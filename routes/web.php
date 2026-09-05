@@ -9,7 +9,12 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
+use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\LeaveBalanceController;
+use App\Http\Controllers\LeaveCalendarController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\OrgChartController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SubscriptionController;
@@ -71,6 +76,19 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('employees/{employee}/shift', [ShiftController::class, 'assign'])->name('employees.shift.assign');
     Route::apiResource('shifts', ShiftController::class);
     Route::apiResource('attendance-devices', AttendanceDeviceController::class);
+
+    // Leave
+    Route::view('leave', 'leave.index')->name('leave');
+    Route::apiResource('leave-types', LeaveTypeController::class);
+    Route::apiResource('holidays', HolidayController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('leave-calendar', LeaveCalendarController::class)->name('leave-calendar');
+    Route::get('leave-balances', [LeaveBalanceController::class, 'index'])->name('leave-balances.index');
+    Route::get('leave-requests', [LeaveRequestController::class, 'index'])->name('leave-requests.index');
+    Route::post('leave-requests', [LeaveRequestController::class, 'store'])->name('leave-requests.store');
+    Route::get('leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show'])->name('leave-requests.show');
+    Route::post('leave-requests/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])->name('leave-requests.approve');
+    Route::post('leave-requests/{leaveRequest}/reject', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject');
+    Route::post('leave-requests/{leaveRequest}/cancel', [LeaveRequestController::class, 'cancel'])->name('leave-requests.cancel');
 });
 
 require __DIR__.'/settings.php';

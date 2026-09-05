@@ -15,6 +15,7 @@ use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Billing\InvoiceService;
+use App\Services\Leave\LeaveService;
 use App\Services\Subscription\SubscriptionManager;
 use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
@@ -120,6 +121,8 @@ class DemoTenantSeeder extends Seeder
                     'effective_from' => now()->subMonths(3)->toDateString(),
                 ]);
             });
+
+            app(LeaveService::class)->accrue();
         });
     }
 }

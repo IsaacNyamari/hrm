@@ -15,11 +15,13 @@ class ProvisionTenant
     public function __construct(
         private readonly ProvisionTenantRoles $roles,
         private readonly ProvisionTenantEmploymentTypes $employmentTypes,
+        private readonly ProvisionTenantLeaveTypes $leaveTypes,
     ) {}
 
     public function handle(Tenant $tenant): void
     {
         $this->roles->handle($tenant);
         $this->employmentTypes->handle($tenant);
+        $this->leaveTypes->handle($tenant);
     }
 }
