@@ -6,6 +6,7 @@ namespace App\Livewire\Attendance;
 
 use App\Enums\AttendanceSource;
 use App\Exceptions\AttendanceException;
+use App\Livewire\Concerns\BindsTenant;
 use App\Services\Attendance\AttendanceService;
 use App\Support\Attendance\PunchData;
 use Illuminate\Contracts\View\View;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class Clock extends Component
 {
+    use BindsTenant;
+
     public ?float $latitude = null;
 
     public ?float $longitude = null;

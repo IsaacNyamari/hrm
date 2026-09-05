@@ -1,7 +1,9 @@
 <?php
 
 use App\Exceptions\AttendanceException;
+use App\Exceptions\LeaveException;
 use App\Exceptions\PlanLimitExceededException;
+use App\Http\Middleware\BindTenantContext;
 use App\Http\Middleware\EnsureTenantSubscribed;
 use App\Http\Middleware\EnsureUserBelongsToTenant;
 use App\Http\Middleware\ResolveTenant;
@@ -26,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscription' => EnsureTenantSubscribed::class,
         ]);
 
+        // Soft-bind the tenant for every web request (incl. Livewire's own
+        // update route, which sits outside the strict `tenant` group). Never
+        // aborts; the `tenant` alias remains the security boundary.
+        $middleware->web(append: [BindTenantContext::class]);
+
         // Resolve the tenant before route-model binding so implicit bindings on
         // tenant-owned models are constrained by TenantScope (cross-tenant ids
         // then 404 instead of leaking).
@@ -48,8 +55,8 @@ return Application::configure(basePath: dirname(__DIR__))
             return response($e->getMessage(), Response::HTTP_PAYMENT_REQUIRED);
         });
 
-        // Attendance rule violations -> 422.
-        $exceptions->render(function (AttendanceException $e, Request $request) {
+        // Attendance / leave rule violations -> 422.
+        $exceptions->render(function (AttendanceException|LeaveException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
             }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Employees;
 
 use App\Enums\EmploymentStatus;
+use App\Livewire\Concerns\BindsTenant;
 use App\Models\Department;
 use App\Models\Employee;
 use Illuminate\Contracts\View\View;
@@ -15,6 +16,7 @@ use Livewire\WithPagination;
 
 class Index extends Component
 {
+    use BindsTenant;
     use WithPagination;
 
     #[Url(as: 'q', history: true)]

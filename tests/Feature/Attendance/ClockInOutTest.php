@@ -3,9 +3,13 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Livewire\Attendance\Clock;
+use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\Scopes\TenantScope;
 use App\Models\Shift;
 use Carbon\CarbonImmutable;
+use Livewire\Livewire;
 
 beforeEach(function () {
     config(['tenancy.central_domains' => ['hrm.test']]);
@@ -102,4 +106,20 @@ it('reports today status', function () {
         ->assertOk()
         ->assertJsonPath('data.clocked_in', true)
         ->assertJsonPath('data.on_break', false);
+});
+
+it('clocks in through the Livewire component without a pre-bound tenant context', function () {
+    // No app(TenantContext)->set(...) here — BindsTenant must fill it, so the
+    // written Attendance still gets a tenant_id.
+    $this->actingAs($this->user);
+
+    Livewire::test(Clock::class)
+        ->call('clockIn')
+        ->assertSet('error', null);
+
+    $attendance = Attendance::withoutGlobalScope(TenantScope::class)
+        ->where('employee_id', $this->employee->id)->first();
+
+    expect($attendance)->not->toBeNull()
+        ->and($attendance->tenant_id)->toBe($this->tenant->id);
 });

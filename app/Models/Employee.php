@@ -212,6 +212,22 @@ class Employee extends Model
         return $this->hasMany(ShiftAssignment::class);
     }
 
+    /**
+     * @return HasMany<LeaveRequest, $this>
+     */
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    /**
+     * @return HasMany<LeaveBalance, $this>
+     */
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(LeaveBalance::class);
+    }
+
     /* ---------------------------------------------------------------------
      | Scopes
      * ------------------------------------------------------------------- */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Organization;
 
+use App\Livewire\Concerns\BindsTenant;
 use App\Models\Employee;
 use App\Services\Organization\OrgChartService;
 use Illuminate\Contracts\View\View;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class Chart extends Component
 {
+    use BindsTenant;
+
     #[Url]
     public string $view = 'reporting';
 
