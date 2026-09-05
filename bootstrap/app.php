@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\AttendanceException;
 use App\Exceptions\PlanLimitExceededException;
 use App\Http\Middleware\EnsureTenantSubscribed;
 use App\Http\Middleware\EnsureUserBelongsToTenant;
@@ -45,5 +46,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return response($e->getMessage(), Response::HTTP_PAYMENT_REQUIRED);
+        });
+
+        // Attendance rule violations -> 422.
+        $exceptions->render(function (AttendanceException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            return response($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
         });
     })->create();

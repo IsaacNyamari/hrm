@@ -11,6 +11,7 @@ use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\EmploymentType;
 use App\Models\Plan;
+use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Billing\InvoiceService;
@@ -109,6 +110,16 @@ class DemoTenantSeeder extends Seeder
                 'designation_id' => $designations->random()->id,
                 'employment_type_id' => $permanent?->id,
             ]);
+
+            $shift = Shift::factory()->forTenant($tenant)->default()->create();
+
+            Employee::query()->each(function (Employee $employee) use ($tenant, $shift): void {
+                $employee->shiftAssignments()->create([
+                    'tenant_id' => $tenant->id,
+                    'shift_id' => $shift->id,
+                    'effective_from' => now()->subMonths(3)->toDateString(),
+                ]);
+            });
         });
     }
 }

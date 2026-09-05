@@ -196,6 +196,22 @@ class Employee extends Model
         return $this->hasOne(EmployeeStatutoryDetail::class);
     }
 
+    /**
+     * @return HasMany<Attendance, $this>
+     */
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    /**
+     * @return HasMany<ShiftAssignment, $this>
+     */
+    public function shiftAssignments(): HasMany
+    {
+        return $this->hasMany(ShiftAssignment::class);
+    }
+
     /* ---------------------------------------------------------------------
      | Scopes
      * ------------------------------------------------------------------- */

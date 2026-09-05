@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceDeviceController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DepartmentController;
@@ -9,6 +11,7 @@ use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\OrgChartController;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserInvitationController;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +57,20 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::apiResource('branches', BranchController::class);
     Route::apiResource('departments', DepartmentController::class);
     Route::apiResource('designations', DesignationController::class);
+
+    // Attendance — self-service clock actions need only a linked employee record.
+    Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('attendance/today', [AttendanceController::class, 'today'])->name('attendance.today');
+    Route::post('attendance/clock-in', [AttendanceController::class, 'clockIn'])->name('attendance.clock-in');
+    Route::post('attendance/clock-out', [AttendanceController::class, 'clockOut'])->name('attendance.clock-out');
+    Route::post('attendance/break/start', [AttendanceController::class, 'startBreak'])->name('attendance.break.start');
+    Route::post('attendance/break/end', [AttendanceController::class, 'endBreak'])->name('attendance.break.end');
+    Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+    Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+
+    Route::post('employees/{employee}/shift', [ShiftController::class, 'assign'])->name('employees.shift.assign');
+    Route::apiResource('shifts', ShiftController::class);
+    Route::apiResource('attendance-devices', AttendanceDeviceController::class);
 });
 
 require __DIR__.'/settings.php';
