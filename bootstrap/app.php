@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\PlanLimitExceededException;
 use App\Http\Middleware\EnsureTenantSubscribed;
 use App\Http\Middleware\EnsureUserBelongsToTenant;
 use App\Http\Middleware\ResolveTenant;
@@ -8,6 +9,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -35,4 +37,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Plan limits are a business condition, not a server fault.
+        $exceptions->render(function (PlanLimitExceededException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], Response::HTTP_PAYMENT_REQUIRED);
+            }
+
+            return response($e->getMessage(), Response::HTTP_PAYMENT_REQUIRED);
+        });
     })->create();

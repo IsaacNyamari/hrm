@@ -11,7 +11,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 1 | Multi-tenant architecture (context, scope, middleware, isolation tests) | ✅ |
 | 2 | Auth + users + roles + permissions + invitations | ✅ |
 | 3 | Tenant onboarding + plans + subscriptions + billing + M-Pesa abstraction | ✅ (registration UI wizard deferred) |
-| 4 | Employee management (full profile, related tables, import/export) | ⬜ |
+| 4 | Employee management (full profile, related tables, import/export) | ✅ |
 | 5 | Departments + designations + branches + org chart | ⬜ |
 | 6 | Attendance + shifts + work schedules + device abstraction | ⬜ |
 | 7 | Leave management (types, policies, workflow, balances, holidays) | ⬜ |

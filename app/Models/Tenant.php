@@ -126,6 +126,38 @@ class Tenant extends Model
         return $this->hasMany(Payment::class)->withoutGlobalScope(TenantScope::class);
     }
 
+    /**
+     * @return HasMany<Branch, $this>
+     */
+    public function branches(): HasMany
+    {
+        return $this->hasMany(Branch::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * @return HasMany<Department, $this>
+     */
+    public function departments(): HasMany
+    {
+        return $this->hasMany(Department::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * @return HasMany<Designation, $this>
+     */
+    public function designations(): HasMany
+    {
+        return $this->hasMany(Designation::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * @return HasMany<EmploymentType, $this>
+     */
+    public function employmentTypes(): HasMany
+    {
+        return $this->hasMany(EmploymentType::class)->withoutGlobalScope(TenantScope::class);
+    }
+
     public function onTrial(): bool
     {
         return $this->status === TenantStatus::Trialing

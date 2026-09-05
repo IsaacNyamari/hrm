@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Subscription;
 
-use App\Actions\Tenancy\ProvisionTenantRoles;
+use App\Actions\Tenancy\ProvisionTenant;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
@@ -30,7 +30,7 @@ class SubscriptionManager
     public function __construct(
         private readonly TenantContext $context,
         private readonly InvoiceService $invoices,
-        private readonly ProvisionTenantRoles $provisionRoles,
+        private readonly ProvisionTenant $provisionTenant,
     ) {}
 
     public function startTrial(Tenant $tenant, Plan $plan): Subscription
@@ -50,7 +50,7 @@ class SubscriptionManager
             ]);
 
             $tenant->forceFill(['status' => TenantStatus::Trialing, 'trial_ends_at' => $trialEnds])->save();
-            $this->provisionRoles->handle($tenant);
+            $this->provisionTenant->handle($tenant);
 
             TrialStarted::dispatch($subscription);
 
@@ -82,7 +82,7 @@ class SubscriptionManager
                 'ends_at' => null,
             ])->save();
 
-            $this->provisionRoles->handle($tenant);
+            $this->provisionTenant->handle($tenant);
 
             if ($plan->price_cents === 0) {
                 $tenant->forceFill(['status' => TenantStatus::Active])->save();
@@ -133,7 +133,7 @@ class SubscriptionManager
     {
         return $this->context->run($subscription->tenant, function () use ($subscription, $plan): Subscription {
             $subscription->forceFill(['plan_id' => $plan->getKey()])->save();
-            $this->provisionRoles->handle($subscription->tenant);
+            $this->provisionTenant->handle($subscription->tenant);
 
             return $subscription->refresh();
         });

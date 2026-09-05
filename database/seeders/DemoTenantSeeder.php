@@ -5,7 +5,11 @@ namespace Database\Seeders;
 use App\Enums\PaymentProvider;
 use App\Enums\Role;
 use App\Enums\TenantStatus;
+use App\Models\Branch;
+use App\Models\Department;
+use App\Models\Designation;
 use App\Models\Employee;
+use App\Models\EmploymentType;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
@@ -69,21 +73,37 @@ class DemoTenantSeeder extends Seeder
             }
         }
 
-        app(TenantContext::class)->run($tenant, function () use ($owner): void {
+        app(TenantContext::class)->run($tenant, function () use ($tenant, $owner, $slug, $name): void {
             $owner->syncRoles([Role::TenantOwner->value]);
-        });
 
-        if ($tenant->employees()->count() === 0) {
-            Employee::factory()->count(6)->forTenant($tenant)->create();
+            if ($tenant->employees()->count() > 0) {
+                return;
+            }
 
-            Employee::factory()->forTenant($tenant)->create([
+            $hq = Branch::factory()->forTenant($tenant)->headquarters()->create();
+            $departments = Department::factory()->forTenant($tenant)->count(4)->create();
+            $designations = Designation::factory()->forTenant($tenant)->count(4)->create();
+            $permanent = EmploymentType::query()->where('slug', 'permanent')->first();
+
+            $manager = Employee::factory()->forTenant($tenant)->create([
                 'user_id' => $owner->getKey(),
                 'employee_number' => strtoupper(substr($slug, 0, 3)).'-EMP-000001',
                 'first_name' => $name,
                 'last_name' => 'Owner',
-                'email' => $ownerEmail,
+                'email' => 'owner@'.$slug.'.test',
                 'job_title' => 'Founder',
+                'branch_id' => $hq->id,
+                'department_id' => $departments->first()->id,
+                'employment_type_id' => $permanent?->id,
             ]);
-        }
+
+            Employee::factory()->forTenant($tenant)->count(8)->create([
+                'branch_id' => $hq->id,
+                'manager_id' => $manager->id,
+                'department_id' => $departments->random()->id,
+                'designation_id' => $designations->random()->id,
+                'employment_type_id' => $permanent?->id,
+            ]);
+        });
     }
 }

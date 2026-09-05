@@ -1,6 +1,6 @@
 <?php
 
-use App\Actions\Tenancy\ProvisionTenantRoles;
+use App\Actions\Tenancy\ProvisionTenant;
 use App\Enums\Role;
 use App\Models\Tenant;
 use App\Models\User;
@@ -30,7 +30,7 @@ function tenantWithRoles(array $attributes = []): Tenant
 {
     $tenant = Tenant::factory()->create($attributes);
 
-    app(ProvisionTenantRoles::class)->handle($tenant);
+    app(ProvisionTenant::class)->handle($tenant);
 
     return $tenant;
 }

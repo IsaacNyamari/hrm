@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeExportController;
+use App\Http\Controllers\EmployeeImportController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserInvitationController;
@@ -31,7 +33,14 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::delete('subscription', [SubscriptionController::class, 'destroy'])->name('subscription.destroy');
 
     Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::post('employees', [EmployeeController::class, 'store'])->name('employees.store');
+    Route::get('employees/export', EmployeeExportController::class)->name('employees.export');
+    Route::post('employees/import/preview', [EmployeeImportController::class, 'preview'])->name('employees.import.preview');
+    Route::post('employees/import/{import}/confirm', [EmployeeImportController::class, 'confirm'])->name('employees.import.confirm');
+    Route::get('employees/import/{import}', [EmployeeImportController::class, 'show'])->name('employees.import.show');
     Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::delete('employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 
     Route::post('users/invitations', [UserInvitationController::class, 'store'])->name('users.invitations.store');
 });
