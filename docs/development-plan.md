@@ -21,7 +21,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 11 | Performance management | ✅ |
 | 12 | Recruitment / ATS | ✅ |
 | 13 | Expenses + loans + assets | ✅ |
-| 14 | Reporting + exports (PDF/Excel/CSV) | ⬜ |
+| 14 | Reporting + exports (PDF/Excel/CSV) | ✅ |
 | 15 | Notifications + announcements + email branding | ⬜ |
 | 16 | API v1 (Sanctum) + webhooks | ⬜ |
 | 17 | Security hardening + audit log + impersonation | ⬜ |
@@ -136,3 +136,18 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   `assets.view/.manage`; self-service claim/loan needs only a linked employee.
   `ExpenseException` / `AssetException` → 422. Livewire `Finance\Expenses`,
   `Finance\Loans`, `Finance\Assets` + a "Finance" sidebar group.
+- **2026-09-06 (P14)** Reporting = no new tables. `App\Reports\Report`
+  interface + `BaseReport`; seven builders (headcount, attendance-summary,
+  leave-ledger, payroll-summary, payroll-register, expense-claims,
+  recruitment-funnel), each declaring its own domain permissions. Aggregation
+  is done in PHP over tenant-scoped Eloquent queries (no raw GROUP BY, so
+  MySQL/sqlite parity and no enum-cast collisions); Collection `where()` on a
+  cast column must compare against the enum instance, never its string.
+  `ReportRegistry` gates each report on `reports.view` + its permissions in the
+  caller's team scope; `ReportService` sanitises filters to the declared keys.
+  `ReportExport` (maatwebsite/excel `FromArray`) drives `?format=xlsx|csv`;
+  `reports.print` Blade is the print-to-PDF path (dompdf still absent).
+  `DashboardMetrics` returns permission-filtered headline cards, shown by
+  Livewire `Analytics\Overview` on the rebuilt `dashboard` blade. Livewire
+  `Reports\Index` + `reports` sidebar entry. Unknown report key → 404,
+  forbidden → 403.

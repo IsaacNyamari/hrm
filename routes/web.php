@@ -10,6 +10,7 @@ use App\Http\Controllers\AttendanceDeviceController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CareersController;
+use App\Http\Controllers\DashboardMetricsController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\DocumentExpiryController;
@@ -44,6 +45,7 @@ use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PerformanceCycleController;
 use App\Http\Controllers\PerformanceReviewController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SubscriptionController;
@@ -265,6 +267,14 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('assets/{asset}/assignments', [AssetAssignmentController::class, 'store'])->name('assets.assignments.store');
     Route::get('asset-assignments', [AssetAssignmentController::class, 'index'])->name('asset-assignments.index');
     Route::post('asset-assignments/{assetAssignment}/return', [AssetAssignmentController::class, 'returnAsset'])->name('asset-assignments.return');
+
+    // Reporting & exports
+    Route::view('reports', 'reports.index')->name('reports');
+    Route::get('reports/catalogue', [ReportController::class, 'index'])->name('reports.catalogue');
+    Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');
+    Route::get('reports/{report}/export', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('reports/{report}/print', [ReportController::class, 'print'])->name('reports.print');
+    Route::get('dashboard/metrics', DashboardMetricsController::class)->name('dashboard.metrics');
 });
 
 /*

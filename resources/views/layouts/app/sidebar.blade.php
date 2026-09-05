@@ -18,6 +18,9 @@
                     <flux:sidebar.item icon="user-circle" :href="route('portal')" :current="request()->routeIs('portal')" wire:navigate>
                         {{ __('My HR') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="chart-bar" :href="route('reports')" :current="request()->routeIs('reports')" wire:navigate>
+                        {{ __('Reports') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('People')" class="grid">
