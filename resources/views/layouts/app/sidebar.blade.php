@@ -11,24 +11,47 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
+                <flux:sidebar.group :heading="__('Overview')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="user-circle" :href="route('portal')" :current="request()->routeIs('portal')" wire:navigate>
+                        {{ __('My HR') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('People')" class="grid">
+                    <flux:sidebar.item icon="users" :href="route('employees.index')" :current="request()->routeIs('employees.*')" wire:navigate>
+                        {{ __('Employees') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="rectangle-group" :href="route('org-chart')" :current="request()->routeIs('org-chart')" wire:navigate>
+                        {{ __('Org chart') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('Time & leave')" class="grid">
+                    <flux:sidebar.item icon="clock" :href="route('attendance.index')" :current="request()->routeIs('attendance.*')" wire:navigate>
+                        {{ __('Attendance') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="calendar-days" :href="route('leave')" :current="request()->routeIs('leave')" wire:navigate>
+                        {{ __('Leave') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('Work')" class="grid">
+                    <flux:sidebar.item icon="banknotes" :href="route('payroll')" :current="request()->routeIs('payroll')" wire:navigate>
+                        {{ __('Payroll') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="trophy" :href="route('performance')" :current="request()->routeIs('performance')" wire:navigate>
+                        {{ __('Performance') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="document-text" :href="route('hr-letters')" :current="request()->routeIs('hr-letters')" wire:navigate>
+                        {{ __('HR letters') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
-
-            <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
-
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
-            </flux:sidebar.nav>
 
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>

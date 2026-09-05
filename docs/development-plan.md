@@ -18,7 +18,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 8 | Payroll engine (structures, components, safe formulas, statutory, runs, payslips) | ✅ |
 | 9 | Employee self-service portal | ✅ |
 | 10 | Documents + expiry + HR letter templates | ✅ |
-| 11 | Performance management | ⬜ |
+| 11 | Performance management | ✅ |
 | 12 | Recruitment / ATS | ⬜ |
 | 13 | Expenses + loans + assets | ⬜ |
 | 14 | Reporting + exports (PDF/Excel/CSV) | ⬜ |
@@ -89,3 +89,19 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   (`employees.documents.view`) + the owning employee once per day-mark, tracked
   in `employee_documents.expiry_reminders_sent`. dompdf stays out (blocked in
   this environment) — letters/payslips are print-ready HTML.
+- **2026-09-05 (P11)** Performance = `performance_cycles` → `goals`
+  (+ `goal_check_ins`) + `kpis` → `performance_reviews` (+ `review_ratings`).
+  A cycle is `draft → active → in_review → closed`; opening it fans out one
+  `manager` review per active employee (+ a `self` review where the employee
+  has a login), idempotently. `PerformanceService` owns the workflow: goal
+  check-ins, KPI recording, review save/submit/acknowledge, and `closeCycle`
+  which snapshots a weighted `final_score` (`goal_weight` vs
+  `competency_weight`, both stored on the cycle) blending goal/KPI attainment
+  with the manager's competency ratings. Competency framework is
+  `config/performance.php` data (tenant-overridable via `settings.performance`),
+  never a table. New permissions `performance.view` / `.manage` / `.review`;
+  self-service goal/KPI management needs only a linked employee record, line
+  managers can rate and review their reports without a special permission.
+  Sidebar navigation added for every module screen (Livewire `wire:navigate`
+  SPA); starter-kit Repository/Documentation links and the boilerplate welcome
+  page removed.

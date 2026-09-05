@@ -15,8 +15,10 @@ use App\Models\DocumentType;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use App\Models\EmploymentType;
+use App\Models\Goal;
 use App\Models\HrRequest;
 use App\Models\PayrollPeriod;
+use App\Models\PerformanceCycle;
 use App\Models\Plan;
 use App\Models\SalaryComponent;
 use App\Models\Shift;
@@ -25,6 +27,7 @@ use App\Models\User;
 use App\Services\Billing\InvoiceService;
 use App\Services\Leave\LeaveService;
 use App\Services\Payroll\PayrollService;
+use App\Services\Performance\PerformanceService;
 use App\Services\Subscription\SubscriptionManager;
 use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
@@ -172,6 +175,21 @@ class DemoTenantSeeder extends Seeder
                 'document_type_id' => $passportType?->id,
                 'expiry_date' => now()->addDays(25)->toDateString(),
             ]);
+
+            $cycle = PerformanceCycle::factory()->forTenant($tenant)->active()->create([
+                'name' => now()->year.' Annual review',
+                'starts_on' => now()->startOfYear()->toDateString(),
+                'ends_on' => now()->endOfYear()->toDateString(),
+                'created_by' => $owner->id,
+            ]);
+            app(PerformanceService::class)->openCycle($cycle);
+
+            Employee::query()->limit(3)->get()->each(function (Employee $employee) use ($cycle): void {
+                Goal::factory()->forEmployee($employee)->create([
+                    'performance_cycle_id' => $cycle->id,
+                    'title' => 'Raise '.fake()->word().' throughput by 15%',
+                ]);
+            });
         });
     }
 }

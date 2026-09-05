@@ -15,9 +15,11 @@ use App\Http\Controllers\EmployeeDocumentController;
 use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
 use App\Http\Controllers\EmployeeSalaryController;
+use App\Http\Controllers\GoalController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HrRequestController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\KpiController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveRequestController;
@@ -30,6 +32,8 @@ use App\Http\Controllers\OrgChartController;
 use App\Http\Controllers\PayrollPeriodController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PayslipController;
+use App\Http\Controllers\PerformanceCycleController;
+use App\Http\Controllers\PerformanceReviewController;
 use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SubscriptionController;
@@ -167,6 +171,27 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('letters', [LetterController::class, 'store'])->name('letters.store');
     Route::get('letters/{letter}', [LetterController::class, 'show'])->name('letters.show');
     Route::get('letters/{letter}/download', [LetterController::class, 'download'])->name('letters.download');
+
+    // Performance management
+    Route::view('performance', 'performance.index')->name('performance');
+    Route::apiResource('performance-cycles', PerformanceCycleController::class)
+        ->parameters(['performance-cycles' => 'performanceCycle'])
+        ->only(['index', 'show', 'store', 'update', 'destroy']);
+    Route::post('performance-cycles/{performanceCycle}/open', [PerformanceCycleController::class, 'open'])->name('performance-cycles.open');
+    Route::post('performance-cycles/{performanceCycle}/start-review', [PerformanceCycleController::class, 'startReview'])->name('performance-cycles.start-review');
+    Route::post('performance-cycles/{performanceCycle}/close', [PerformanceCycleController::class, 'close'])->name('performance-cycles.close');
+
+    Route::apiResource('goals', GoalController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+    Route::post('goals/{goal}/check-ins', [GoalController::class, 'checkIn'])->name('goals.check-ins');
+
+    Route::apiResource('kpis', KpiController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('kpis/{kpi}/record', [KpiController::class, 'record'])->name('kpis.record');
+
+    Route::get('performance-reviews', [PerformanceReviewController::class, 'index'])->name('performance-reviews.index');
+    Route::get('performance-reviews/{performanceReview}', [PerformanceReviewController::class, 'show'])->name('performance-reviews.show');
+    Route::put('performance-reviews/{performanceReview}', [PerformanceReviewController::class, 'update'])->name('performance-reviews.update');
+    Route::post('performance-reviews/{performanceReview}/submit', [PerformanceReviewController::class, 'submit'])->name('performance-reviews.submit');
+    Route::post('performance-reviews/{performanceReview}/acknowledge', [PerformanceReviewController::class, 'acknowledge'])->name('performance-reviews.acknowledge');
 });
 
 require __DIR__.'/settings.php';

@@ -271,6 +271,30 @@ class Employee extends Model
         return $this->hasMany(HrRequest::class);
     }
 
+    /**
+     * @return HasMany<Goal, $this>
+     */
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    /**
+     * @return HasMany<Kpi, $this>
+     */
+    public function kpis(): HasMany
+    {
+        return $this->hasMany(Kpi::class);
+    }
+
+    /**
+     * @return HasMany<PerformanceReview, $this>
+     */
+    public function performanceReviews(): HasMany
+    {
+        return $this->hasMany(PerformanceReview::class);
+    }
+
     /* ---------------------------------------------------------------------
      | Scopes
      * ------------------------------------------------------------------- */

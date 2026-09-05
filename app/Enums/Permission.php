@@ -41,6 +41,11 @@ enum Permission: string
     case PayrollProcess = 'payroll.process';
     case PayrollApprove = 'payroll.approve';
 
+    // Performance
+    case PerformanceView = 'performance.view';
+    case PerformanceManage = 'performance.manage';
+    case PerformanceReview = 'performance.review';
+
     // Reports
     case ReportsView = 'reports.view';
     case ReportsExport = 'reports.export';

@@ -103,7 +103,8 @@ Indexes: unique `(tenant_id, employee_number)`, unique `(tenant_id, email)`,
   `payslips`, `payslip_lines`, `loans`, `loan_repayments`.
 - **P10** `documents`, `document_types`, `document_templates`,
   `generated_documents`.
-- **P11** `performance_cycles`, `goals`, `kpis`, `reviews`, `review_ratings`.
+- **P11** `performance_cycles`, `goals`, `goal_check_ins`, `kpis`,
+  `performance_reviews`, `review_ratings`.
 - **P12** `job_positions`, `vacancies`, `applicants`, `applications`,
   `interviews`, `offers`.
 - **P13** `expenses`, `expense_items`, `expense_approvals`, `assets`,
