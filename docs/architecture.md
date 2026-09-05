@@ -108,11 +108,16 @@ binding).
   `employees`, whose email is unique per tenant.
 - **API auth** _(planned P16)_: Sanctum personal-access tokens, abilities map to
   permissions, tokens carry the tenant.
-- **Roles & permissions** _(planned P2)_: `spatie/laravel-permission` with
-  `teams = true`, the "team" being the tenant, so a user can hold different
-  roles in principle and permissions never leak across tenants. Platform roles
-  (Super Admin, Platform Admin, Support Admin, Finance Admin) live in the
-  team-less/`null` team.
+- **Roles & permissions** _(P2, done)_: `spatie/laravel-permission` v8 with
+  `teams = true`, the "team" being the tenant, so permissions never leak across
+  tenants. It is the **only** authorization system — platform (operator) roles
+  (Super Admin, Platform Admin, Support Admin, Finance Admin) live under the
+  reserved team id `0` (`TenantContext::PLATFORM_TEAM_ID`), which sidesteps the
+  non-null team-key constraint on the Spatie pivots without a parallel system.
+  `App\Enums\Role` / `Permission` / `PlatformPermission` are typed catalogues;
+  the Spatie tables are the source of truth. `users.is_platform_admin` is a
+  denormalised fast gate. `TenantContext` keeps Spatie's active team id in sync
+  on every bind (tenant id, or `0` when unbound).
 - **Policies**: one policy per model, auto-discovered. Base rule: acting user
   and subject must share a tenant. Platform admins are denied tenant HR data by
   default and reach it only through audited impersonation _(planned P7)_.

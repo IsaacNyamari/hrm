@@ -52,11 +52,16 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 - **2026-09-05** Build on the existing Laravel 13 Livewire starter kit (Fortify,
   Livewire 4, Flux 2, Pest 4). No destructive reset.
 - **2026-09-05 (P2)** `spatie/laravel-permission` v8 with `teams = true`,
-  `team_foreign_key = tenant_id` for tenant-side roles. Platform-side roles use
-  a plain `users.platform_role` column instead — the teams pivot requires a
-  non-null team key, and platform staff have no tenant. Policies evaluate
-  permissions inside the *record's* tenant scope (`AuthorizesWithinTenant`) so
-  they are correct outside the HTTP pipeline too.
+  `team_foreign_key = tenant_id`. **One** authorization system for both sides:
+  tenant roles live under their `tenant_id` team; platform (operator) roles live
+  under the reserved team id `0` (`TenantContext::PLATFORM_TEAM_ID`) — avoids a
+  null team key while keeping everything in Spatie. `Role` / `Permission` /
+  `PlatformPermission` enums are the catalogue only; the DB tables are the
+  source of truth. `users.is_platform_admin` is kept as a fast denormalised
+  gate. Policies evaluate permissions inside the *record's* tenant scope
+  (`AuthorizesWithinTenant`) so they are correct outside the HTTP pipeline too.
+  (Superseded the earlier `users.platform_role` column — dropped in migration
+  `..._181000`.)
 - **2026-09-05 (P2)** Invitations carry the tenant via a 64-char single-use
   token (guest route, no subdomain needed); acceptance creates the user +
   assigns the role in one transaction. Login/Failed/Lockout events recorded to

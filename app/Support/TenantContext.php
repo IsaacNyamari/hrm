@@ -20,6 +20,12 @@ use Spatie\Permission\PermissionRegistrar;
  */
 class TenantContext
 {
+    /**
+     * Reserved Spatie "team" id for platform-side (SaaS operator) roles and
+     * permissions. Tenant teams use their positive tenant_id.
+     */
+    public const PLATFORM_TEAM_ID = 0;
+
     private ?Tenant $tenant = null;
 
     private bool $resolved = false;
@@ -40,7 +46,8 @@ class TenantContext
 
     /**
      * Keep Spatie's team context aligned with the bound tenant so role and
-     * permission lookups never cross tenants.
+     * permission lookups never cross tenants. With no tenant bound we fall back
+     * to the platform team so operator roles resolve.
      */
     private function syncPermissionTeam(): void
     {
@@ -48,7 +55,7 @@ class TenantContext
             return;
         }
 
-        app(PermissionRegistrar::class)->setPermissionsTeamId($this->id());
+        app(PermissionRegistrar::class)->setPermissionsTeamId($this->id() ?? self::PLATFORM_TEAM_ID);
     }
 
     private function restore(?Tenant $tenant, bool $resolved): void

@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasUuid;
 use App\Enums\Role;
+use App\Support\TenantContext;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -18,6 +19,7 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -25,7 +27,6 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string $uuid
  * @property int|null $tenant_id
  * @property bool $is_platform_admin
- * @property Role|null $platform_role
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
@@ -56,7 +57,6 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_platform_admin' => 'boolean',
-            'platform_role' => Role::class,
         ];
     }
 
@@ -85,14 +85,32 @@ class User extends Authenticatable implements PasskeyUser
         return $this->is_platform_admin === true;
     }
 
+    /**
+     * Whether this user holds one of the given platform roles (evaluated in the
+     * reserved platform team, regardless of the currently bound tenant).
+     */
     public function hasPlatformRole(Role ...$roles): bool
     {
-        return $this->platform_role !== null && in_array($this->platform_role, $roles, true);
+        if (! $this->isPlatformAdmin()) {
+            return false;
+        }
+
+        $registrar = app(PermissionRegistrar::class);
+        $previous = $registrar->getPermissionsTeamId();
+        $registrar->setPermissionsTeamId(TenantContext::PLATFORM_TEAM_ID);
+
+        try {
+            $names = array_map(static fn (Role $r): string => $r->value, $roles ?: Role::platformRoles());
+
+            return $this->hasRole($names);
+        } finally {
+            $registrar->setPermissionsTeamId($previous);
+        }
     }
 
     public function isSuperAdmin(): bool
     {
-        return $this->platform_role === Role::SuperAdmin;
+        return $this->hasPlatformRole(Role::SuperAdmin);
     }
 
     public function belongsToTenant(Tenant $tenant): bool

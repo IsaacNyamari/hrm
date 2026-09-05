@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Enums;
 
 use App\Enums\Permission as P;
+use App\Enums\PlatformPermission as PP;
 
 /**
- * Named roles. Platform roles live in the null team; tenant roles are created
- * per tenant at provisioning time. Authorization checks always resolve to
- * permissions — role names are for assignment and display only.
+ * Named roles — the catalogue only. The source of truth is Spatie's tables:
+ * platform roles live under the reserved team id 0
+ * (App\Support\TenantContext::PLATFORM_TEAM_ID); tenant roles are created per
+ * tenant at provisioning time. Authorization always resolves to permissions;
+ * role names are for assignment and display.
  */
 enum Role: string
 {
@@ -42,6 +45,38 @@ enum Role: string
     public static function tenantRoles(): array
     {
         return array_values(array_filter(self::cases(), static fn (self $r): bool => ! $r->isPlatform()));
+    }
+
+    /**
+     * @return array<int, self>
+     */
+    public static function platformRoles(): array
+    {
+        return array_values(array_filter(self::cases(), static fn (self $r): bool => $r->isPlatform()));
+    }
+
+    /**
+     * Default platform-permission set for a platform role.
+     *
+     * @return array<int, string>
+     */
+    public function platformPermissions(): array
+    {
+        return match ($this) {
+            self::SuperAdmin, self::PlatformAdmin => PP::values(),
+
+            self::SupportAdmin => [
+                PP::DashboardView->value, PP::TenantsView->value, PP::TenantsImpersonate->value,
+                PP::PaymentsView->value, PP::AuditView->value,
+            ],
+
+            self::FinanceAdmin => [
+                PP::DashboardView->value, PP::SubscriptionsManage->value, PP::InvoicesManage->value,
+                PP::PaymentsView->value, PP::PlansManage->value,
+            ],
+
+            default => [],
+        };
     }
 
     /**

@@ -5,9 +5,11 @@ namespace Database\Factories;
 use App\Enums\Role;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * @extends Factory<User>
@@ -41,15 +43,29 @@ class UserFactory extends Factory
     }
 
     /**
-     * Platform staff account (no tenant).
+     * Platform staff account (no tenant). Assigns the Spatie platform role under
+     * the reserved platform team.
      */
     public function platformAdmin(?Role $role = null): static
     {
+        $role ??= Role::SuperAdmin;
+
         return $this->state(fn (array $attributes): array => [
             'tenant_id' => null,
             'is_platform_admin' => true,
-            'platform_role' => ($role ?? Role::SuperAdmin)->value,
-        ]);
+        ])->afterCreating(function (User $user) use ($role): void {
+            $registrar = app(PermissionRegistrar::class);
+            $previous = $registrar->getPermissionsTeamId();
+            $registrar->setPermissionsTeamId(TenantContext::PLATFORM_TEAM_ID);
+
+            try {
+                \Spatie\Permission\Models\Role::findOrCreate($role->value, 'web')
+                    ->forceFill(['tenant_id' => TenantContext::PLATFORM_TEAM_ID])->save();
+                $user->assignRole($role->value);
+            } finally {
+                $registrar->setPermissionsTeamId($previous);
+            }
+        });
     }
 
     /**
