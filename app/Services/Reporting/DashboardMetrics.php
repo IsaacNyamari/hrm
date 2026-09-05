@@ -13,6 +13,7 @@ use App\Models\LeaveRequest;
 use App\Models\PayrollRun;
 use App\Models\User;
 use App\Models\Vacancy;
+use App\Support\TenantCache;
 use Carbon\CarbonImmutable;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -27,6 +28,18 @@ class DashboardMetrics
      * @return array<int, array{key: string, label: string, value: int|string, href?: string}>
      */
     public function for(User $user): array
+    {
+        return TenantCache::remember(
+            'dashboard.metrics:'.$user->getKey(),
+            30,
+            fn (): array => $this->compute($user),
+        );
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string, value: int|string, href?: string}>
+     */
+    private function compute(User $user): array
     {
         $today = CarbonImmutable::now()->toDateString();
         $cards = [];

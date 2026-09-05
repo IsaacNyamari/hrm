@@ -27,39 +27,41 @@ class CheckDocumentExpiry extends Command
         $today = CarbonImmutable::now()->startOfDay();
         $sent = 0;
 
-        Tenant::query()->each(function (Tenant $tenant) use ($context, $today, &$sent): void {
-            $context->run($tenant, function () use ($tenant, $today, &$sent): void {
-                $hrUsers = $this->hrRecipients($tenant->getKey());
+        Tenant::query()->chunkById(100, function ($tenants) use ($context, $today, &$sent): void {
+            foreach ($tenants as $tenant) {
+                $context->run($tenant, function () use ($tenant, $today, &$sent): void {
+                    $hrUsers = $this->hrRecipients($tenant->getKey());
 
-                EmployeeDocument::query()
-                    ->whereNotNull('expiry_date')
-                    ->whereDate('expiry_date', '>=', $today->toDateString())
-                    ->with(['employee.user', 'documentType'])
-                    ->chunkById(200, function ($documents) use ($today, $hrUsers, &$sent): void {
-                        foreach ($documents as $document) {
-                            $daysLeft = (int) $today->diffInDays($document->expiry_date->startOfDay(), false);
-                            $marks = $document->documentType?->reminderMarks() ?? [30, 14, 7];
+                    EmployeeDocument::query()
+                        ->whereNotNull('expiry_date')
+                        ->whereDate('expiry_date', '>=', $today->toDateString())
+                        ->with(['employee.user', 'documentType'])
+                        ->chunkById(200, function ($documents) use ($today, $hrUsers, &$sent): void {
+                            foreach ($documents as $document) {
+                                $daysLeft = (int) $today->diffInDays($document->expiry_date->startOfDay(), false);
+                                $marks = $document->documentType?->reminderMarks() ?? [30, 14, 7];
 
-                            if (! in_array($daysLeft, $marks, true)) {
-                                continue;
+                                if (! in_array($daysLeft, $marks, true)) {
+                                    continue;
+                                }
+
+                                $alreadySent = $document->expiry_reminders_sent ?? [];
+                                if (in_array($daysLeft, $alreadySent, true)) {
+                                    continue;
+                                }
+
+                                $recipients = $document->employee->user !== null
+                                    ? $hrUsers->merge([$document->employee->user])->unique('id')
+                                    : $hrUsers;
+
+                                Notification::send($recipients, new DocumentExpiringNotification($document, $daysLeft));
+
+                                $document->forceFill(['expiry_reminders_sent' => [...$alreadySent, $daysLeft]])->save();
+                                $sent += $recipients->count();
                             }
-
-                            $alreadySent = $document->expiry_reminders_sent ?? [];
-                            if (in_array($daysLeft, $alreadySent, true)) {
-                                continue;
-                            }
-
-                            $recipients = $document->employee->user !== null
-                                ? $hrUsers->merge([$document->employee->user])->unique('id')
-                                : $hrUsers;
-
-                            Notification::send($recipients, new DocumentExpiringNotification($document, $daysLeft));
-
-                            $document->forceFill(['expiry_reminders_sent' => [...$alreadySent, $daysLeft]])->save();
-                            $sent += $recipients->count();
-                        }
-                    });
-            });
+                        });
+                });
+            }
         });
 
         $this->info("Sent {$sent} document-expiry reminder(s).");

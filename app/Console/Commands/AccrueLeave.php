@@ -20,8 +20,10 @@ class AccrueLeave extends Command
         $year = $this->option('year') !== null ? (int) $this->option('year') : null;
         $total = 0;
 
-        Tenant::query()->each(function (Tenant $tenant) use ($service, $context, $year, &$total): void {
-            $total += $context->run($tenant, fn (): int => $service->accrue($year));
+        Tenant::query()->chunkById(100, function ($tenants) use ($service, $context, $year, &$total): void {
+            foreach ($tenants as $tenant) {
+                $total += $context->run($tenant, fn (): int => $service->accrue($year));
+            }
         });
 
         $this->info("Accrued {$total} leave balance(s).");

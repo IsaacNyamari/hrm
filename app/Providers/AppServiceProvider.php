@@ -22,6 +22,8 @@ use App\Policies\PayrollPolicy;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Date;
@@ -89,6 +91,20 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );
+
+        // Surface N+1s in development / CI; in production log rather than throw.
+        Model::preventLazyLoading(! app()->isProduction());
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
+            $message = "Lazy loading [{$relation}] on [".$model::class.'].';
+
+            if (app()->isProduction()) {
+                logger()->warning($message);
+
+                return;
+            }
+
+            throw new LazyLoadingViolationException($model, $relation);
+        });
 
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)

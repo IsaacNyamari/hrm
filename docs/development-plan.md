@@ -26,7 +26,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 16 | API v1 (Sanctum) + webhooks | ✅ |
 | 17 | Security hardening + audit log + impersonation | ✅ |
 | 18 | Test coverage pass (feature + isolation matrix) | ✅ |
-| 19 | Performance (indexes, eager loading, caching, chunked jobs) | ⬜ |
+| 19 | Performance (indexes, eager loading, caching, chunked jobs) | ✅ |
 | 20 | Production deployment docs + config | ⬜ |
 
 ## Cross-cutting rules (every phase)
@@ -211,3 +211,17 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   from their own `Tenant::factory()` don't exercise context auto-stamp — test
   that with a bare `Model::create()`; `fake()->unique()` pools exhaust for
   `DocumentTemplate`/`SalaryComponent` at count 5 (kept out of the matrix).
+- **2026-09-06 (P19)** Perf pass. `Model::preventLazyLoading(! isProduction())`
+  + a violation handler that logs in prod / throws in dev — the whole suite
+  passed with only one N+1 to fix (`PerformanceService::openCycle` now
+  `->with('manager:id,user_id')`). `2026_09_05_300000_add_performance_indexes`
+  adds composite indexes for the hottest tenant filter combos
+  (employees ×dept/×manager, attendances ×work_date, payslips ×employee,
+  notifications ×read_at, goals, audit_logs ×actor×date), each guarded by
+  `Schema::hasIndex` so it re-runs safely. `App\Support\TenantCache` —
+  `remember`/`forget`/`bumpVersion`/`versionedKey`, keys always prefixed
+  `tenant:{id|platform}:`; wired into `OrgChartService` (120s TTL on both
+  trees) and `DashboardMetrics` (30s per user). Scheduled commands
+  `leave:accrue` (+ `LeaveService::accrue` inner loop) and
+  `documents:check-expiry` now `chunkById` over tenants/employees instead of
+  `->each()`.

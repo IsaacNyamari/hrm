@@ -44,7 +44,7 @@ class PerformanceService
 
                 $created = 0;
 
-                Employee::query()->active()->get(['id', 'tenant_id', 'user_id', 'manager_id'])
+                Employee::query()->active()->with('manager:id,user_id')->get(['id', 'tenant_id', 'user_id', 'manager_id'])
                     ->each(function (Employee $employee) use ($cycle, &$created): void {
                         $created += $this->ensureReview($cycle, $employee, ReviewerType::Manager, $employee->manager?->user_id);
 

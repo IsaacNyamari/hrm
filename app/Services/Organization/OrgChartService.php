@@ -6,14 +6,18 @@ namespace App\Services\Organization;
 
 use App\Models\Department;
 use App\Models\Employee;
+use App\Support\TenantCache;
 use Illuminate\Support\Collection;
 
 /**
  * Builds organisational trees in memory from a single query each — no N+1.
- * Every query is tenant-scoped by the bound context.
+ * Every query is tenant-scoped by the bound context, and the assembled tree is
+ * cached per tenant for a short window (structural changes surface within it).
  */
 class OrgChartService
 {
+    private const CACHE_TTL = 120;
+
     /**
      * Reporting lines: employees nested under their manager. Roots are employees
      * with no manager (or a manager outside the active set).
@@ -21,6 +25,14 @@ class OrgChartService
      * @return array<int, array<string, mixed>>
      */
     public function reportingTree(): array
+    {
+        return TenantCache::remember('org.reporting-tree', self::CACHE_TTL, fn (): array => $this->buildReportingTree());
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildReportingTree(): array
     {
         $employees = Employee::query()
             ->active()
@@ -56,6 +68,14 @@ class OrgChartService
      * @return array<int, array<string, mixed>>
      */
     public function departmentTree(): array
+    {
+        return TenantCache::remember('org.department-tree', self::CACHE_TTL, fn (): array => $this->buildDepartmentTree());
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildDepartmentTree(): array
     {
         $departments = Department::query()
             ->with('head:id,first_name,middle_name,last_name')

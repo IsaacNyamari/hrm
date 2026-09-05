@@ -19,6 +19,7 @@ use App\Models\LeaveType;
 use App\Models\User;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -233,38 +234,52 @@ class LeaveService
         $touched = 0;
 
         $types = LeaveType::query()->where('is_active', true)->get();
-        $employees = Employee::query()->active()->get(['id', 'tenant_id', 'employment_type_id']);
 
-        foreach ($employees as $employee) {
-            foreach ($types as $type) {
-                if ($type->employment_type_id !== null && $type->employment_type_id !== $employee->employment_type_id) {
-                    continue;
+        Employee::query()->active()->select(['id', 'tenant_id', 'employment_type_id'])
+            ->chunkById(500, function ($employees) use ($types, $year, &$touched): void {
+                foreach ($employees as $employee) {
+                    $touched += $this->accrueEmployee($employee, $types, $year);
                 }
+            });
 
-                $balance = $this->balanceFor($employee, $type, $year);
-                $carry = 0.0;
+        return $touched;
+    }
 
-                if ($type->allow_carry_forward) {
-                    $prior = LeaveBalance::query()
-                        ->where('employee_id', $employee->getKey())
-                        ->where('leave_type_id', $type->getKey())
-                        ->where('year', $year - 1)
-                        ->first();
+    /**
+     * @param  EloquentCollection<int, LeaveType>  $types
+     */
+    private function accrueEmployee(Employee $employee, EloquentCollection $types, int $year): int
+    {
+        $touched = 0;
 
-                    if ($prior !== null) {
-                        $carry = max(0.0, $prior->remainingDays());
-                        if ($type->max_carry_forward_days !== null) {
-                            $carry = min($carry, $type->max_carry_forward_days);
-                        }
+        foreach ($types as $type) {
+            if ($type->employment_type_id !== null && $type->employment_type_id !== $employee->employment_type_id) {
+                continue;
+            }
+
+            $balance = $this->balanceFor($employee, $type, $year);
+            $carry = 0.0;
+
+            if ($type->allow_carry_forward) {
+                $prior = LeaveBalance::query()
+                    ->where('employee_id', $employee->getKey())
+                    ->where('leave_type_id', $type->getKey())
+                    ->where('year', $year - 1)
+                    ->first();
+
+                if ($prior !== null) {
+                    $carry = max(0.0, $prior->remainingDays());
+                    if ($type->max_carry_forward_days !== null) {
+                        $carry = min($carry, $type->max_carry_forward_days);
                     }
                 }
-
-                $balance->forceFill([
-                    'allocated_days' => $this->accruedAllocation($type, $year),
-                    'carried_forward_days' => $carry,
-                ])->save();
-                $touched++;
             }
+
+            $balance->forceFill([
+                'allocated_days' => $this->accruedAllocation($type, $year),
+                'carried_forward_days' => $carry,
+            ])->save();
+            $touched++;
         }
 
         return $touched;
