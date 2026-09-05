@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\DocumentCategory;
 use App\Enums\HrRequestType;
 use App\Enums\PaymentProvider;
 use App\Enums\Role;
@@ -10,7 +11,9 @@ use App\Models\Announcement;
 use App\Models\Branch;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\DocumentType;
 use App\Models\Employee;
+use App\Models\EmployeeDocument;
 use App\Models\EmploymentType;
 use App\Models\HrRequest;
 use App\Models\PayrollPeriod;
@@ -160,6 +163,14 @@ class DemoTenantSeeder extends Seeder
                 'reference' => 'HR-000001',
                 'subject' => 'Salary certificate for visa',
                 'type' => HrRequestType::SalaryCertificate,
+            ]);
+
+            $passportType = DocumentType::query()->where('code', 'PASSPORT')->first();
+            EmployeeDocument::factory()->forEmployee(Employee::query()->first())->create([
+                'title' => 'Passport',
+                'category' => DocumentCategory::Other,
+                'document_type_id' => $passportType?->id,
+                'expiry_date' => now()->addDays(25)->toDateString(),
             ]);
         });
     }

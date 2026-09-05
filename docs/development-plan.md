@@ -17,7 +17,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 7 | Leave management (types, policies, workflow, balances, holidays) | ✅ |
 | 8 | Payroll engine (structures, components, safe formulas, statutory, runs, payslips) | ✅ |
 | 9 | Employee self-service portal | ✅ |
-| 10 | Documents + expiry + HR letter templates | ⬜ |
+| 10 | Documents + expiry + HR letter templates | ✅ |
 | 11 | Performance management | ⬜ |
 | 12 | Recruitment / ATS | ⬜ |
 | 13 | Expenses + loans + assets | ⬜ |
@@ -76,3 +76,16 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   data; `subscriptions:expire` / `subscriptions:send-reminders` scheduled daily.
   Deferred: the multi-step public registration wizard UI (backend pieces —
   plans, trial start, subscribe, charge — are all in place).
+- **2026-09-05 (P10)** HR letter templates are rendered by `TemplateRenderer`
+  with pure `preg_replace_callback` over a whitelisted `{{ placeholder }}` map —
+  no Blade, no `eval`, so template bodies are safe tenant-editable content.
+  Unknown placeholders resolve to `''` and are reported as `missing`. Generated
+  letters are persisted to `generated_letters`; when `save_to_documents` is set
+  the rendered HTML is written to the private `local` disk under
+  `tenants/{uuid}/employees/{uuid}/letters/` and linked as an `EmployeeDocument`
+  (warning/termination letters flagged `is_confidential`). Document expiry:
+  `document_types.notify_before_days` (default `[30,14,7]`) drives
+  `documents:check-expiry` (daily 07:00), which notifies HR
+  (`employees.documents.view`) + the owning employee once per day-mark, tracked
+  in `employee_documents.expiry_reminders_sent`. dompdf stays out (blocked in
+  this environment) — letters/payslips are print-ready HTML.

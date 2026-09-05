@@ -60,6 +60,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $profile_photo_path
  * @property string|null $notes
  * @property-read Tenant $tenant
+ * @property-read Department|null $department
+ * @property-read Designation|null $designation
+ * @property-read Branch|null $branch
  */
 class Employee extends Model
 {

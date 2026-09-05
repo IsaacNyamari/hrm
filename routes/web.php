@@ -7,6 +7,9 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\DocumentExpiryController;
+use App\Http\Controllers\DocumentTemplateController;
+use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDocumentController;
 use App\Http\Controllers\EmployeeExportController;
@@ -19,6 +22,7 @@ use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\LeaveTypeController;
+use App\Http\Controllers\LetterController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\Me\DashboardController as MeDashboardController;
 use App\Http\Controllers\Me\ProfileController as MeProfileController;
@@ -152,6 +156,17 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::post('announcements/{announcement}/read', [AnnouncementController::class, 'markRead'])->name('announcements.read');
     Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
+    // Document types + HR letter templates
+    Route::view('hr-letters', 'documents.index')->name('hr-letters');
+    Route::apiResource('document-types', DocumentTypeController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::apiResource('document-templates', DocumentTemplateController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+    Route::post('document-templates/{documentTemplate}/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
+    Route::get('documents/expiring', DocumentExpiryController::class)->name('documents.expiring');
+    Route::get('letters', [LetterController::class, 'index'])->name('letters.index');
+    Route::post('letters', [LetterController::class, 'store'])->name('letters.store');
+    Route::get('letters/{letter}', [LetterController::class, 'show'])->name('letters.show');
+    Route::get('letters/{letter}/download', [LetterController::class, 'download'])->name('letters.download');
 });
 
 require __DIR__.'/settings.php';

@@ -6,12 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\DocumentCategory;
 use App\Facades\Tenancy;
+use App\Models\DocumentType;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -50,11 +52,16 @@ class EmployeeDocumentController extends Controller
             'file' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx'],
             'title' => ['required', 'string', 'max:150'],
             'category' => ['required', new Enum(DocumentCategory::class)],
+            'document_type_uuid' => ['nullable', Rule::exists('document_types', 'uuid')->where('tenant_id', Tenancy::id())],
             'employee_id' => ['nullable', 'integer'],
             'issue_date' => ['nullable', 'date'],
             'expiry_date' => ['nullable', 'date', 'after:issue_date'],
             'is_confidential' => ['boolean'],
         ]);
+
+        $documentTypeId = isset($data['document_type_uuid'])
+            ? DocumentType::query()->where('uuid', $data['document_type_uuid'])->value('id')
+            : null;
 
         $employee = $this->resolveEmployee($request, $data['employee_id'] ?? null, $canUploadForOthers);
 
@@ -72,6 +79,7 @@ class EmployeeDocumentController extends Controller
         $document = EmployeeDocument::query()->create([
             'employee_id' => $employee->getKey(),
             'category' => $data['category'],
+            'document_type_id' => $documentTypeId,
             'title' => $data['title'],
             'original_filename' => $request->file('file')->getClientOriginalName(),
             'disk' => 'local',

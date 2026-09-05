@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $uuid
  * @property int $employee_id
  * @property DocumentCategory $category
+ * @property int|null $document_type_id
+ * @property array<int, int>|null $expiry_reminders_sent
  * @property string $title
  * @property string $original_filename
  * @property string $disk
@@ -53,8 +55,17 @@ class EmployeeDocument extends Model
             'size_bytes' => 'integer',
             'issue_date' => 'immutable_date',
             'expiry_date' => 'immutable_date',
+            'expiry_reminders_sent' => 'array',
             'is_confidential' => 'boolean',
         ];
+    }
+
+    /**
+     * @return BelongsTo<DocumentType, $this>
+     */
+    public function documentType(): BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class);
     }
 
     public function getRouteKeyName(): string
