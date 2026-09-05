@@ -2,10 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Tenancy\ProvisionTenantRoles;
+use App\Enums\Role;
 use App\Enums\TenantStatus;
 use App\Models\Employee;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -36,6 +39,8 @@ class DemoTenantSeeder extends Seeder
             ],
         );
 
+        app(ProvisionTenantRoles::class)->handle($tenant);
+
         $owner = User::query()->firstOrCreate(
             ['email' => $ownerEmail],
             [
@@ -46,6 +51,10 @@ class DemoTenantSeeder extends Seeder
                 'is_platform_admin' => false,
             ],
         );
+
+        app(TenantContext::class)->run($tenant, function () use ($owner): void {
+            $owner->syncRoles([Role::TenantOwner->value]);
+        });
 
         if ($tenant->employees()->count() === 0) {
             Employee::factory()->count(6)->forTenant($tenant)->create();

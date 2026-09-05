@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Enums\Role;
 use App\Models\Employee;
-use App\Models\Tenant;
 use App\Models\User;
 
 beforeEach(function () {
     config(['tenancy.central_domains' => ['hrm.test']]);
 
-    $this->tenantA = Tenant::factory()->withSlug('tenant-a')->create();
-    $this->tenantB = Tenant::factory()->withSlug('tenant-b')->create();
+    $this->tenantA = tenantWithRoles(['slug' => 'tenant-a']);
+    $this->tenantB = tenantWithRoles(['slug' => 'tenant-b']);
 
-    $this->userA = User::factory()->forTenant($this->tenantA)->create();
-    $this->userB = User::factory()->forTenant($this->tenantB)->create();
+    $this->userA = userForTenant($this->tenantA, Role::HrManager);
+    $this->userB = userForTenant($this->tenantB, Role::HrManager);
 
     $this->employeeA = Employee::factory()->forTenant($this->tenantA)->create();
     $this->employeeB = Employee::factory()->forTenant($this->tenantB)->create();
@@ -53,7 +53,6 @@ it('blocks a user from entering another tenant via its subdomain', function () {
 });
 
 it('scopes queries to the subdomain tenant, not the user\'s default', function () {
-    // userA legitimately belongs only to tenant-a, so tenant-a subdomain is fine
     $this->actingAs($this->userA)
         ->getJson('http://tenant-a.hrm.test/employees')
         ->assertOk()
@@ -66,10 +65,17 @@ it('404s an unknown subdomain', function () {
         ->assertNotFound();
 });
 
+it('denies a user without the employees.view permission', function () {
+    $employee = userForTenant($this->tenantA, Role::Employee); // no employees.view
+
+    $this->actingAs($employee)
+        ->getJson('http://hrm.test/employees')
+        ->assertForbidden();
+});
+
 it('denies a platform admin direct access to tenant HR data', function () {
     $admin = User::factory()->platformAdmin()->create();
 
-    // platform admin has no tenant, so host resolution must carry it
     $this->actingAs($admin)
         ->getJson('http://tenant-a.hrm.test/employees/'.$this->employeeA->uuid)
         ->assertForbidden();

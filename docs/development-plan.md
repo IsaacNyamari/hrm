@@ -9,7 +9,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | Multi-tenant architecture (context, scope, middleware, isolation tests) | ✅ |
-| 2 | Auth + users + roles + permissions + invitations | ⬜ |
+| 2 | Auth + users + roles + permissions + invitations | ✅ |
 | 3 | Tenant onboarding + plans + subscriptions + billing + M-Pesa abstraction | ⬜ |
 | 4 | Employee management (full profile, related tables, import/export) | ⬜ |
 | 5 | Departments + designations + branches + org chart | ⬜ |
@@ -51,3 +51,13 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   `employees.email` unique per tenant.
 - **2026-09-05** Build on the existing Laravel 13 Livewire starter kit (Fortify,
   Livewire 4, Flux 2, Pest 4). No destructive reset.
+- **2026-09-05 (P2)** `spatie/laravel-permission` v8 with `teams = true`,
+  `team_foreign_key = tenant_id` for tenant-side roles. Platform-side roles use
+  a plain `users.platform_role` column instead — the teams pivot requires a
+  non-null team key, and platform staff have no tenant. Policies evaluate
+  permissions inside the *record's* tenant scope (`AuthorizesWithinTenant`) so
+  they are correct outside the HTTP pipeline too.
+- **2026-09-05 (P2)** Invitations carry the tenant via a 64-char single-use
+  token (guest route, no subdomain needed); acceptance creates the user +
+  assigns the role in one transaction. Login/Failed/Lockout events recorded to
+  `login_activities`.

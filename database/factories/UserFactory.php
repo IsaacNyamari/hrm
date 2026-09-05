@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -42,11 +43,12 @@ class UserFactory extends Factory
     /**
      * Platform staff account (no tenant).
      */
-    public function platformAdmin(): static
+    public function platformAdmin(?Role $role = null): static
     {
         return $this->state(fn (array $attributes): array => [
             'tenant_id' => null,
             'is_platform_admin' => true,
+            'platform_role' => ($role ?? Role::SuperAdmin)->value,
         ]);
     }
 

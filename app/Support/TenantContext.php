@@ -8,6 +8,7 @@ use App\Facades\Tenancy;
 use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use RuntimeException;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Holds the tenant bound to the current request, queued job or console command.
@@ -27,12 +28,34 @@ class TenantContext
     {
         $this->tenant = $tenant;
         $this->resolved = true;
+        $this->syncPermissionTeam();
     }
 
     public function forget(): void
     {
         $this->tenant = null;
         $this->resolved = false;
+        $this->syncPermissionTeam();
+    }
+
+    /**
+     * Keep Spatie's team context aligned with the bound tenant so role and
+     * permission lookups never cross tenants.
+     */
+    private function syncPermissionTeam(): void
+    {
+        if (! app()->bound(PermissionRegistrar::class)) {
+            return;
+        }
+
+        app(PermissionRegistrar::class)->setPermissionsTeamId($this->id());
+    }
+
+    private function restore(?Tenant $tenant, bool $resolved): void
+    {
+        $this->tenant = $tenant;
+        $this->resolved = $resolved;
+        $this->syncPermissionTeam();
     }
 
     public function has(): bool
@@ -94,8 +117,7 @@ class TenantContext
         try {
             return $callback();
         } finally {
-            $this->tenant = $previous;
-            $this->resolved = $previousResolved;
+            $this->restore($previous, $previousResolved);
         }
     }
 
@@ -117,8 +139,7 @@ class TenantContext
         try {
             return $callback();
         } finally {
-            $this->tenant = $previous;
-            $this->resolved = $previousResolved;
+            $this->restore($previous, $previousResolved);
         }
     }
 }

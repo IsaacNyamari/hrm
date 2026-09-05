@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasUuid;
+use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -17,12 +18,14 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
  * @property string $uuid
  * @property int|null $tenant_id
  * @property bool $is_platform_admin
+ * @property Role|null $platform_role
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
@@ -40,7 +43,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasUuid, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, HasRoles, HasUuid, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -53,6 +56,7 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_platform_admin' => 'boolean',
+            'platform_role' => Role::class,
         ];
     }
 
@@ -79,6 +83,16 @@ class User extends Authenticatable implements PasskeyUser
     public function isPlatformAdmin(): bool
     {
         return $this->is_platform_admin === true;
+    }
+
+    public function hasPlatformRole(Role ...$roles): bool
+    {
+        return $this->platform_role !== null && in_array($this->platform_role, $roles, true);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->platform_role === Role::SuperAdmin;
     }
 
     public function belongsToTenant(Tenant $tenant): bool

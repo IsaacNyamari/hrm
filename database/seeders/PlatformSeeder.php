@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,7 @@ class PlatformSeeder extends Seeder
                 'email_verified_at' => now(),
                 'tenant_id' => null,
                 'is_platform_admin' => true,
+                'platform_role' => Role::SuperAdmin->value,
             ],
         );
     }
