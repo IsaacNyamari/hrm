@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use App\Concerns\BelongsToTenant;
 use Database\Factories\TenantBrandingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class TenantBranding extends Model
 {
+    use Auditable;
     use BelongsToTenant;
 
     /** @use HasFactory<TenantBrandingFactory> */

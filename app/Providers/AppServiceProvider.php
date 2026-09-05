@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\ApplyTenantMailBranding;
 use App\Listeners\DispatchWebhooks;
+use App\Listeners\RecordAuditTrail;
 use App\Listeners\RecordLoginActivity;
 use App\Listeners\SendBillingNotifications;
 use App\Listeners\SendExpenseNotifications;
@@ -57,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendRecruitmentNotifications::class);
         Event::subscribe(SendExpenseNotifications::class);
         Event::subscribe(DispatchWebhooks::class);
+        Event::subscribe(RecordAuditTrail::class);
 
         // Per-tenant e-mail From / Reply-To.
         Event::listen(MessageSending::class, [ApplyTenantMailBranding::class, 'handle']);

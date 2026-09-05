@@ -24,7 +24,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 14 | Reporting + exports (PDF/Excel/CSV) | ✅ |
 | 15 | Notifications + announcements + email branding | ✅ |
 | 16 | API v1 (Sanctum) + webhooks | ✅ |
-| 17 | Security hardening + audit log + impersonation | ⬜ |
+| 17 | Security hardening + audit log + impersonation | ✅ |
 | 18 | Test coverage pass (feature + isolation matrix) | ⬜ |
 | 19 | Performance (indexes, eager loading, caching, chunked jobs) | ⬜ |
 | 20 | Production deployment docs + config | ⬜ |
@@ -187,3 +187,17 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   ApplicationReceived. `WebhookEndpointController` (CRUD + ping + deliveries,
   `webhooks.manage`). Livewire `Developers\Index` + "Developers" sidebar.
   New perms `webhooks.manage`, `api.tokens.manage`.
+- **2026-09-06 (P17)** `audit_logs` — append-only: `AuditLog` blocks
+  `updating`/`deleting`, only `created_at`. `Auditor::log(event, ?subject,
+  props)` captures actor/tenant/ip/ua server-side and flags
+  `via_impersonation` from the session. `Auditable` trait (created/updated/
+  deleted → `{model}.{verb}`, strips password/secret/2fa columns) on Employee,
+  Loan, WebhookEndpoint, TenantBranding. `RecordAuditTrail` subscriber logs
+  auth (login/logout/failed/lockout) + leave/expense decisions.
+  `AuditLogController` (tenant-scoped, `audit.view`) + Livewire `Audit\Log`
+  (sidebar behind `@can('audit.view')`). Impersonation:
+  `ImpersonationController` start/stop (platform-admin only, refuses another
+  operator or self, one at a time), session key `impersonator_id`, amber
+  banner + Stop button in the layout, both transitions audited.
+  `SecurityHeaders` middleware on `web` (nosniff, SAMEORIGIN, Referrer-Policy,
+  Permissions-Policy, COOP; HSTS only when secure+prod; CSP left out).

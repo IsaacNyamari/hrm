@@ -8,6 +8,7 @@ use App\Http\Controllers\AssetAssignmentController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceDeviceController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BrandingController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\ExpenseItemController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HrRequestController;
+use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\JobPositionController;
@@ -63,6 +65,15 @@ Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
+});
+
+/*
+| Platform operator impersonation of a tenant user. Guarded inside the
+| controller (platform admin only); every start/stop is audited.
+*/
+Route::middleware(['auth'])->group(function () {
+    Route::post('impersonate/stop', [ImpersonationController::class, 'stop'])->name('impersonate.stop');
+    Route::post('impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');
 });
 
 /*
@@ -287,6 +298,11 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::view('settings/branding', 'settings.branding')->name('settings.branding');
     Route::get('branding', [BrandingController::class, 'show'])->name('branding.show');
     Route::put('branding', [BrandingController::class, 'update'])->name('branding.update');
+
+    // Audit trail
+    Route::view('audit', 'audit.index')->name('audit');
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
 
     // Developer: API tokens & webhooks
     Route::view('developers', 'developers.index')->name('developers');

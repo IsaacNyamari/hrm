@@ -4,6 +4,16 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
+        @if (session()->has('impersonator_id'))
+            <div class="flex items-center justify-center gap-3 bg-amber-500 px-4 py-1.5 text-sm font-medium text-amber-950">
+                <span>{{ __('You are impersonating') }} {{ auth()->user()?->name }}.</span>
+                <form method="POST" action="{{ route('impersonate.stop') }}">
+                    @csrf
+                    <button type="submit" class="rounded bg-amber-950/10 px-2 py-0.5 underline">{{ __('Stop impersonating') }}</button>
+                </form>
+            </div>
+        @endif
+
         <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
@@ -27,6 +37,11 @@
                     <flux:sidebar.item icon="code-bracket" :href="route('developers')" :current="request()->routeIs('developers')" wire:navigate>
                         {{ __('Developers') }}
                     </flux:sidebar.item>
+                    @can('audit.view')
+                        <flux:sidebar.item icon="shield-check" :href="route('audit')" :current="request()->routeIs('audit')" wire:navigate>
+                            {{ __('Audit trail') }}
+                        </flux:sidebar.item>
+                    @endcan
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('People')" class="grid">
