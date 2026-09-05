@@ -29,8 +29,8 @@ class LeaveCalendarController extends Controller
             ->map(fn (LeaveRequest $r): array => [
                 'type' => 'leave',
                 'employee' => $r->employee->fullName(),
-                'leave_type' => $r->leaveType->name,
-                'color' => $r->leaveType->color,
+                'leave_type' => $r->leaveType?->name,
+                'color' => $r->leaveType?->color,
                 'start' => $r->start_date->toDateString(),
                 'end' => $r->end_date->toDateString(),
             ]);

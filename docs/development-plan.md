@@ -25,7 +25,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 15 | Notifications + announcements + email branding | ✅ |
 | 16 | API v1 (Sanctum) + webhooks | ✅ |
 | 17 | Security hardening + audit log + impersonation | ✅ |
-| 18 | Test coverage pass (feature + isolation matrix) | ⬜ |
+| 18 | Test coverage pass (feature + isolation matrix) | ✅ |
 | 19 | Performance (indexes, eager loading, caching, chunked jobs) | ⬜ |
 | 20 | Production deployment docs + config | ⬜ |
 
@@ -201,3 +201,13 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   banner + Stop button in the layout, both transitions audited.
   `SecurityHeaders` middleware on `web` (nosniff, SAMEORIGIN, Referrer-Policy,
   Permissions-Policy, COOP; HSTS only when secure+prod; CSP left out).
+- **2026-09-06 (P18)** Coverage pass — no features. Added data-driven matrices:
+  `GlobalScopeMatrixTest` (17 tenant-owned models × `Tenancy::run` count ==
+  own rows, `unscoped == A+B`), `RouteIsolationMatrixTest` (cross-tenant uuid →
+  404 on show routes, empty list endpoints), `ManagementAuthorizationMatrixTest`
+  (Employee role → 403 on 12 admin endpoints, still reaches self-service),
+  `LeaveCalendarTest`. Suite 356 → 403. Hardened `LeaveCalendarController` to
+  `$r->leaveType?->name`. Matrix note: model factories that seed `tenant_id`
+  from their own `Tenant::factory()` don't exercise context auto-stamp — test
+  that with a bare `Model::create()`; `fake()->unique()` pools exhaust for
+  `DocumentTemplate`/`SalaryComponent` at count 5 (kept out of the matrix).
