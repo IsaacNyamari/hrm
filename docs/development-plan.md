@@ -12,7 +12,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 2 | Auth + users + roles + permissions + invitations | ✅ |
 | 3 | Tenant onboarding + plans + subscriptions + billing + M-Pesa abstraction | ✅ (registration UI wizard deferred) |
 | 4 | Employee management (full profile, related tables, import/export) | ✅ |
-| 5 | Departments + designations + branches + org chart | ⬜ |
+| 5 | Departments + designations + branches + org chart | ✅ |
 | 6 | Attendance + shifts + work schedules + device abstraction | ⬜ |
 | 7 | Leave management (types, policies, workflow, balances, holidays) | ⬜ |
 | 8 | Payroll engine (structures, components, safe formulas, statutory, runs, payslips) | ⬜ |

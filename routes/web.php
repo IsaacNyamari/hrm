@@ -1,10 +1,14 @@
 <?php
 
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\OrgChartController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserInvitationController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +47,13 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::delete('employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 
     Route::post('users/invitations', [UserInvitationController::class, 'store'])->name('users.invitations.store');
+
+    // Organization structure
+    Route::get('org-chart', OrgChartController::class)->name('org-chart');
+    Route::get('departments/tree', [DepartmentController::class, 'tree'])->name('departments.tree');
+    Route::apiResource('branches', BranchController::class);
+    Route::apiResource('departments', DepartmentController::class);
+    Route::apiResource('designations', DesignationController::class);
 });
 
 require __DIR__.'/settings.php';

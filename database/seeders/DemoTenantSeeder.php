@@ -85,6 +85,9 @@ class DemoTenantSeeder extends Seeder
             $designations = Designation::factory()->forTenant($tenant)->count(4)->create();
             $permanent = EmploymentType::query()->where('slug', 'permanent')->first();
 
+            // Nest the last two departments under the first.
+            $departments->slice(2)->each(fn (Department $d) => $d->update(['parent_id' => $departments->first()->id]));
+
             $manager = Employee::factory()->forTenant($tenant)->create([
                 'user_id' => $owner->getKey(),
                 'employee_number' => strtoupper(substr($slug, 0, 3)).'-EMP-000001',
@@ -96,6 +99,8 @@ class DemoTenantSeeder extends Seeder
                 'department_id' => $departments->first()->id,
                 'employment_type_id' => $permanent?->id,
             ]);
+
+            $departments->first()->update(['head_employee_id' => $manager->id]);
 
             Employee::factory()->forTenant($tenant)->count(8)->create([
                 'branch_id' => $hq->id,
