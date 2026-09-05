@@ -23,7 +23,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 13 | Expenses + loans + assets | ✅ |
 | 14 | Reporting + exports (PDF/Excel/CSV) | ✅ |
 | 15 | Notifications + announcements + email branding | ✅ |
-| 16 | API v1 (Sanctum) + webhooks | ⬜ |
+| 16 | API v1 (Sanctum) + webhooks | ✅ |
 | 17 | Security hardening + audit log + impersonation | ⬜ |
 | 18 | Test coverage pass (feature + isolation matrix) | ⬜ |
 | 19 | Performance (indexes, eager loading, caching, chunked jobs) | ⬜ |
@@ -166,3 +166,24 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   `BrandingController` + Livewire `Settings\BrandingForm` (`settings.manage`).
   Announcements gained `is_pinned` / `acknowledgement_required` +
   `announcement_reads.acknowledged_at`. Sidebar: "Notifications".
+- **2026-09-06 (P16)** `laravel/sanctum` v4 added (`install:api` published the
+  config + `personal_access_tokens` migration; `HasApiTokens` on `User`).
+  Read-mostly **`/api/v1`** on `routes/api.php`: `auth:sanctum` →
+  `ResolveApiTenant` (tenant from the token owner, never the client) →
+  `subscription` → `throttle:api` (120/min per token, registered in
+  AppServiceProvider). Per-route token abilities via Sanctum's `abilities`
+  middleware (aliased in bootstrap/app.php). Endpoints: `me`, `employees`
+  index/show, `departments`, `leave-requests` index + write, `payslips`
+  index/show — all through `App\Http\Resources\Api\V1\*Resource`. Tokens
+  managed from the web app (`ApiTokenController`, session auth) with a
+  whitelisted ability set. **Outbound webhooks**: `webhook_endpoints`
+  (`secret` encrypted, `events` json, auto-disable after 10 consecutive
+  failures) + `webhook_deliveries`. `WebhookService::dispatch(WebhookEvent,
+  payload)` fans out to subscribed active endpoints, one queued
+  `DeliverWebhook` job each — POSTs signed JSON
+  (`X-Webhook-Signature: sha256=hmac(timestamp.body, secret)`), retries with
+  backoff, records response. `DispatchWebhooks` subscriber maps
+  EmployeeCreated / LeaveApproved / LeaveRejected / ExpenseDecided /
+  ApplicationReceived. `WebhookEndpointController` (CRUD + ping + deliveries,
+  `webhooks.manage`). Livewire `Developers\Index` + "Developers" sidebar.
+  New perms `webhooks.manage`, `api.tokens.manage`.

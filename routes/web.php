@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\AssetAssignmentController;
@@ -55,6 +56,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TaxRuleController;
 use App\Http\Controllers\UserInvitationController;
 use App\Http\Controllers\VacancyController;
+use App\Http\Controllers\WebhookEndpointController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -285,6 +287,19 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::view('settings/branding', 'settings.branding')->name('settings.branding');
     Route::get('branding', [BrandingController::class, 'show'])->name('branding.show');
     Route::put('branding', [BrandingController::class, 'update'])->name('branding.update');
+
+    // Developer: API tokens & webhooks
+    Route::view('developers', 'developers.index')->name('developers');
+    Route::get('api-tokens', [ApiTokenController::class, 'index'])->name('api-tokens.index');
+    Route::post('api-tokens', [ApiTokenController::class, 'store'])->name('api-tokens.store');
+    Route::delete('api-tokens/{token}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
+
+    Route::get('webhook-endpoints', [WebhookEndpointController::class, 'index'])->name('webhook-endpoints.index');
+    Route::post('webhook-endpoints', [WebhookEndpointController::class, 'store'])->name('webhook-endpoints.store');
+    Route::put('webhook-endpoints/{webhookEndpoint}', [WebhookEndpointController::class, 'update'])->name('webhook-endpoints.update');
+    Route::delete('webhook-endpoints/{webhookEndpoint}', [WebhookEndpointController::class, 'destroy'])->name('webhook-endpoints.destroy');
+    Route::post('webhook-endpoints/{webhookEndpoint}/ping', [WebhookEndpointController::class, 'ping'])->name('webhook-endpoints.ping');
+    Route::get('webhook-endpoints/{webhookEndpoint}/deliveries', [WebhookEndpointController::class, 'deliveries'])->name('webhook-endpoints.deliveries');
 
     // Reporting & exports
     Route::view('reports', 'reports.index')->name('reports');

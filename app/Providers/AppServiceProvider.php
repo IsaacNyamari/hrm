@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\ApplyTenantMailBranding;
+use App\Listeners\DispatchWebhooks;
 use App\Listeners\RecordLoginActivity;
 use App\Listeners\SendBillingNotifications;
 use App\Listeners\SendExpenseNotifications;
@@ -19,11 +20,14 @@ use App\Models\TaxRule;
 use App\Policies\PayrollPolicy;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -52,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendPerformanceNotifications::class);
         Event::subscribe(SendRecruitmentNotifications::class);
         Event::subscribe(SendExpenseNotifications::class);
+        Event::subscribe(DispatchWebhooks::class);
 
         // Per-tenant e-mail From / Reply-To.
         Event::listen(MessageSending::class, [ApplyTenantMailBranding::class, 'handle']);
@@ -66,6 +71,10 @@ class AppServiceProvider extends ServiceProvider
         foreach ([PayrollPeriod::class, PayrollRun::class, Payslip::class, SalaryComponent::class, SalaryStructure::class, TaxRule::class] as $model) {
             Gate::policy($model, PayrollPolicy::class);
         }
+
+        // API v1 rate limit — per token, falling back to the client IP.
+        RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(120)
+            ->by($request->user()?->getAuthIdentifier() ?: $request->ip()));
     }
 
     /**

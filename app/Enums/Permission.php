@@ -60,6 +60,10 @@ enum Permission: string
     case AssetsView = 'assets.view';
     case AssetsManage = 'assets.manage';
 
+    // Developer / integrations
+    case WebhooksManage = 'webhooks.manage';
+    case ApiTokensManage = 'api.tokens.manage';
+
     // Reports
     case ReportsView = 'reports.view';
     case ReportsExport = 'reports.export';

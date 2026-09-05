@@ -24,6 +24,9 @@
                     <flux:sidebar.item icon="bell" :href="route('notifications')" :current="request()->routeIs('notifications')" wire:navigate>
                         {{ __('Notifications') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="code-bracket" :href="route('developers')" :current="request()->routeIs('developers')" wire:navigate>
+                        {{ __('Developers') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('People')" class="grid">

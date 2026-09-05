@@ -114,6 +114,8 @@ Indexes: unique `(tenant_id, employee_number)`, unique `(tenant_id, email)`,
   `tenant_branding`, `notification_preferences`. (`announcements` +
   `is_pinned`/`acknowledgement_required`; `announcement_reads` +
   `acknowledged_at`.)
+- **P16** `personal_access_tokens` (Sanctum), `webhook_endpoints`,
+  `webhook_deliveries`.
 - **P17** `audit_logs` (append-only), `activity_log`.
 
 ## ERD (core — Phase 1 solid, planned dashed)

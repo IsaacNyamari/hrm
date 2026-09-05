@@ -29,6 +29,7 @@ use App\Models\Tenant;
 use App\Models\TenantBranding;
 use App\Models\User;
 use App\Models\Vacancy;
+use App\Models\WebhookEndpoint;
 use App\Services\Assets\AssetService;
 use App\Services\Billing\InvoiceService;
 use App\Services\Expenses\ExpenseService;
@@ -40,6 +41,7 @@ use App\Services\Subscription\SubscriptionManager;
 use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DemoTenantSeeder extends Seeder
 {
@@ -247,6 +249,16 @@ class DemoTenantSeeder extends Seeder
                     'email_footer' => 'Sent by '.$tenant->name.'. Please do not reply to this address.',
                 ],
             );
+
+            WebhookEndpoint::query()->create([
+                'tenant_id' => $tenant->id,
+                'name' => 'Example integration',
+                'url' => 'https://example.test/hooks/'.$slug,
+                'secret' => Str::random(40),
+                'events' => ['employee.created', 'leave.approved'],
+                'is_active' => false,
+                'created_by' => $owner->id,
+            ]);
         });
     }
 }
