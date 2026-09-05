@@ -97,6 +97,7 @@ enum Role: string
                 P::AttendanceView->value, P::AttendanceManage->value, P::ShiftsManage->value,
                 P::LeaveView->value, P::LeaveApprove->value, P::LeaveManage->value,
                 P::PerformanceView->value, P::PerformanceManage->value, P::PerformanceReview->value,
+                P::RecruitmentView->value, P::RecruitmentManage->value, P::RecruitmentInterview->value,
                 P::ReportsView->value, P::ReportsExport->value,
             ],
 
@@ -116,6 +117,7 @@ enum Role: string
                 P::AttendanceView->value, P::AttendanceManage->value,
                 P::LeaveView->value, P::LeaveApprove->value,
                 P::PerformanceView->value, P::PerformanceReview->value,
+                P::RecruitmentView->value, P::RecruitmentInterview->value,
                 P::ReportsView->value,
             ],
 
@@ -124,6 +126,7 @@ enum Role: string
                 P::AttendanceView->value,
                 P::LeaveView->value, P::LeaveApprove->value,
                 P::PerformanceReview->value,
+                P::RecruitmentInterview->value,
             ],
 
             self::Employee => [

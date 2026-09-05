@@ -106,7 +106,7 @@ Indexes: unique `(tenant_id, employee_number)`, unique `(tenant_id, email)`,
 - **P11** `performance_cycles`, `goals`, `goal_check_ins`, `kpis`,
   `performance_reviews`, `review_ratings`.
 - **P12** `job_positions`, `vacancies`, `applicants`, `applications`,
-  `interviews`, `offers`.
+  `application_activities`, `interviews`, `offers`.
 - **P13** `expenses`, `expense_items`, `expense_approvals`, `assets`,
   `asset_assignments`.
 - **P15** `notifications` (Laravel), `announcements`, `announcement_reads`.

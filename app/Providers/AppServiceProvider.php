@@ -7,6 +7,7 @@ use App\Listeners\SendBillingNotifications;
 use App\Listeners\SendLeaveNotifications;
 use App\Listeners\SendPerformanceNotifications;
 use App\Listeners\SendPortalNotifications;
+use App\Listeners\SendRecruitmentNotifications;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\Payslip;
@@ -45,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendLeaveNotifications::class);
         Event::subscribe(SendPortalNotifications::class);
         Event::subscribe(SendPerformanceNotifications::class);
+        Event::subscribe(SendRecruitmentNotifications::class);
 
         // One policy class serves the whole payroll module.
         foreach ([PayrollPeriod::class, PayrollRun::class, Payslip::class, SalaryComponent::class, SalaryStructure::class, TaxRule::class] as $model) {

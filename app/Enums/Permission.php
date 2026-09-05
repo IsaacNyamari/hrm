@@ -46,6 +46,11 @@ enum Permission: string
     case PerformanceManage = 'performance.manage';
     case PerformanceReview = 'performance.review';
 
+    // Recruitment
+    case RecruitmentView = 'recruitment.view';
+    case RecruitmentManage = 'recruitment.manage';
+    case RecruitmentInterview = 'recruitment.interview';
+
     // Reports
     case ReportsView = 'reports.view';
     case ReportsExport = 'reports.export';

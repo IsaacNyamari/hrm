@@ -19,7 +19,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 9 | Employee self-service portal | ✅ |
 | 10 | Documents + expiry + HR letter templates | ✅ |
 | 11 | Performance management | ✅ |
-| 12 | Recruitment / ATS | ⬜ |
+| 12 | Recruitment / ATS | ✅ |
 | 13 | Expenses + loans + assets | ⬜ |
 | 14 | Reporting + exports (PDF/Excel/CSV) | ⬜ |
 | 15 | Notifications + announcements + email branding | ⬜ |
@@ -105,3 +105,20 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   Sidebar navigation added for every module screen (Livewire `wire:navigate`
   SPA); starter-kit Repository/Documentation links and the boilerplate welcome
   page removed.
+- **2026-09-06 (P12)** Recruitment / ATS = `job_positions` (reusable role
+  templates) → `vacancies` (openings, with a per-vacancy `pipeline_stages`
+  JSON) → `applicants` (tenant talent pool, unique per email, private-disk
+  résumés) → `applications` (+ `application_activities` timeline) →
+  `interviews` (one row per panelist/round) → `offers`. `RecruitmentService`
+  owns apply / moveStage / reject / withdraw / rate / scheduleInterview /
+  recordInterviewFeedback / makeOffer / sendOffer / respondToOffer; reaching a
+  vacancy's final stage marks the application hired and fills a headcount seat
+  (auto-closes the vacancy as `filled`). `ConvertOfferToEmployee` turns an
+  accepted offer into an `Employee` via the existing `CreateEmployee` action
+  (keeps the plan-limit + employee-number logic). Public per-tenant careers
+  board: `GET /careers`, `GET /careers/{slug}`, `POST /careers/{slug}/applications`
+  under a guest `['tenant']` group (tenant from the request host, never the
+  client; only `open` vacancies exposed; apply throttled 6/min). New perms
+  `recruitment.view` / `.manage` / `.interview`; panel interviewers submit
+  feedback without a recruiter permission. `RecruitmentException` → 422.
+  Livewire `Recruitment\Board` pipeline view + sidebar entry.

@@ -24,10 +24,12 @@ use App\Models\SalaryComponent;
 use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Vacancy;
 use App\Services\Billing\InvoiceService;
 use App\Services\Leave\LeaveService;
 use App\Services\Payroll\PayrollService;
 use App\Services\Performance\PerformanceService;
+use App\Services\Recruitment\RecruitmentService;
 use App\Services\Subscription\SubscriptionManager;
 use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
@@ -190,6 +192,28 @@ class DemoTenantSeeder extends Seeder
                     'title' => 'Raise '.fake()->word().' throughput by 15%',
                 ]);
             });
+
+            $vacancy = Vacancy::factory()->forTenant($tenant)->open()->create([
+                'title' => 'Software Engineer',
+                'slug' => $slug.'-software-engineer',
+                'department_id' => $departments->first()->id,
+                'headcount' => 2,
+                'opened_by' => $owner->id,
+                'hiring_manager_id' => $manager->id,
+            ]);
+
+            $recruitment = app(RecruitmentService::class);
+            foreach (['screening', 'interview', 'applied'] as $index => $targetStage) {
+                $application = $recruitment->apply($vacancy, [
+                    'first_name' => fake()->firstName(),
+                    'last_name' => fake()->lastName(),
+                    'email' => 'candidate'.$index.'@'.$slug.'.example',
+                ], ['cover_letter' => fake()->paragraph()]);
+
+                if ($targetStage !== 'applied') {
+                    $recruitment->moveStage($application, $targetStage, $owner);
+                }
+            }
         });
     }
 }

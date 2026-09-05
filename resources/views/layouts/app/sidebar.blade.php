@@ -45,6 +45,9 @@
                     <flux:sidebar.item icon="trophy" :href="route('performance')" :current="request()->routeIs('performance')" wire:navigate>
                         {{ __('Performance') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="user-plus" :href="route('recruitment')" :current="request()->routeIs('recruitment')" wire:navigate>
+                        {{ __('Recruitment') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="document-text" :href="route('hr-letters')" :current="request()->routeIs('hr-letters')" wire:navigate>
                         {{ __('HR letters') }}
                     </flux:sidebar.item>

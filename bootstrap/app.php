@@ -5,6 +5,7 @@ use App\Exceptions\LeaveException;
 use App\Exceptions\PayrollException;
 use App\Exceptions\PerformanceException;
 use App\Exceptions\PlanLimitExceededException;
+use App\Exceptions\RecruitmentException;
 use App\Http\Middleware\BindTenantContext;
 use App\Http\Middleware\EnsureTenantSubscribed;
 use App\Http\Middleware\EnsureUserBelongsToTenant;
@@ -57,8 +58,8 @@ return Application::configure(basePath: dirname(__DIR__))
             return response($e->getMessage(), Response::HTTP_PAYMENT_REQUIRED);
         });
 
-        // Attendance / leave / payroll / performance rule violations -> 422.
-        $exceptions->render(function (AttendanceException|LeaveException|PayrollException|PerformanceException $e, Request $request) {
+        // Attendance / leave / payroll / performance / recruitment rule violations -> 422.
+        $exceptions->render(function (AttendanceException|LeaveException|PayrollException|PerformanceException|RecruitmentException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
             }

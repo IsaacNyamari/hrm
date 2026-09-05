@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceDeviceController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CareersController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\DocumentExpiryController;
@@ -18,7 +21,9 @@ use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HrRequestController;
+use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\JobPositionController;
 use App\Http\Controllers\KpiController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveCalendarController;
@@ -28,6 +33,7 @@ use App\Http\Controllers\LetterController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\Me\DashboardController as MeDashboardController;
 use App\Http\Controllers\Me\ProfileController as MeProfileController;
+use App\Http\Controllers\OfferController;
 use App\Http\Controllers\OrgChartController;
 use App\Http\Controllers\PayrollPeriodController;
 use App\Http\Controllers\PayrollRunController;
@@ -39,6 +45,7 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TaxRuleController;
 use App\Http\Controllers\UserInvitationController;
+use App\Http\Controllers\VacancyController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -192,6 +199,52 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::put('performance-reviews/{performanceReview}', [PerformanceReviewController::class, 'update'])->name('performance-reviews.update');
     Route::post('performance-reviews/{performanceReview}/submit', [PerformanceReviewController::class, 'submit'])->name('performance-reviews.submit');
     Route::post('performance-reviews/{performanceReview}/acknowledge', [PerformanceReviewController::class, 'acknowledge'])->name('performance-reviews.acknowledge');
+
+    // Recruitment / ATS
+    Route::view('recruitment', 'recruitment.index')->name('recruitment');
+    Route::apiResource('job-positions', JobPositionController::class)
+        ->parameters(['job-positions' => 'jobPosition'])
+        ->only(['index', 'show', 'store', 'update', 'destroy']);
+
+    Route::apiResource('vacancies', VacancyController::class)->only(['index', 'show', 'store', 'update']);
+    Route::post('vacancies/{vacancy}/publish', [VacancyController::class, 'publish'])->name('vacancies.publish');
+    Route::post('vacancies/{vacancy}/close', [VacancyController::class, 'close'])->name('vacancies.close');
+
+    Route::apiResource('applicants', ApplicantController::class)->only(['index', 'show', 'store', 'update']);
+    Route::get('applicants/{applicant}/resume', [ApplicantController::class, 'resume'])->name('applicants.resume');
+
+    Route::get('applications', [ApplicationController::class, 'index'])->name('applications.index');
+    Route::post('applications', [ApplicationController::class, 'store'])->name('applications.store');
+    Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+    Route::post('applications/{application}/stage', [ApplicationController::class, 'moveStage'])->name('applications.stage');
+    Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
+    Route::post('applications/{application}/rate', [ApplicationController::class, 'rate'])->name('applications.rate');
+    Route::post('applications/{application}/withdraw', [ApplicationController::class, 'withdraw'])->name('applications.withdraw');
+    Route::post('applications/{application}/assign', [ApplicationController::class, 'assign'])->name('applications.assign');
+
+    Route::get('interviews', [InterviewController::class, 'index'])->name('interviews.index');
+    Route::post('interviews', [InterviewController::class, 'store'])->name('interviews.store');
+    Route::get('interviews/{interview}', [InterviewController::class, 'show'])->name('interviews.show');
+    Route::post('interviews/{interview}/feedback', [InterviewController::class, 'feedback'])->name('interviews.feedback');
+
+    Route::get('offers', [OfferController::class, 'index'])->name('offers.index');
+    Route::post('offers', [OfferController::class, 'store'])->name('offers.store');
+    Route::get('offers/{offer}', [OfferController::class, 'show'])->name('offers.show');
+    Route::post('offers/{offer}/send', [OfferController::class, 'send'])->name('offers.send');
+    Route::post('offers/{offer}/respond', [OfferController::class, 'respond'])->name('offers.respond');
+    Route::post('offers/{offer}/rescind', [OfferController::class, 'rescind'])->name('offers.rescind');
+    Route::post('offers/{offer}/convert', [OfferController::class, 'convert'])->name('offers.convert');
+});
+
+/*
+| Public per-tenant careers board. Tenant resolved from the request host; no
+| auth. Application submission is rate-limited.
+*/
+Route::middleware(['tenant'])->prefix('careers')->name('careers.')->group(function () {
+    Route::get('/', [CareersController::class, 'index'])->name('index');
+    Route::get('{vacancy:slug}', [CareersController::class, 'show'])->name('show');
+    Route::post('{vacancy:slug}/applications', [CareersController::class, 'apply'])
+        ->middleware('throttle:6,1')->name('apply');
 });
 
 require __DIR__.'/settings.php';
