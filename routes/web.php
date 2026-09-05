@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceDeviceController;
 use App\Http\Controllers\BillingController;
@@ -7,16 +8,20 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeDocumentController;
 use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
 use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\HrRequestController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\Me\DashboardController as MeDashboardController;
+use App\Http\Controllers\Me\ProfileController as MeProfileController;
 use App\Http\Controllers\OrgChartController;
 use App\Http\Controllers\PayrollPeriodController;
 use App\Http\Controllers\PayrollRunController;
@@ -122,6 +127,31 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
     Route::post('loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approve');
     Route::delete('loans/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
+
+    // Employee self-service portal
+    Route::get('portal', MeDashboardController::class)->name('portal');
+    Route::get('me/dashboard', MeDashboardController::class)->name('me.dashboard');
+    Route::get('me/profile', [MeProfileController::class, 'show'])->name('me.profile.show');
+    Route::put('me/profile', [MeProfileController::class, 'update'])->name('me.profile.update');
+
+    // Documents
+    Route::get('employee-documents', [EmployeeDocumentController::class, 'index'])->name('employee-documents.index');
+    Route::post('employee-documents', [EmployeeDocumentController::class, 'store'])->name('employee-documents.store');
+    Route::get('employee-documents/{document}/download', [EmployeeDocumentController::class, 'download'])->name('employee-documents.download');
+    Route::delete('employee-documents/{document}', [EmployeeDocumentController::class, 'destroy'])->name('employee-documents.destroy');
+
+    // HR requests / tickets
+    Route::get('hr-requests', [HrRequestController::class, 'index'])->name('hr-requests.index');
+    Route::post('hr-requests', [HrRequestController::class, 'store'])->name('hr-requests.store');
+    Route::get('hr-requests/{hrRequest}', [HrRequestController::class, 'show'])->name('hr-requests.show');
+    Route::put('hr-requests/{hrRequest}', [HrRequestController::class, 'update'])->name('hr-requests.update');
+    Route::post('hr-requests/{hrRequest}/comments', [HrRequestController::class, 'comment'])->name('hr-requests.comments');
+
+    // Announcements
+    Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::post('announcements/{announcement}/read', [AnnouncementController::class, 'markRead'])->name('announcements.read');
+    Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
 });
 
 require __DIR__.'/settings.php';

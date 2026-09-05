@@ -2,14 +2,17 @@
 
 namespace Database\Seeders;
 
+use App\Enums\HrRequestType;
 use App\Enums\PaymentProvider;
 use App\Enums\Role;
 use App\Enums\TenantStatus;
+use App\Models\Announcement;
 use App\Models\Branch;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\EmploymentType;
+use App\Models\HrRequest;
 use App\Models\PayrollPeriod;
 use App\Models\Plan;
 use App\Models\SalaryComponent;
@@ -146,6 +149,18 @@ class DemoTenantSeeder extends Seeder
 
             $period = PayrollPeriod::factory()->forTenant($tenant)->forMonth(2026, 9)->create();
             app(PayrollService::class)->run($period);
+
+            Announcement::factory()->forTenant($tenant)->create([
+                'title' => 'Welcome to '.$tenant->name.' HR',
+                'body' => 'This is your self-service portal. Clock in, request leave, download payslips and raise HR requests here.',
+                'published_by' => $owner->id,
+            ]);
+
+            HrRequest::factory()->forEmployee(Employee::query()->first())->create([
+                'reference' => 'HR-000001',
+                'subject' => 'Salary certificate for visa',
+                'type' => HrRequestType::SalaryCertificate,
+            ]);
         });
     }
 }

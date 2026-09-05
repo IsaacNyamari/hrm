@@ -252,6 +252,22 @@ class Employee extends Model
         return $this->hasMany(Payslip::class);
     }
 
+    /**
+     * @return HasMany<EmployeeDocument, $this>
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EmployeeDocument::class);
+    }
+
+    /**
+     * @return HasMany<HrRequest, $this>
+     */
+    public function hrRequests(): HasMany
+    {
+        return $this->hasMany(HrRequest::class);
+    }
+
     /* ---------------------------------------------------------------------
      | Scopes
      * ------------------------------------------------------------------- */

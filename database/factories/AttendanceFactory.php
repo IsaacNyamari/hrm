@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 
 /**
  * @extends Factory<Attendance>
@@ -47,9 +48,12 @@ class AttendanceFactory extends Factory
 
     public function forEmployee(Employee $employee): static
     {
+        // Distinct work_date per row for this employee (unique tenant+employee+date).
         return $this->state(fn (): array => [
             'tenant_id' => $employee->tenant_id,
             'employee_id' => $employee->getKey(),
-        ]);
+        ])->state(new Sequence(
+            fn (Sequence $sequence): array => ['work_date' => now()->subDays($sequence->index + 1)->toDateString()],
+        ));
     }
 }
