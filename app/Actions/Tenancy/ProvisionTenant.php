@@ -16,6 +16,7 @@ class ProvisionTenant
         private readonly ProvisionTenantRoles $roles,
         private readonly ProvisionTenantEmploymentTypes $employmentTypes,
         private readonly ProvisionTenantLeaveTypes $leaveTypes,
+        private readonly ProvisionTenantPayroll $payroll,
     ) {}
 
     public function handle(Tenant $tenant): void
@@ -23,5 +24,6 @@ class ProvisionTenant
         $this->roles->handle($tenant);
         $this->employmentTypes->handle($tenant);
         $this->leaveTypes->handle($tenant);
+        $this->payroll->handle($tenant);
     }
 }

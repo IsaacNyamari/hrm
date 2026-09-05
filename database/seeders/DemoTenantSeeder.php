@@ -10,12 +10,15 @@ use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\EmploymentType;
+use App\Models\PayrollPeriod;
 use App\Models\Plan;
+use App\Models\SalaryComponent;
 use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Billing\InvoiceService;
 use App\Services\Leave\LeaveService;
+use App\Services\Payroll\PayrollService;
 use App\Services\Subscription\SubscriptionManager;
 use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
@@ -123,6 +126,26 @@ class DemoTenantSeeder extends Seeder
             });
 
             app(LeaveService::class)->accrue();
+
+            $transport = SalaryComponent::query()->where('code', 'TRANSPORT_ALLOWANCE')->first();
+            Employee::query()->each(function (Employee $employee) use ($tenant, $transport): void {
+                $employee->update([
+                    'salary_amount_cents' => fake()->numberBetween(400, 3000) * 1000,
+                    'salary_currency' => 'KES',
+                    'pay_frequency' => 'monthly',
+                ]);
+                if ($transport !== null) {
+                    $employee->salaryComponents()->create([
+                        'tenant_id' => $tenant->id,
+                        'salary_component_id' => $transport->id,
+                        'amount_cents' => 800000,
+                        'effective_from' => now()->subMonths(3)->toDateString(),
+                    ]);
+                }
+            });
+
+            $period = PayrollPeriod::factory()->forTenant($tenant)->forMonth(2026, 9)->create();
+            app(PayrollService::class)->run($period);
         });
     }
 }

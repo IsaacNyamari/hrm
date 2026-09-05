@@ -11,3 +11,8 @@ parameters:
         - routes/
 
     level: 7
+
+    # Larastan's model relation/property types are heuristic (e.g. a belongsTo
+    # on a soft-deletable model can still be null). Don't treat those PHPDoc
+    # types as certain.
+    treatPhpDocTypesAsCertain: false

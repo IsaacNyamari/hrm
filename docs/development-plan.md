@@ -15,7 +15,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 5 | Departments + designations + branches + org chart | ✅ |
 | 6 | Attendance + shifts + work schedules + device abstraction | ✅ |
 | 7 | Leave management (types, policies, workflow, balances, holidays) | ✅ |
-| 8 | Payroll engine (structures, components, safe formulas, statutory, runs, payslips) | ⬜ |
+| 8 | Payroll engine (structures, components, safe formulas, statutory, runs, payslips) | ✅ |
 | 9 | Employee self-service portal | ⬜ |
 | 10 | Documents + expiry + HR letter templates | ⬜ |
 | 11 | Performance management | ⬜ |

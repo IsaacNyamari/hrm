@@ -9,15 +9,22 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
+use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\LeaveTypeController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\OrgChartController;
+use App\Http\Controllers\PayrollPeriodController;
+use App\Http\Controllers\PayrollRunController;
+use App\Http\Controllers\PayslipController;
+use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\TaxRuleController;
 use App\Http\Controllers\UserInvitationController;
 use Illuminate\Support\Facades\Route;
 
@@ -89,6 +96,32 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('leave-requests/{leaveRequest}/approve', [LeaveRequestController::class, 'approve'])->name('leave-requests.approve');
     Route::post('leave-requests/{leaveRequest}/reject', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject');
     Route::post('leave-requests/{leaveRequest}/cancel', [LeaveRequestController::class, 'cancel'])->name('leave-requests.cancel');
+
+    // Payroll
+    Route::view('payroll', 'payroll.index')->name('payroll');
+    Route::apiResource('salary-components', SalaryComponentController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::apiResource('tax-rules', TaxRuleController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('employees/{employee}/salary', [EmployeeSalaryController::class, 'show'])->name('employees.salary.show');
+    Route::put('employees/{employee}/salary', [EmployeeSalaryController::class, 'update'])->name('employees.salary.update');
+
+    Route::get('payroll-periods', [PayrollPeriodController::class, 'index'])->name('payroll-periods.index');
+    Route::post('payroll-periods', [PayrollPeriodController::class, 'store'])->name('payroll-periods.store');
+    Route::get('payroll-periods/{payrollPeriod}', [PayrollPeriodController::class, 'show'])->name('payroll-periods.show');
+    Route::post('payroll-periods/{payrollPeriod}/run', [PayrollRunController::class, 'store'])->name('payroll-periods.run');
+
+    Route::get('payroll-runs/{payrollRun}', [PayrollRunController::class, 'show'])->name('payroll-runs.show');
+    Route::post('payroll-runs/{payrollRun}/approve', [PayrollRunController::class, 'approve'])->name('payroll-runs.approve');
+    Route::post('payroll-runs/{payrollRun}/pay', [PayrollRunController::class, 'pay'])->name('payroll-runs.pay');
+    Route::post('payroll-runs/{payrollRun}/lock', [PayrollRunController::class, 'lock'])->name('payroll-runs.lock');
+
+    Route::get('payslips', [PayslipController::class, 'index'])->name('payslips.index');
+    Route::get('payslips/{payslip}', [PayslipController::class, 'show'])->name('payslips.show');
+    Route::get('payslips/{payslip}/pdf', [PayslipController::class, 'pdf'])->name('payslips.pdf');
+
+    Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
+    Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
+    Route::post('loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approve');
+    Route::delete('loans/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
 });
 
 require __DIR__.'/settings.php';
