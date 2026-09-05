@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\RecordLoginActivity;
 use App\Listeners\SendBillingNotifications;
+use App\Listeners\SendExpenseNotifications;
 use App\Listeners\SendLeaveNotifications;
 use App\Listeners\SendPerformanceNotifications;
 use App\Listeners\SendPortalNotifications;
@@ -47,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendPortalNotifications::class);
         Event::subscribe(SendPerformanceNotifications::class);
         Event::subscribe(SendRecruitmentNotifications::class);
+        Event::subscribe(SendExpenseNotifications::class);
 
         // One policy class serves the whole payroll module.
         foreach ([PayrollPeriod::class, PayrollRun::class, Payslip::class, SalaryComponent::class, SalaryStructure::class, TaxRule::class] as $model) {

@@ -8,6 +8,7 @@ use App\Enums\PaymentProvider;
 use App\Enums\Role;
 use App\Enums\TenantStatus;
 use App\Models\Announcement;
+use App\Models\Asset;
 use App\Models\Branch;
 use App\Models\Department;
 use App\Models\Designation;
@@ -15,6 +16,8 @@ use App\Models\DocumentType;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use App\Models\EmploymentType;
+use App\Models\Expense;
+use App\Models\ExpenseItem;
 use App\Models\Goal;
 use App\Models\HrRequest;
 use App\Models\PayrollPeriod;
@@ -25,7 +28,9 @@ use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vacancy;
+use App\Services\Assets\AssetService;
 use App\Services\Billing\InvoiceService;
+use App\Services\Expenses\ExpenseService;
 use App\Services\Leave\LeaveService;
 use App\Services\Payroll\PayrollService;
 use App\Services\Performance\PerformanceService;
@@ -214,6 +219,22 @@ class DemoTenantSeeder extends Seeder
                     $recruitment->moveStage($application, $targetStage, $owner);
                 }
             }
+
+            $claimant = Employee::query()->where('id', '!=', $manager->id)->first() ?? $manager;
+            $expense = Expense::query()->create([
+                'reference' => app(ExpenseService::class)->nextReference(),
+                'employee_id' => $claimant->id,
+                'title' => 'Client visit — travel',
+                'currency' => $tenant->currency,
+                'incurred_on' => now()->subWeek()->toDateString(),
+                'submitted_by' => $claimant->user_id,
+            ]);
+            ExpenseItem::factory()->forExpense($expense)->count(2)->create();
+            app(ExpenseService::class)->recalculateTotal($expense);
+
+            $assetService = app(AssetService::class);
+            $laptops = Asset::factory()->forTenant($tenant)->count(4)->create(['branch_id' => $hq->id]);
+            $assetService->assign($laptops->first(), $manager, ['condition_out' => 'New'], $owner);
         });
     }
 }

@@ -30,7 +30,19 @@ class LoanPolicy
 
     public function create(User $user): bool
     {
-        return $this->permits($user, $user->tenant_id, Permission::PayrollManage);
+        // Any employee may request a loan / salary advance for themselves;
+        // requesting on someone's behalf is gated in the controller.
+        return $user->tenant_id !== null;
+    }
+
+    public function cancel(User $user, Loan $loan): bool
+    {
+        if ($user->tenant_id !== $loan->tenant_id) {
+            return false;
+        }
+
+        return $user->employee?->getKey() === $loan->employee_id
+            || $this->permits($user, $loan->tenant_id, Permission::PayrollManage);
     }
 
     public function update(User $user, Loan $loan): bool

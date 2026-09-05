@@ -3,6 +3,8 @@
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\AssetAssignmentController;
+use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceDeviceController;
 use App\Http\Controllers\BillingController;
@@ -18,6 +20,8 @@ use App\Http\Controllers\EmployeeDocumentController;
 use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
 use App\Http\Controllers\EmployeeSalaryController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\ExpenseItemController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HrRequestController;
@@ -138,9 +142,12 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::get('payslips/{payslip}', [PayslipController::class, 'show'])->name('payslips.show');
     Route::get('payslips/{payslip}/pdf', [PayslipController::class, 'pdf'])->name('payslips.pdf');
 
+    Route::view('loan-centre', 'finance.loans')->name('loan-centre');
     Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
     Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
+    Route::get('loans/{loan}/schedule', [LoanController::class, 'schedule'])->name('loans.schedule');
     Route::post('loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approve');
+    Route::post('loans/{loan}/cancel', [LoanController::class, 'cancel'])->name('loans.cancel');
     Route::delete('loans/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
 
     // Employee self-service portal
@@ -234,6 +241,30 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('offers/{offer}/respond', [OfferController::class, 'respond'])->name('offers.respond');
     Route::post('offers/{offer}/rescind', [OfferController::class, 'rescind'])->name('offers.rescind');
     Route::post('offers/{offer}/convert', [OfferController::class, 'convert'])->name('offers.convert');
+
+    // Expenses
+    Route::view('expenses', 'finance.expenses')->name('expenses');
+    Route::get('expense-claims', [ExpenseController::class, 'index'])->name('expenses.index');
+    Route::post('expense-claims', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::get('expense-claims/{expense}', [ExpenseController::class, 'show'])->name('expenses.show');
+    Route::put('expense-claims/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+    Route::delete('expense-claims/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+    Route::post('expense-claims/{expense}/submit', [ExpenseController::class, 'submit'])->name('expenses.submit');
+    Route::post('expense-claims/{expense}/approve', [ExpenseController::class, 'approve'])->name('expenses.approve');
+    Route::post('expense-claims/{expense}/reject', [ExpenseController::class, 'reject'])->name('expenses.reject');
+    Route::post('expense-claims/{expense}/reimburse', [ExpenseController::class, 'reimburse'])->name('expenses.reimburse');
+    Route::post('expense-claims/{expense}/items', [ExpenseItemController::class, 'store'])->name('expense-items.store');
+    Route::put('expense-items/{expenseItem}', [ExpenseItemController::class, 'update'])->name('expense-items.update');
+    Route::delete('expense-items/{expenseItem}', [ExpenseItemController::class, 'destroy'])->name('expense-items.destroy');
+    Route::get('expense-items/{expenseItem}/receipt', [ExpenseItemController::class, 'receipt'])->name('expense-items.receipt');
+
+    // Asset register
+    Route::view('asset-register', 'finance.assets')->name('assets');
+    Route::apiResource('assets', AssetController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+    Route::post('assets/{asset}/retire', [AssetController::class, 'retire'])->name('assets.retire');
+    Route::post('assets/{asset}/assignments', [AssetAssignmentController::class, 'store'])->name('assets.assignments.store');
+    Route::get('asset-assignments', [AssetAssignmentController::class, 'index'])->name('asset-assignments.index');
+    Route::post('asset-assignments/{assetAssignment}/return', [AssetAssignmentController::class, 'returnAsset'])->name('asset-assignments.return');
 });
 
 /*

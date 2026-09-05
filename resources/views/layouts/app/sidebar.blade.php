@@ -52,6 +52,18 @@
                         {{ __('HR letters') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('Finance')" class="grid">
+                    <flux:sidebar.item icon="receipt-percent" :href="route('expenses')" :current="request()->routeIs('expenses')" wire:navigate>
+                        {{ __('Expenses') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="credit-card" :href="route('loan-centre')" :current="request()->routeIs('loan-centre')" wire:navigate>
+                        {{ __('Loans') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="computer-desktop" :href="route('assets')" :current="request()->routeIs('assets')" wire:navigate>
+                        {{ __('Assets') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />

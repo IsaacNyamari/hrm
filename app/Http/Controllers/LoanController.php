@@ -40,7 +40,7 @@ class LoanController extends Controller
         $this->authorize('create', Loan::class);
 
         $data = $request->validate([
-            'employee_id' => ['required', Rule::exists('employees', 'id')->where('tenant_id', Tenancy::id())],
+            'employee_id' => ['nullable', Rule::exists('employees', 'id')->where('tenant_id', Tenancy::id())],
             'type' => ['required', new Enum(LoanType::class)],
             'reference' => ['nullable', 'string', 'max:60'],
             'principal_cents' => ['required', 'integer', 'min:1'],
@@ -49,12 +49,14 @@ class LoanController extends Controller
             'start_date' => ['required', 'date'],
         ]);
 
+        $employeeId = $this->resolveEmployeeId($request, isset($data['employee_id']) ? (int) $data['employee_id'] : null);
+
         $interest = (int) round($data['principal_cents'] * ((float) ($data['interest_rate'] ?? 0)));
         $repayable = $data['principal_cents'] + $interest;
         $installmentCents = (int) ceil($repayable / $data['installments']);
 
         $loan = Loan::query()->create([
-            'employee_id' => $data['employee_id'],
+            'employee_id' => $employeeId,
             'type' => $data['type'],
             'reference' => $data['reference'] ?? null,
             'principal_cents' => $data['principal_cents'],
@@ -84,6 +86,44 @@ class LoanController extends Controller
         return response()->json(['data' => $this->transform($loan)]);
     }
 
+    public function cancel(Loan $loan): JsonResponse
+    {
+        $this->authorize('cancel', $loan);
+
+        abort_if($loan->status !== LoanStatus::Pending, 409, 'Only a pending loan can be cancelled.');
+
+        $loan->forceFill(['status' => LoanStatus::Cancelled])->save();
+
+        return response()->json(['data' => $this->transform($loan)]);
+    }
+
+    public function schedule(Loan $loan): JsonResponse
+    {
+        $this->authorize('view', $loan);
+
+        $rows = [];
+        $balance = $loan->principal_cents
+            + (int) round($loan->principal_cents * $loan->interest_rate);
+        $date = $loan->start_date;
+
+        for ($i = 1; $i <= $loan->installments && $balance > 0; $i++) {
+            $due = min($loan->installment_cents, $balance);
+            $balance -= $due;
+            $rows[] = [
+                'installment' => $i,
+                'due_on' => $date->toDateString(),
+                'amount_cents' => $due,
+                'balance_cents' => $balance,
+            ];
+            $date = $date->addMonthNoOverflow();
+        }
+
+        return response()->json(['data' => [
+            'loan' => $this->transform($loan),
+            'schedule' => $rows,
+        ]]);
+    }
+
     public function destroy(Loan $loan): Response
     {
         $this->authorize('delete', $loan);
@@ -92,6 +132,20 @@ class LoanController extends Controller
         $loan->delete();
 
         return response()->noContent();
+    }
+
+    private function resolveEmployeeId(Request $request, ?int $employeeId): int
+    {
+        if ($employeeId !== null) {
+            abort_unless($request->user()?->can('payroll.manage'), 403);
+
+            return $employeeId;
+        }
+
+        $employee = $request->user()?->employee;
+        abort_if($employee === null, 422, 'Your account is not linked to an employee record.');
+
+        return $employee->getKey();
     }
 
     /**

@@ -51,6 +51,15 @@ enum Permission: string
     case RecruitmentManage = 'recruitment.manage';
     case RecruitmentInterview = 'recruitment.interview';
 
+    // Expenses
+    case ExpensesView = 'expenses.view';
+    case ExpensesApprove = 'expenses.approve';
+    case ExpensesManage = 'expenses.manage';
+
+    // Assets
+    case AssetsView = 'assets.view';
+    case AssetsManage = 'assets.manage';
+
     // Reports
     case ReportsView = 'reports.view';
     case ReportsExport = 'reports.export';

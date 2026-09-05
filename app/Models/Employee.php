@@ -295,6 +295,22 @@ class Employee extends Model
         return $this->hasMany(PerformanceReview::class);
     }
 
+    /**
+     * @return HasMany<Expense, $this>
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    /**
+     * @return HasMany<AssetAssignment, $this>
+     */
+    public function assetAssignments(): HasMany
+    {
+        return $this->hasMany(AssetAssignment::class);
+    }
+
     /* ---------------------------------------------------------------------
      | Scopes
      * ------------------------------------------------------------------- */

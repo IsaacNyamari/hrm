@@ -98,17 +98,22 @@ enum Role: string
                 P::LeaveView->value, P::LeaveApprove->value, P::LeaveManage->value,
                 P::PerformanceView->value, P::PerformanceManage->value, P::PerformanceReview->value,
                 P::RecruitmentView->value, P::RecruitmentManage->value, P::RecruitmentInterview->value,
+                P::ExpensesView->value, P::ExpensesApprove->value,
+                P::AssetsView->value, P::AssetsManage->value,
                 P::ReportsView->value, P::ReportsExport->value,
             ],
 
             self::PayrollManager => [
                 P::EmployeesView->value,
                 P::PayrollView->value, P::PayrollManage->value, P::PayrollProcess->value,
+                P::ExpensesView->value, P::ExpensesApprove->value, P::ExpensesManage->value,
                 P::ReportsView->value, P::ReportsExport->value,
             ],
 
             self::FinanceManager => [
                 P::PayrollView->value, P::PayrollApprove->value,
+                P::ExpensesView->value, P::ExpensesApprove->value, P::ExpensesManage->value,
+                P::AssetsView->value, P::AssetsManage->value,
                 P::BillingView->value, P::ReportsView->value, P::ReportsExport->value,
             ],
 
@@ -118,6 +123,7 @@ enum Role: string
                 P::LeaveView->value, P::LeaveApprove->value,
                 P::PerformanceView->value, P::PerformanceReview->value,
                 P::RecruitmentView->value, P::RecruitmentInterview->value,
+                P::ExpensesApprove->value, P::AssetsView->value,
                 P::ReportsView->value,
             ],
 
@@ -127,6 +133,7 @@ enum Role: string
                 P::LeaveView->value, P::LeaveApprove->value,
                 P::PerformanceReview->value,
                 P::RecruitmentInterview->value,
+                P::ExpensesApprove->value,
             ],
 
             self::Employee => [

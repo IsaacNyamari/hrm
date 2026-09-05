@@ -20,7 +20,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 10 | Documents + expiry + HR letter templates | ✅ |
 | 11 | Performance management | ✅ |
 | 12 | Recruitment / ATS | ✅ |
-| 13 | Expenses + loans + assets | ⬜ |
+| 13 | Expenses + loans + assets | ✅ |
 | 14 | Reporting + exports (PDF/Excel/CSV) | ⬜ |
 | 15 | Notifications + announcements + email branding | ⬜ |
 | 16 | API v1 (Sanctum) + webhooks | ⬜ |
@@ -122,3 +122,17 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   `recruitment.view` / `.manage` / `.interview`; panel interviewers submit
   feedback without a recruiter permission. `RecruitmentException` → 422.
   Livewire `Recruitment\Board` pipeline view + sidebar entry.
+- **2026-09-06 (P13)** Expenses = `expenses` (claim header, reference
+  `EXP-000001`) → `expense_items` (line items, private-disk receipts) with an
+  `expense_approvals` chain (`manager` → `finance`, reused
+  `LeaveApprovalStatus`, optional `auto_approve_under_cents`). `ExpenseService`
+  recomputes the header total and applies `config('expenses.mileage_rate_cents_per_km')`
+  (tenant-overridable) to mileage lines; submit → decide (multi-level) →
+  reimburse. Assets = `assets` register (unique `asset_tag` per tenant) +
+  `asset_assignments`; `AssetService` guards one active assignment per asset
+  and flips asset status on assign / check-in / retire. Loans (P8) gained a
+  self-service request path, `GET /loans/{loan}/schedule` amortisation, cancel,
+  and a Livewire screen. New perms `expenses.view/.approve/.manage`,
+  `assets.view/.manage`; self-service claim/loan needs only a linked employee.
+  `ExpenseException` / `AssetException` → 422. Livewire `Finance\Expenses`,
+  `Finance\Loans`, `Finance\Assets` + a "Finance" sidebar group.
