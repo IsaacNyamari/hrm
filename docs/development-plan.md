@@ -22,7 +22,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 12 | Recruitment / ATS | ✅ |
 | 13 | Expenses + loans + assets | ✅ |
 | 14 | Reporting + exports (PDF/Excel/CSV) | ✅ |
-| 15 | Notifications + announcements + email branding | ⬜ |
+| 15 | Notifications + announcements + email branding | ✅ |
 | 16 | API v1 (Sanctum) + webhooks | ⬜ |
 | 17 | Security hardening + audit log + impersonation | ⬜ |
 | 18 | Test coverage pass (feature + isolation matrix) | ⬜ |
@@ -151,3 +151,18 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   Livewire `Analytics\Overview` on the rebuilt `dashboard` blade. Livewire
   `Reports\Index` + `reports` sidebar entry. Unknown report key → 404,
   forbidden → 403.
+- **2026-09-06 (P15)** Notification centre = Laravel `notifications` table
+  surfaced via `NotificationController` (feed / unread-count / read / read-all
+  / delete) + Livewire `Notifications\Center`. `notification_preferences`
+  (per user × `NotificationCategory`) — `RespectsPreferences` trait gives every
+  in-app notification a `via()` that keeps `database` always and toggles `mail`
+  per `NotificationChannels::forUser`; 14 notification classes migrated to it
+  (billing/leave/expenses/performance/recruitment/documents/announcements/
+  hr-requests), only `TenantInvitationNotification` keeps its own `via()`.
+  E-mail branding = `tenant_branding` (logo on `public` disk, colours, from/
+  reply-to, footer); `ApplyTenantMailBranding` listens on `MessageSending` and
+  rewrites From / Reply-To for the bound tenant; published `vendor/mail/html/
+  {header,footer}` read a `$tenantBrand` shared by a `View::composer`.
+  `BrandingController` + Livewire `Settings\BrandingForm` (`settings.manage`).
+  Announcements gained `is_pinned` / `acknowledgement_required` +
+  `announcement_reads.acknowledged_at`. Sidebar: "Notifications".

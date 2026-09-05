@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Enums\LeaveStatus;
+use App\Enums\NotificationCategory;
 use App\Models\LeaveRequest;
+use App\Notifications\Concerns\RespectsPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -14,15 +16,13 @@ use Illuminate\Notifications\Notification;
 class LeaveDecisionNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+    use RespectsPreferences;
 
     public function __construct(private readonly LeaveRequest $leaveRequest) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function preferenceCategory(): NotificationCategory
     {
-        return ['mail', 'database'];
+        return NotificationCategory::Leave;
     }
 
     public function toMail(object $notifiable): MailMessage

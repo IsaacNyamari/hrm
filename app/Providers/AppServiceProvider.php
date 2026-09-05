@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\ApplyTenantMailBranding;
 use App\Listeners\RecordLoginActivity;
 use App\Listeners\SendBillingNotifications;
 use App\Listeners\SendExpenseNotifications;
@@ -18,10 +19,12 @@ use App\Models\TaxRule;
 use App\Policies\PayrollPolicy;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -49,6 +52,15 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendPerformanceNotifications::class);
         Event::subscribe(SendRecruitmentNotifications::class);
         Event::subscribe(SendExpenseNotifications::class);
+
+        // Per-tenant e-mail From / Reply-To.
+        Event::listen(MessageSending::class, [ApplyTenantMailBranding::class, 'handle']);
+
+        // Expose the bound tenant's branding to the markdown mail components.
+        View::composer(['mail::header', 'mail::footer', 'mail::layout', 'mail::message'], function ($view): void {
+            $tenant = app(TenantContext::class)->get();
+            $view->with('tenantBrand', $tenant?->brandingOrNew());
+        });
 
         // One policy class serves the whole payroll module.
         foreach ([PayrollPeriod::class, PayrollRun::class, Payslip::class, SalaryComponent::class, SalaryStructure::class, TaxRule::class] as $model) {

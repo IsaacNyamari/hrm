@@ -110,7 +110,10 @@ Indexes: unique `(tenant_id, employee_number)`, unique `(tenant_id, email)`,
 - **P13** `expenses`, `expense_items`, `expense_approvals`, `assets`,
   `asset_assignments`. (Loans/loan_repayments from P8 gain a UI + schedule
   endpoint + self-service request.)
-- **P15** `notifications` (Laravel), `announcements`, `announcement_reads`.
+- **P15** `notifications` (Laravel), `announcements`, `announcement_reads`,
+  `tenant_branding`, `notification_preferences`. (`announcements` +
+  `is_pinned`/`acknowledgement_required`; `announcement_reads` +
+  `acknowledged_at`.)
 - **P17** `audit_logs` (append-only), `activity_log`.
 
 ## ERD (core — Phase 1 solid, planned dashed)

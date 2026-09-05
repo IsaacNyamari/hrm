@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Enums\NotificationCategory;
 use App\Models\PerformanceReview;
+use App\Notifications\Concerns\RespectsPreferences;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,15 +15,13 @@ use Illuminate\Notifications\Notification;
 class PerformanceReviewSubmittedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+    use RespectsPreferences;
 
     public function __construct(private readonly PerformanceReview $review) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function preferenceCategory(): NotificationCategory
     {
-        return ['mail', 'database'];
+        return NotificationCategory::Performance;
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -158,6 +158,26 @@ class Tenant extends Model
         return $this->hasMany(EmploymentType::class)->withoutGlobalScope(TenantScope::class);
     }
 
+    /**
+     * @return HasOne<TenantBranding, $this>
+     */
+    public function branding(): HasOne
+    {
+        return $this->hasOne(TenantBranding::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * The tenant's branding row, or a fresh unsaved default bound to this tenant.
+     */
+    public function brandingOrNew(): TenantBranding
+    {
+        return $this->branding()->first() ?? tap(new TenantBranding, function (TenantBranding $b): void {
+            $b->tenant_id = $this->getKey();
+            $b->primary_color = '#4f46e5';
+            $b->setRelation('tenant', $this);
+        });
+    }
+
     public function onTrial(): bool
     {
         return $this->status === TenantStatus::Trialing

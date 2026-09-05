@@ -26,6 +26,7 @@ use App\Models\Plan;
 use App\Models\SalaryComponent;
 use App\Models\Shift;
 use App\Models\Tenant;
+use App\Models\TenantBranding;
 use App\Models\User;
 use App\Models\Vacancy;
 use App\Services\Assets\AssetService;
@@ -235,6 +236,17 @@ class DemoTenantSeeder extends Seeder
             $assetService = app(AssetService::class);
             $laptops = Asset::factory()->forTenant($tenant)->count(4)->create(['branch_id' => $hq->id]);
             $assetService->assign($laptops->first(), $manager, ['condition_out' => 'New'], $owner);
+
+            TenantBranding::query()->updateOrCreate(
+                ['tenant_id' => $tenant->id],
+                [
+                    'brand_name' => $tenant->name,
+                    'primary_color' => '#2563eb',
+                    'from_name' => $tenant->name.' People Team',
+                    'from_email' => 'people@'.$slug.'.test',
+                    'email_footer' => 'Sent by '.$tenant->name.'. Please do not reply to this address.',
+                ],
+            );
         });
     }
 }

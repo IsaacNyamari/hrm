@@ -9,6 +9,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceDeviceController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\CareersController;
 use App\Http\Controllers\DashboardMetricsController;
 use App\Http\Controllers\DepartmentController;
@@ -38,6 +39,8 @@ use App\Http\Controllers\LetterController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\Me\DashboardController as MeDashboardController;
 use App\Http\Controllers\Me\ProfileController as MeProfileController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\OrgChartController;
 use App\Http\Controllers\PayrollPeriodController;
@@ -267,6 +270,21 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('assets/{asset}/assignments', [AssetAssignmentController::class, 'store'])->name('assets.assignments.store');
     Route::get('asset-assignments', [AssetAssignmentController::class, 'index'])->name('asset-assignments.index');
     Route::post('asset-assignments/{assetAssignment}/return', [AssetAssignmentController::class, 'returnAsset'])->name('asset-assignments.return');
+
+    // Notification centre & preferences
+    Route::view('notifications', 'notifications.index')->name('notifications');
+    Route::get('notifications/feed', [NotificationController::class, 'index'])->name('notifications.feed');
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('me/notification-preferences', [NotificationPreferenceController::class, 'show'])->name('me.notification-preferences.show');
+    Route::put('me/notification-preferences', [NotificationPreferenceController::class, 'update'])->name('me.notification-preferences.update');
+
+    // Tenant branding
+    Route::view('settings/branding', 'settings.branding')->name('settings.branding');
+    Route::get('branding', [BrandingController::class, 'show'])->name('branding.show');
+    Route::put('branding', [BrandingController::class, 'update'])->name('branding.update');
 
     // Reporting & exports
     Route::view('reports', 'reports.index')->name('reports');
