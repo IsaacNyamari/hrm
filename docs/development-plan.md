@@ -27,7 +27,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | 17 | Security hardening + audit log + impersonation | ✅ |
 | 18 | Test coverage pass (feature + isolation matrix) | ✅ |
 | 19 | Performance (indexes, eager loading, caching, chunked jobs) | ✅ |
-| 20 | Production deployment docs + config | ⬜ |
+| 20 | Production deployment docs + config | ✅ |
 
 ## Cross-cutting rules (every phase)
 
@@ -225,3 +225,17 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   `leave:accrue` (+ `LeaveService::accrue` inner loop) and
   `documents:check-expiry` now `chunkById` over tenants/employees instead of
   `->each()`.
+- **2026-09-06 (P20)** Deployment. `.env.example` gained an "HRM application
+  configuration" block (all `TENANCY_*`, `ATTENDANCE_*`, `BILLING_*`, `MPESA_*`,
+  `LEAVE_YEAR_START_MONTH`, `EXPENSE_MILEAGE_RATE_CENTS`,
+  `PASSKEYS_USER_HANDLE_SECRET`, `SANCTUM_STATEFUL_DOMAINS`) + a production
+  overrides comment. New `docs/deployment.md` (server reqs, wildcard DNS/TLS
+  for `*.app.domain`, nginx sketch, first + zero-downtime deploy, `.env` prod
+  values, Supervisor queue worker, `schedule:run` cron + the 4 jobs, private vs
+  public disk rules, `/up` health, backups of MySQL + `storage/app`, scaling,
+  go-live checklist) and `docs/operations.md` (runbook: common commands, manual
+  tenant provisioning, impersonation audit query, webhook redelivery + the
+  signature formula, M-Pesa reconciliation, audit-log retention caveat, incident
+  quick-reference). New root `README.md`. No code/schema change — health stays
+  Laravel's built-in `/up` (a custom DB-poking endpoint would be an unauth info
+  leak). **All 20 phases complete.**
