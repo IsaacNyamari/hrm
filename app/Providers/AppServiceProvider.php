@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\RecordLoginActivity;
+use App\Listeners\SendBillingNotifications;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         Event::subscribe(RecordLoginActivity::class);
+        Event::subscribe(SendBillingNotifications::class);
     }
 
     /**

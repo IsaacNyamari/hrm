@@ -12,6 +12,7 @@ use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -93,6 +94,38 @@ class Tenant extends Model
         return $this->hasMany(Employee::class)->withoutGlobalScope(TenantScope::class);
     }
 
+    /**
+     * @return HasMany<Subscription, $this>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * @return HasOne<Subscription, $this>
+     */
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)->withoutGlobalScope(TenantScope::class)->latestOfMany();
+    }
+
+    /**
+     * @return HasMany<Invoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * @return HasMany<Payment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->withoutGlobalScope(TenantScope::class);
+    }
+
     public function onTrial(): bool
     {
         return $this->status === TenantStatus::Trialing
@@ -101,11 +134,18 @@ class Tenant extends Model
     }
 
     /**
-     * Whether the tenant may currently use the tenant application. Subscription
-     * billing (P3) will extend this; for now it is trial + active state.
+     * Whether the tenant may currently use the tenant application. Once a
+     * subscription exists it is the source of truth; the tenant status/trial
+     * columns are the fallback before onboarding completes.
      */
     public function hasAppAccess(): bool
     {
+        $subscription = $this->subscription;
+
+        if ($subscription !== null) {
+            return $subscription->grantsAppAccess();
+        }
+
         if ($this->status === TenantStatus::Trialing) {
             return $this->onTrial();
         }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureTenantSubscribed;
 use App\Http\Middleware\EnsureUserBelongsToTenant;
 use App\Http\Middleware\ResolveTenant;
 use Illuminate\Foundation\Application;
@@ -11,6 +12,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -18,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => ResolveTenant::class,
             'tenant.user' => EnsureUserBelongsToTenant::class,
+            'subscription' => EnsureTenantSubscribed::class,
         ]);
 
         // Resolve the tenant before route-model binding so implicit bindings on

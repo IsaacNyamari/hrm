@@ -2,12 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Actions\Tenancy\ProvisionTenantRoles;
+use App\Enums\PaymentProvider;
 use App\Enums\Role;
 use App\Enums\TenantStatus;
 use App\Models\Employee;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Billing\InvoiceService;
+use App\Services\Subscription\SubscriptionManager;
 use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -15,16 +18,16 @@ use Illuminate\Support\Facades\Hash;
 class DemoTenantSeeder extends Seeder
 {
     /**
-     * Two fully isolated demo organizations, each with an owner login and a
-     * handful of employees. Used by the tenant-isolation test narrative.
+     * Two fully isolated demo organizations: ABC on a 14-day trial, XYZ on a
+     * paid Business subscription. Used by the tenant-isolation test narrative.
      */
     public function run(): void
     {
-        $this->makeTenant('ABC Company', 'abc-company', 'owner@abc-company.test');
-        $this->makeTenant('XYZ Limited', 'xyz-limited', 'owner@xyz-limited.test');
+        $this->makeTenant('ABC Company', 'abc-company', 'owner@abc-company.test', 'starter', 'trial');
+        $this->makeTenant('XYZ Limited', 'xyz-limited', 'owner@xyz-limited.test', 'business', 'active');
     }
 
-    private function makeTenant(string $name, string $slug, string $ownerEmail): void
+    private function makeTenant(string $name, string $slug, string $ownerEmail, string $planSlug, string $mode): void
     {
         $tenant = Tenant::query()->firstOrCreate(
             ['slug' => $slug],
@@ -35,11 +38,9 @@ class DemoTenantSeeder extends Seeder
                 'country' => 'KE',
                 'currency' => 'KES',
                 'timezone' => 'Africa/Nairobi',
-                'status' => TenantStatus::Active,
+                'status' => TenantStatus::Pending,
             ],
         );
-
-        app(ProvisionTenantRoles::class)->handle($tenant);
 
         $owner = User::query()->firstOrCreate(
             ['email' => $ownerEmail],
@@ -51,6 +52,22 @@ class DemoTenantSeeder extends Seeder
                 'is_platform_admin' => false,
             ],
         );
+
+        $plan = Plan::query()->where('slug', $planSlug)->firstOrFail();
+        $subscriptions = app(SubscriptionManager::class);
+
+        if ($tenant->subscription()->doesntExist()) {
+            if ($mode === 'trial') {
+                $subscriptions->startTrial($tenant, $plan);
+            } else {
+                [$subscription, $invoice, $payment] = $subscriptions->subscribe($tenant, $plan, PaymentProvider::Manual);
+
+                if ($invoice !== null && $payment !== null) {
+                    app(InvoiceService::class)->markPaid($invoice, $payment);
+                    $subscriptions->activatePaidInvoice($invoice);
+                }
+            }
+        }
 
         app(TenantContext::class)->run($tenant, function () use ($owner): void {
             $owner->syncRoles([Role::TenantOwner->value]);

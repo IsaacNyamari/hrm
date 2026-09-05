@@ -10,7 +10,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 |---|-------|--------|
 | 1 | Multi-tenant architecture (context, scope, middleware, isolation tests) | ✅ |
 | 2 | Auth + users + roles + permissions + invitations | ✅ |
-| 3 | Tenant onboarding + plans + subscriptions + billing + M-Pesa abstraction | ⬜ |
+| 3 | Tenant onboarding + plans + subscriptions + billing + M-Pesa abstraction | ✅ (registration UI wizard deferred) |
 | 4 | Employee management (full profile, related tables, import/export) | ⬜ |
 | 5 | Departments + designations + branches + org chart | ⬜ |
 | 6 | Attendance + shifts + work schedules + device abstraction | ⬜ |
@@ -61,3 +61,13 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
   token (guest route, no subdomain needed); acceptance creates the user +
   assigns the role in one transaction. Login/Failed/Lockout events recorded to
   `login_activities`.
+- **2026-09-05 (P3)** Money stored as integer minor units. `PaymentGateway`
+  contract with `MpesaGateway` (Daraja STK push) + `ManualGateway`; billing
+  never depends on a concrete provider. Webhook idempotency via
+  `payment_transactions (provider, external_id)` unique + `PaymentReconciler`
+  in a transaction. Success confirmed only server-side. `EnsureTenantSubscribed`
+  middleware gates the app on subscription lapse, allowlisting billing/settings.
+  `FeatureGate` is the single source for plan limits/flags. Plans are seeded
+  data; `subscriptions:expire` / `subscriptions:send-reminders` scheduled daily.
+  Deferred: the multi-step public registration wizard UI (backend pieces —
+  plans, trial start, subscribe, charge — are all in place).

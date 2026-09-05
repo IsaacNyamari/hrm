@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserInvitationController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,17 +14,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 /*
-| Invitation acceptance — guest, tenant is carried by the signed token.
+| Invitation acceptance — guest, tenant is carried by the single-use token.
 */
 Route::get('invitations/{invitation}', [InvitationController::class, 'show'])->name('invitations.show');
 Route::post('invitations/{invitation}', [InvitationController::class, 'store'])->name('invitations.accept');
 
 /*
-| Tenant application routes — every request is tenant-resolved and the user is
-| verified to belong to that tenant before the controller runs. Queries inside
-| are automatically scoped by App\Models\Scopes\TenantScope.
+| Tenant application. Every request is tenant-resolved, the user is verified to
+| belong to that tenant, and the subscription is checked (billing.* and
+| subscription.* stay reachable when it has lapsed). Queries are auto-scoped by
+| App\Models\Scopes\TenantScope.
 */
-Route::middleware(['auth', 'verified', 'tenant', 'tenant.user'])->group(function () {
+Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])->group(function () {
+    Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('subscription', [SubscriptionController::class, 'store'])->name('subscription.store');
+    Route::delete('subscription', [SubscriptionController::class, 'destroy'])->name('subscription.destroy');
+
     Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
 
