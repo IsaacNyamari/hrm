@@ -32,6 +32,9 @@
                         <flux:sidebar.item icon="rectangle-stack" :href="route('platform.plans.index')" :current="request()->routeIs('platform.plans.*')" wire:navigate>
                             {{ __('Plans') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="banknotes" :href="route('platform.billing')" :current="request()->routeIs('platform.billing') || request()->routeIs('platform.billing.*')" wire:navigate>
+                            {{ __('Billing') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                 @else
                 <flux:sidebar.group :heading="__('Overview')" class="grid">
