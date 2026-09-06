@@ -21,6 +21,19 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
+                @if (auth()->user()?->isPlatformAdmin())
+                    <flux:sidebar.group :heading="__('Platform')" class="grid">
+                        <flux:sidebar.item icon="home" :href="route('platform.dashboard')" :current="request()->routeIs('platform.dashboard')" wire:navigate>
+                            {{ __('Overview') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="building-office-2" :href="route('platform.tenants.index')" :current="request()->routeIs('platform.tenants.*')" wire:navigate>
+                            {{ __('Organizations') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="rectangle-stack" :href="route('platform.plans.index')" :current="request()->routeIs('platform.plans.*')" wire:navigate>
+                            {{ __('Plans') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @else
                 <flux:sidebar.group :heading="__('Overview')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
@@ -88,6 +101,7 @@
                         {{ __('Assets') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />

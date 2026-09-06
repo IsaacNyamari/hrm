@@ -51,6 +51,9 @@ use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PerformanceCycleController;
 use App\Http\Controllers\PerformanceReviewController;
+use App\Http\Controllers\Platform\DashboardController;
+use App\Http\Controllers\Platform\PlanController;
+use App\Http\Controllers\Platform\TenantController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
@@ -64,7 +67,32 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', function () {
+        if (request()->user()?->isPlatformAdmin()) {
+            return redirect()->route('platform.dashboard');
+        }
+
+        return view('dashboard');
+    })->name('dashboard');
+});
+
+/*
+| Platform (SaaS operator) area. Sits OUTSIDE the tenant `ResolveTenant` group:
+| no tenant is bound, so queries run cross-tenant. Guarded by `platform`
+| (is_platform_admin + a platform role); each action re-checks the specific
+| PlatformPermission.
+*/
+Route::middleware(['auth', 'verified', 'platform'])->prefix('platform')->name('platform.')->group(function () {
+    Route::get('/', DashboardController::class)->name('dashboard');
+
+    Route::get('tenants', [TenantController::class, 'index'])->name('tenants.index');
+    Route::get('tenants/{tenant}', [TenantController::class, 'show'])->name('tenants.show');
+    Route::post('tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
+    Route::post('tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
+
+    Route::get('plans', [PlanController::class, 'index'])->name('plans.index');
+    Route::post('plans', [PlanController::class, 'store'])->name('plans.store');
+    Route::put('plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
 });
 
 /*

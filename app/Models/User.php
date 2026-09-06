@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasUuid;
+use App\Enums\PlatformPermission;
 use App\Enums\Role;
 use App\Support\TenantContext;
 use Database\Factories\UserFactory;
@@ -112,6 +113,27 @@ class User extends Authenticatable implements PasskeyUser
     public function isSuperAdmin(): bool
     {
         return $this->hasPlatformRole(Role::SuperAdmin);
+    }
+
+    /**
+     * Whether this user holds the given platform permission, evaluated in the
+     * reserved platform team regardless of the currently bound tenant.
+     */
+    public function canOnPlatform(PlatformPermission $permission): bool
+    {
+        if (! $this->isPlatformAdmin()) {
+            return false;
+        }
+
+        $registrar = app(PermissionRegistrar::class);
+        $previous = $registrar->getPermissionsTeamId();
+        $registrar->setPermissionsTeamId(TenantContext::PLATFORM_TEAM_ID);
+
+        try {
+            return $this->hasPermissionTo($permission->value);
+        } finally {
+            $registrar->setPermissionsTeamId($previous);
+        }
     }
 
     public function belongsToTenant(Tenant $tenant): bool

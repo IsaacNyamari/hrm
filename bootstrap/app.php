@@ -9,6 +9,7 @@ use App\Exceptions\PerformanceException;
 use App\Exceptions\PlanLimitExceededException;
 use App\Exceptions\RecruitmentException;
 use App\Http\Middleware\BindTenantContext;
+use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureTenantSubscribed;
 use App\Http\Middleware\EnsureUserBelongsToTenant;
 use App\Http\Middleware\ResolveApiTenant;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => ResolveTenant::class,
             'tenant.user' => EnsureUserBelongsToTenant::class,
+            'platform' => EnsurePlatformAdmin::class,
             'subscription' => EnsureTenantSubscribed::class,
             'api.tenant' => ResolveApiTenant::class,
             'abilities' => CheckAbilities::class,
