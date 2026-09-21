@@ -20,7 +20,7 @@
     @else
         <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
             <div>
-                <flux:badge size="sm">{{ $vacancy->status->label() }}</flux:badge>
+                <x-status-badge :status="$vacancy->status" />
                 <span class="ml-2 text-sm text-neutral-500">{{ __('Headcount') }}: {{ $vacancy->positions_filled }} / {{ $vacancy->headcount }}</span>
             </div>
             @if ($canManage)

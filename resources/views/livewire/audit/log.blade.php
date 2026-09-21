@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ __('Audit trail') }}</h1>
+        <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Audit trail') }}</h1>
         <input type="text" wire:model.live.debounce.400ms="event" placeholder="{{ __('Filter by event, e.g. employee.') }}"
             class="w-64 rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900" />
     </div>

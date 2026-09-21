@@ -45,3 +45,17 @@ it('treats a null limit as unlimited', function () {
     expect($this->gate->withinLimit($tenant, 'employees', 999999))->toBeTrue()
         ->and($this->gate->remaining($tenant, 'employees', 10))->toBeNull();
 });
+
+it('reads the plan from a serialising cache store on repeat calls', function () {
+    config(['cache.default' => 'database']);
+    $tenant = tenantWithRoles();
+    $plan = Plan::factory()->create(['employee_limit' => 20, 'features' => ['flags' => ['payroll'], 'limits' => []]]);
+    Subscription::factory()->forTenant($tenant)->onPlan($plan)->create();
+    $this->gate->flush($tenant);
+
+    $this->gate->planFor($tenant);
+
+    expect($this->gate->planFor($tenant))->toBeInstanceOf(Plan::class)
+        ->and($this->gate->limit($tenant, 'employees'))->toBe(20)
+        ->and($this->gate->allows($tenant, 'payroll'))->toBeTrue();
+});

@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-6">
-    <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ __('Developers') }}</h1>
+    <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Developers') }}</h1>
 
     @if ($notice)
         <p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-950 dark:text-green-300">{{ $notice }}</p>

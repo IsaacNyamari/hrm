@@ -56,7 +56,7 @@
                                 <td>{{ number_format($loan->principal_cents / 100, 2) }}</td>
                                 <td>{{ number_format($loan->installment_cents / 100, 2) }}</td>
                                 <td>{{ number_format($loan->outstanding_cents / 100, 2) }}</td>
-                                <td><flux:badge size="sm">{{ $loan->status->label() }}</flux:badge></td>
+                                <td><x-status-badge :status="$loan->status" /></td>
                                 <td class="text-right">
                                     @if ($loan->status->value === 'pending')
                                         <flux:modal.trigger name="cancel-loan-{{ $loan->uuid }}">
@@ -92,7 +92,7 @@
                                 <td>{{ $loan->type->label() }}</td>
                                 <td>{{ number_format($loan->principal_cents / 100, 2) }}</td>
                                 <td class="text-right space-x-2">
-                                    <flux:button size="sm" variant="primary" wire:click="approve('{{ $loan->uuid }}')">{{ __('Approve') }}</flux:button>
+                                    <flux:button size="sm" variant="primary" color="green" icon="check" wire:click="approve('{{ $loan->uuid }}')">{{ __('Approve') }}</flux:button>
                                     <flux:modal.trigger name="reject-loan-{{ $loan->uuid }}">
                                         <flux:button size="sm" variant="danger">{{ __('Reject') }}</flux:button>
                                     </flux:modal.trigger>
@@ -123,7 +123,7 @@
                                 <td>{{ $loan->type->label() }}</td>
                                 <td>{{ number_format($loan->principal_cents / 100, 2) }}</td>
                                 <td>{{ number_format($loan->outstanding_cents / 100, 2) }}</td>
-                                <td><flux:badge size="sm">{{ $loan->status->label() }}</flux:badge></td>
+                                <td><x-status-badge :status="$loan->status" /></td>
                                 <td class="text-right">
                                     @if ($loan->status->value === 'pending' && $loan->outstanding_cents === $loan->principal_cents)
                                         <flux:modal.trigger name="delete-loan-{{ $loan->uuid }}">

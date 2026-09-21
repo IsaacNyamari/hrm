@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-6" wire:poll.30s>
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+        <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">
             {{ __('Notifications') }}
             @if ($unread > 0)
                 <span class="ml-1 rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">{{ $unread }}</span>

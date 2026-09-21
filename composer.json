@@ -20,6 +20,7 @@
     "require": {
         "php": "^8.3",
         "athwari/laravel-zkteco-adms": "@dev",
+        "barryvdh/laravel-dompdf": "^3.1",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",

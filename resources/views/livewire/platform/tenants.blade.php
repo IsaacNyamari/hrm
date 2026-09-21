@@ -39,7 +39,7 @@
                         </td>
                         <td class="px-4 py-3">{{ $tenant->subscription?->plan?->name ?? '—' }}</td>
                         <td class="px-4 py-3">{{ $tenant->users_count }}</td>
-                        <td class="px-4 py-3"><flux:badge size="sm">{{ $tenant->status->label() }}</flux:badge></td>
+                        <td class="px-4 py-3"><x-status-badge :status="$tenant->status" /></td>
                         <td class="px-4 py-3 text-neutral-500">{{ $tenant->created_at?->format('Y-m-d') }}</td>
                         <td class="px-4 py-3 text-right">
                             @if ($canManage)

@@ -3,7 +3,7 @@
         <div>
             <flux:link :href="route('platform.tenants.index')" wire:navigate class="text-sm">&larr; {{ __('Organizations') }}</flux:link>
             <flux:heading size="xl" class="mt-1">{{ $tenant->name }}</flux:heading>
-            <flux:text class="mt-1">{{ $tenant->slug }} · {{ $tenant->email }} · <flux:badge size="sm">{{ $tenant->status->label() }}</flux:badge></flux:text>
+            <flux:text class="mt-1">{{ $tenant->slug }} · {{ $tenant->email }} · <x-status-badge :status="$tenant->status" /></flux:text>
         </div>
 
         @if ($canManage)
@@ -83,6 +83,7 @@
                                     <x-money :cents="$invoice->total_cents" :currency="$invoice->currency" />
                                     <div><flux:badge size="sm" :color="$invoice->isPaid() ? 'green' : 'zinc'">{{ $invoice->status->label() }}</flux:badge></div>
                                 </td>
+                                <td class="px-4 py-2 text-right"><flux:button size="sm" variant="ghost" icon="arrow-down-tray" :href="route('platform.billing.invoices.pdf', $invoice)">{{ __('PDF') }}</flux:button></td>
                             </tr>
                         @empty
                             <tr><td class="px-4 py-4 text-neutral-500">{{ __('No invoices issued.') }}</td></tr>

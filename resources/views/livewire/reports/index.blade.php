@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-5">
-    <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ __('Reports') }}</h1>
+    <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Reports') }}</h1>
 
     @if (count($reports) === 0)
         <p class="rounded-xl border border-dashed border-neutral-300 p-8 text-center text-neutral-500 dark:border-neutral-700">
@@ -48,7 +48,7 @@
                     @foreach ($result['summary'] as $label => $value)
                         <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
                             <p class="text-xs uppercase text-neutral-500">{{ $label }}</p>
-                            <p class="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{{ $value }}</p>
+                            <p class="mt-1 text-lg font-semibold text-neutral-800 dark:text-neutral-100">{{ $value }}</p>
                         </div>
                     @endforeach
                 </div>

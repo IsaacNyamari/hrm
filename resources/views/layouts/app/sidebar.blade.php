@@ -3,7 +3,7 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
+    <body class="min-h-screen bg-canvas font-sans text-ink antialiased dark:bg-zinc-950 dark:text-zinc-100">
         @if (session()->has('impersonator_id'))
             <div class="flex items-center justify-center gap-3 bg-amber-500 px-4 py-1.5 text-sm font-medium text-amber-950">
                 <span>{{ __('You are impersonating') }} {{ auth()->user()?->name }}.</span>
@@ -14,11 +14,22 @@
             </div>
         @endif
 
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200/80 bg-linear-to-b from-white via-white to-indigo-100 dark:border-white/10 dark:from-zinc-900 dark:via-zinc-900 dark:to-indigo-950">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
+
+            <div class="flex items-center gap-3 rounded-xl px-2 py-3">
+                <flux:avatar circle :name="auth()->user()->name" :initials="auth()->user()->initials()" color="indigo" class="ring-2 ring-brand/15" />
+                <div class="min-w-0 flex-1 leading-tight">
+                    <p class="truncate text-sm font-semibold text-zinc-900 dark:text-white">{{ auth()->user()->name }}</p>
+                    <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ auth()->user()->isPlatformAdmin() ? __('Platform admin') : str(auth()->user()->getRoleNames()->first() ?? __('Member'))->headline() }}</p>
+                </div>
+                <a href="{{ route('profile.edit') }}" wire:navigate class="grid size-6 place-items-center rounded-md bg-highlight text-white shadow-sm shadow-highlight/30 transition hover:bg-cyan-600" aria-label="{{ __('Edit profile') }}">
+                    <flux:icon.pencil-square variant="micro" />
+                </a>
+            </div>
 
             <flux:sidebar.nav>
                 @if (auth()->user()?->isPlatformAdmin())
@@ -56,6 +67,11 @@
                     @can('audit.view')
                         <flux:sidebar.item icon="shield-check" :href="route('audit')" :current="request()->routeIs('audit')" wire:navigate>
                             {{ __('Audit trail') }}
+                        </flux:sidebar.item>
+                    @endcan
+                    @can('billing.view')
+                        <flux:sidebar.item icon="wallet" :href="route('billing.index')" :current="request()->routeIs('billing.index')" wire:navigate>
+                            {{ __('Billing') }}
                         </flux:sidebar.item>
                     @endcan
                 </flux:sidebar.group>
@@ -110,39 +126,50 @@
                 @endif
             </flux:sidebar.nav>
 
-            <flux:spacer />
-
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>
 
-        <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
-            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+        <flux:header sticky class="gap-2 bg-night text-white shadow-sm lg:gap-3 dark:bg-zinc-950">
+            <flux:sidebar.toggle class="text-white! lg:hidden" icon="bars-2" inset="left" />
+
+            @if (! auth()->user()->isPlatformAdmin())
+                @can('employees.view')
+                    <form method="GET" action="{{ route('employees.index') }}" class="relative hidden w-full max-w-xs sm:block">
+                        <flux:icon.magnifying-glass variant="micro" class="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-white/50" />
+                        <input type="search" name="q" placeholder="{{ __('Search employees…') }}"
+                               class="w-full rounded-lg border-0 bg-white/10 py-2 ps-9 pe-3 text-sm text-white placeholder:text-white/50 focus:bg-white/15 focus:outline-hidden focus:ring-2 focus:ring-highlight/60" />
+                    </form>
+                @endcan
+            @endif
 
             <flux:spacer />
 
-            <flux:dropdown position="top" align="end">
-                <flux:profile
-                    :initials="auth()->user()->initials()"
-                    icon-trailing="chevron-down"
-                />
+            @php($unreadNotifications = auth()->user()->unreadNotifications()->count())
+            <a href="{{ route('notifications') }}" wire:navigate class="relative grid size-9 place-items-center rounded-lg bg-white/10 text-white transition hover:bg-white/20" aria-label="{{ __('Notifications') }}">
+                <flux:icon.bell variant="mini" />
+                @if ($unreadNotifications > 0)
+                    <span class="absolute -end-1 -top-1 grid min-w-4 place-items-center rounded-full bg-warning px-1 text-[10px] font-bold leading-4 text-night">{{ $unreadNotifications > 9 ? '9+' : $unreadNotifications }}</span>
+                @endif
+            </a>
+
+            <flux:dropdown position="bottom" align="end">
+                <button type="button" class="flex items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-medium text-white transition hover:bg-white/10" data-test="sidebar-menu-button">
+                    <flux:avatar circle size="sm" :name="auth()->user()->name" :initials="auth()->user()->initials()" color="cyan" />
+                    <span class="hidden max-w-40 truncate md:inline">{{ auth()->user()->name }}</span>
+                    <flux:icon.chevron-down variant="micro" class="text-white/60" />
+                </button>
 
                 <flux:menu>
-                    <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                                <flux:avatar
-                                    :name="auth()->user()->name"
-                                    :initials="auth()->user()->initials()"
-                                />
+                    <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
+                        <flux:avatar
+                            :name="auth()->user()->name"
+                            :initials="auth()->user()->initials()"
+                        />
 
-                                <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                    <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
-                                </div>
-                            </div>
+                        <div class="grid flex-1 text-start text-sm leading-tight">
+                            <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
+                            <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
                         </div>
-                    </flux:menu.radio.group>
+                    </div>
 
                     <flux:menu.separator />
 

@@ -6,7 +6,7 @@
     <title>Accept invitation — {{ $invitation->tenant->name }}</title>
     @vite(['resources/css/app.css'])
 </head>
-<body class="h-full bg-neutral-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+<body class="h-full bg-neutral-50 text-neutral-800 antialiased dark:bg-neutral-950 dark:text-neutral-100">
     <div class="mx-auto flex min-h-full max-w-md flex-col justify-center px-6 py-12">
         <div class="rounded-xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
             <h1 class="text-lg font-semibold">Join {{ $invitation->tenant->name }}</h1>

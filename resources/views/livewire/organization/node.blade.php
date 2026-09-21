@@ -2,7 +2,7 @@
 <li>
     <div class="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"
          style="margin-left: {{ $depth * 1.5 }}rem">
-        <span class="font-medium text-neutral-900 dark:text-neutral-100">{{ $node['name'] }}</span>
+        <span class="font-medium text-neutral-800 dark:text-neutral-100">{{ $node['name'] }}</span>
         @if (! empty($node['job_title']))
             <span class="text-neutral-500">· {{ $node['job_title'] }}</span>
         @endif

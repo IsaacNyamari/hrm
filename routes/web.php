@@ -85,6 +85,7 @@ Route::middleware(['auth', 'verified', 'platform'])->prefix('platform')->name('p
     Route::view('plans', 'platform.plans')->name('plans.index');
     Route::view('billing', 'platform.billing')->name('billing');
     Route::get('billing/payments/{payment:uuid}', [PlatformBillingController::class, 'showPayment'])->name('billing.payments.show');
+    Route::get('billing/invoices/{invoice:uuid}/pdf', [PlatformBillingController::class, 'downloadInvoice'])->name('billing.invoices.pdf');
 });
 
 /*
@@ -110,6 +111,7 @@ Route::post('invitations/{invitation}', [InvitationController::class, 'store'])-
 */
 Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])->group(function () {
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('billing/invoices/{invoice:uuid}/pdf', [BillingController::class, 'invoicePdf'])->name('billing.invoices.pdf');
     Route::post('subscription', [SubscriptionController::class, 'store'])->name('subscription.store');
     Route::delete('subscription', [SubscriptionController::class, 'destroy'])->name('subscription.destroy');
 

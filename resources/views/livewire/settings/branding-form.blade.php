@@ -1,6 +1,6 @@
 <div class="flex max-w-2xl flex-col gap-5">
     <div>
-        <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ __('Branding') }}</h1>
+        <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Branding') }}</h1>
         <p class="mt-1 text-sm text-neutral-500">{{ __('Applied to the app header and every e-mail your team sends.') }}</p>
     </div>
 

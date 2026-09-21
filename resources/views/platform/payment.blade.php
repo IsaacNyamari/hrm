@@ -22,7 +22,12 @@
                         @endif
                     </dd>
                     <dt class="text-neutral-500">{{ __('Invoice') }}</dt>
-                    <dd class="col-span-2">{{ $payment->invoice?->number ?? __('—') }}</dd>
+                    <dd class="col-span-2 flex items-center gap-3">
+                        {{ $payment->invoice?->number ?? __('—') }}
+                        @if ($payment->invoice)
+                            <flux:button size="xs" variant="ghost" icon="arrow-down-tray" :href="route('platform.billing.invoices.pdf', $payment->invoice)">{{ __('PDF') }}</flux:button>
+                        @endif
+                    </dd>
                     <dt class="text-neutral-500">{{ __('Provider ref') }}</dt>
                     <dd class="col-span-2 font-mono text-xs">{{ $payment->provider_reference ?? __('—') }}</dd>
                     <dt class="text-neutral-500">{{ __('Payer') }}</dt>

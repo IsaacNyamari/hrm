@@ -16,13 +16,21 @@ class FeatureGate
 {
     private const TTL_SECONDS = 300;
 
+    /**
+     * The plan's raw attributes are cached rather than the model itself: with
+     * `cache.serializable_classes` disabled, a cached model would come back as
+     * an incomplete object.
+     */
     public function planFor(Tenant $tenant): ?Plan
     {
-        return Cache::remember(
+        /** @var array<string, mixed>|null $attributes */
+        $attributes = Cache::remember(
             $this->cacheKey($tenant),
             self::TTL_SECONDS,
-            fn (): ?Plan => $tenant->subscription()->with('plan')->first()?->plan,
+            fn (): ?array => $tenant->subscription()->with('plan')->first()?->plan?->getAttributes(),
         );
+
+        return $attributes === null ? null : (new Plan)->newFromBuilder($attributes);
     }
 
     public function allows(Tenant $tenant, string $feature): bool

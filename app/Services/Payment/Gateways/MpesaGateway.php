@@ -146,6 +146,10 @@ class MpesaGateway implements PaymentGateway
 
     private function accessToken(): string
     {
+        if (blank($this->config['consumer_key'] ?? null) || blank($this->config['consumer_secret'] ?? null)) {
+            throw new RuntimeException('M-Pesa is not configured: set MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET.');
+        }
+
         $response = Http::withBasicAuth(
             (string) $this->config['consumer_key'],
             (string) $this->config['consumer_secret'],
@@ -154,7 +158,7 @@ class MpesaGateway implements PaymentGateway
         $token = $response->json('access_token');
 
         if (! is_string($token) || $token === '') {
-            throw new RuntimeException('Unable to obtain an M-Pesa access token.');
+            throw new RuntimeException('Unable to obtain an M-Pesa access token (HTTP '.$response->status().').');
         }
 
         return $token;

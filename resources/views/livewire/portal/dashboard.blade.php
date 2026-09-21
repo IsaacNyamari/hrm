@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-6">
-    <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ __('My HR') }}</h1>
+    <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('My HR') }}</h1>
 
     @unless ($hasEmployee)
         <p class="rounded-xl border border-dashed border-neutral-300 p-8 text-center text-neutral-500 dark:border-neutral-700">
@@ -9,7 +9,7 @@
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
                 <p class="text-xs uppercase text-neutral-500">{{ __('Today') }}</p>
-                <p class="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                <p class="mt-1 text-lg font-semibold text-neutral-800 dark:text-neutral-100">
                     @if ($data['attendance_today']['clocked_in'])
                         {{ __('Clocked in') }}
                     @elseif ($data['attendance_today']['status'])
@@ -23,18 +23,18 @@
 
             <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
                 <p class="text-xs uppercase text-neutral-500">{{ __('Pending leave') }}</p>
-                <p class="mt-1 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">{{ $data['pending_leave'] }}</p>
+                <p class="mt-1 text-2xl font-semibold text-neutral-800 dark:text-neutral-100">{{ $data['pending_leave'] }}</p>
                 <a href="{{ route('leave') }}" class="text-xs text-neutral-500 underline">{{ __('Leave') }}</a>
             </div>
 
             <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
                 <p class="text-xs uppercase text-neutral-500">{{ __('Open HR requests') }}</p>
-                <p class="mt-1 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">{{ $data['open_hr_requests'] }}</p>
+                <p class="mt-1 text-2xl font-semibold text-neutral-800 dark:text-neutral-100">{{ $data['open_hr_requests'] }}</p>
             </div>
 
             <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
                 <p class="text-xs uppercase text-neutral-500">{{ __('Documents expiring') }}</p>
-                <p class="mt-1 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">{{ $data['documents_expiring_30d'] }}</p>
+                <p class="mt-1 text-2xl font-semibold text-neutral-800 dark:text-neutral-100">{{ $data['documents_expiring_30d'] }}</p>
             </div>
         </div>
 

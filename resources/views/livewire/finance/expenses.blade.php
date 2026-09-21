@@ -35,7 +35,7 @@
                             <td>{{ $claim->title }}</td>
                             <td>{{ $claim->items->count() }}</td>
                             <td>{{ number_format($claim->total_cents / 100, 2) }} {{ $claim->currency }}</td>
-                            <td><flux:badge size="sm">{{ $claim->status->label() }}</flux:badge></td>
+                            <td><x-status-badge :status="$claim->status" /></td>
                             <td class="text-right space-x-2">
                                 @if ($claim->status->isEditable())
                                     <flux:button size="sm" variant="primary" wire:click="submitClaim('{{ $claim->uuid }}')">{{ __('Submit') }}</flux:button>
@@ -67,7 +67,7 @@
                             <span class="text-neutral-600 dark:text-neutral-400">{{ $claim->reference }} — {{ $claim->employee->fullName() }} — {{ $claim->title }}</span>
                             <span class="flex items-center gap-2">
                                 <span class="font-medium">{{ number_format($claim->total_cents / 100, 2) }}</span>
-                                <flux:button size="sm" variant="primary" wire:click="approveClaim('{{ $claim->uuid }}')">{{ __('Approve') }}</flux:button>
+                                <flux:button size="sm" variant="primary" color="green" icon="check" wire:click="approveClaim('{{ $claim->uuid }}')">{{ __('Approve') }}</flux:button>
                                 <flux:modal.trigger name="reject-claim-{{ $claim->uuid }}">
                                     <flux:button size="sm" variant="danger">{{ __('Reject') }}</flux:button>
                                 </flux:modal.trigger>

@@ -25,7 +25,7 @@
                         <td class="px-4 py-3 text-neutral-500">{{ $record->clock_in_at?->format('H:i') ?? '—' }}</td>
                         <td class="px-4 py-3 text-neutral-500">{{ $record->clock_out_at?->format('H:i') ?? '—' }}</td>
                         <td class="px-4 py-3 text-neutral-500">{{ $record->worked_minutes !== null ? gmdate('H:i', $record->worked_minutes * 60) : '—' }}</td>
-                        <td class="px-4 py-3"><flux:badge size="sm">{{ $record->status->label() }}</flux:badge></td>
+                        <td class="px-4 py-3"><x-status-badge :status="$record->status" /></td>
                         <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                             <flux:button size="sm" variant="ghost" wire:click="startEdit('{{ $record->uuid }}')">{{ __('Edit') }}</flux:button>
                             <flux:modal.trigger name="delete-attendance-{{ $record->uuid }}">

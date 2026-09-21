@@ -41,7 +41,7 @@
                                             <flux:badge size="sm" color="red">{{ __('Overdue') }}</flux:badge>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3"><flux:badge size="sm">{{ $t->status->label() }}</flux:badge></td>
+                                    <td class="px-4 py-3"><x-status-badge :status="$t->status" /></td>
                                     <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                                         @if ($t->status->value === 'pending')
                                             <flux:button size="sm" variant="primary" wire:click="startTask('{{ $t->uuid }}')">{{ __('Start') }}</flux:button>
@@ -87,7 +87,7 @@
                                             <flux:badge size="sm" color="red">{{ __('Overdue') }}</flux:badge>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3"><flux:badge size="sm">{{ $t->status->label() }}</flux:badge></td>
+                                    <td class="px-4 py-3"><x-status-badge :status="$t->status" /></td>
                                     <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                                         @if ($canManage || $t->employee->user_id === auth()->id())
                                             @if ($t->status->value === 'pending')

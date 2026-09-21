@@ -34,7 +34,18 @@
                         <td class="px-4 py-3">{{ $plan->subscriptions_count }}</td>
                         <td class="px-4 py-3">{{ $plan->is_active ? __('Yes') : __('No') }}</td>
                         <td class="px-4 py-3 text-right">
-                            <flux:button size="sm" variant="ghost" wire:click="edit({{ $plan->id }})">{{ __('Edit') }}</flux:button>
+                            <flux:button size="sm" variant="primary" wire:click="edit({{ $plan->id }})">{{ __('Edit') }}</flux:button>
+                            <flux:modal.trigger name="delete-plan-{{ $plan->id }}">
+                                <flux:button size="sm" variant="primary" color="red" icon="trash">{{ __('Delete') }}</flux:button>
+                            </flux:modal.trigger>
+                            <x-confirm-modal
+                                name="delete-plan-{{ $plan->id }}"
+                                :heading="__('Delete the “:name” plan?', ['name' => $plan->name])"
+                                :text="$plan->subscriptions_count > 0
+                                    ? trans_choice('This plan has :count subscription. This cannot be undone.|This plan has :count subscriptions. This cannot be undone.', $plan->subscriptions_count)
+                                    : __('This cannot be undone.')"
+                                :confirm-label="__('Delete plan')"
+                                confirm-wire="delete({{ $plan->id }})" />
                         </td>
                     </tr>
                 @empty

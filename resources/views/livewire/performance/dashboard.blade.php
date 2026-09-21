@@ -98,7 +98,7 @@
                                 <span class="text-neutral-500">({{ $review->cycle->name }})</span>
                             </span>
                             <span class="flex items-center gap-2">
-                                <flux:badge size="sm">{{ $review->status->label() }}</flux:badge>
+                                <x-status-badge :status="$review->status" />
                                 @if ($review->status->isEditable())
                                     <flux:button size="sm" variant="primary" wire:click="startReview('{{ $review->uuid }}')">{{ __('Fill in') }}</flux:button>
                                 @endif
@@ -156,7 +156,7 @@
                                 <td class="px-4 py-3 font-medium">{{ $cycle->name }}</td>
                                 <td class="px-4 py-3 text-neutral-500">{{ $cycle->type->label() }}</td>
                                 <td class="px-4 py-3 text-neutral-500">{{ $cycle->starts_on->toDateString() }} – {{ $cycle->ends_on->toDateString() }}</td>
-                                <td class="px-4 py-3"><flux:badge size="sm">{{ $cycle->status->label() }}</flux:badge></td>
+                                <td class="px-4 py-3"><x-status-badge :status="$cycle->status" /></td>
                                 <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                                     @if ($cycle->status->value === 'draft')
                                         <flux:button size="sm" variant="primary" wire:click="openCycle('{{ $cycle->uuid }}')">{{ __('Open') }}</flux:button>

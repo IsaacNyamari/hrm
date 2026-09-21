@@ -34,7 +34,7 @@
                             <td class="py-1.5 font-mono text-xs">{{ $asset->asset_tag }}</td>
                             <td>{{ $asset->name }}</td>
                             <td class="text-neutral-500">{{ $asset->category->label() }}</td>
-                            <td><flux:badge size="sm">{{ $asset->status->label() }}</flux:badge></td>
+                            <td><x-status-badge :status="$asset->status" /></td>
                             <td class="text-neutral-500">{{ optional($asset->activeAssignments->first())->employee?->fullName() ?? '—' }}</td>
                             @if ($canEdit)
                                 <td class="text-right space-x-2 whitespace-nowrap">

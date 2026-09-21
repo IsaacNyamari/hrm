@@ -3,7 +3,7 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+    <body class="min-h-screen bg-white text-neutral-800 antialiased dark:bg-neutral-950 dark:text-neutral-100">
         <div class="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-6">
             <header class="flex items-center justify-between py-6">
                 <span class="text-sm font-semibold tracking-tight">{{ config('app.name', 'HRM') }}</span>

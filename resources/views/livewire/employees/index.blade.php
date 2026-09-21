@@ -53,11 +53,11 @@
                 @forelse ($employees as $employee)
                     <tr wire:key="emp-{{ $employee->uuid }}" class="hover:bg-neutral-50 dark:hover:bg-neutral-900">
                         <td class="px-4 py-3 font-mono text-xs">{{ $employee->employee_number }}</td>
-                        <td class="px-4 py-3 font-medium text-neutral-900 dark:text-neutral-100">{{ $employee->fullName() }}</td>
+                        <td class="px-4 py-3 font-medium text-neutral-800 dark:text-neutral-100">{{ $employee->fullName() }}</td>
                         <td class="px-4 py-3 text-neutral-500">{{ $employee->job_title ?? '—' }}</td>
                         <td class="px-4 py-3 text-neutral-500">{{ $employee->department?->name ?? '—' }}</td>
                         <td class="px-4 py-3 text-neutral-500">{{ $employee->branch?->name ?? '—' }}</td>
-                        <td class="px-4 py-3"><flux:badge size="sm">{{ $employee->status->label() }}</flux:badge></td>
+                        <td class="px-4 py-3"><x-status-badge :status="$employee->status" /></td>
                         @if ($canUpdate || $canDelete)
                             <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                                 @if ($canUpdate)

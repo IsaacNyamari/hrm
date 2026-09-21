@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ __('Organization chart') }}</h1>
+        <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Organization chart') }}</h1>
         <div class="inline-flex rounded-lg border border-neutral-300 p-0.5 text-sm dark:border-neutral-700">
             <button type="button" wire:click="$set('view', 'reporting')"
                 @class(['rounded-md px-3 py-1', 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' => $view === 'reporting'])>

@@ -1,4 +1,4 @@
-@php($active = 'text-neutral-900 dark:text-neutral-100 border-neutral-900 dark:border-neutral-100')
+@php($active = 'text-neutral-800 dark:text-neutral-100 border-neutral-900 dark:border-neutral-100')
 @php($idle = 'text-neutral-500 border-transparent hover:text-neutral-800 dark:hover:text-neutral-200')
 
 <div class="flex h-full w-full flex-1 flex-col gap-6">
@@ -86,6 +86,7 @@
                         <th class="px-4 py-3 font-medium">{{ __('Outstanding') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Status') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Due') }}</th>
+                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -102,9 +103,10 @@
                             <td class="px-4 py-3"><x-money :cents="$invoice->outstandingCents()" :currency="$invoice->currency" /></td>
                             <td class="px-4 py-3"><flux:badge size="sm" :color="$invoice->isPaid() ? 'green' : ($invoice->status === \App\Enums\InvoiceStatus::Uncollectible ? 'red' : 'zinc')">{{ $invoice->status->label() }}</flux:badge></td>
                             <td class="px-4 py-3 text-neutral-500">{{ $invoice->due_at?->format('Y-m-d') ?? '—' }}</td>
+                            <td class="px-4 py-3 text-right"><flux:button size="sm" variant="ghost" icon="arrow-down-tray" :href="route('platform.billing.invoices.pdf', $invoice)">{{ __('PDF') }}</flux:button></td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-6 text-center text-neutral-500">{{ __('No invoices match.') }}</td></tr>
+                        <tr><td colspan="8" class="px-4 py-6 text-center text-neutral-500">{{ __('No invoices match.') }}</td></tr>
                     @endforelse
                 </tbody>
             @else

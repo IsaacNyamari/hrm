@@ -11,7 +11,7 @@
                 @foreach ($balances as $b)
                     <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
                         <p class="text-xs uppercase text-neutral-500">{{ $b['name'] }}</p>
-                        <p class="mt-1 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">{{ $b['remaining'] }}</p>
+                        <p class="mt-1 text-2xl font-semibold text-neutral-800 dark:text-neutral-100">{{ $b['remaining'] }}</p>
                         <p class="text-xs text-neutral-500">{{ $b['used'] }} {{ __('used') }} · {{ $b['pending'] }} {{ __('pending') }}</p>
                     </div>
                 @endforeach
@@ -64,7 +64,7 @@
                                 <td class="px-4 py-3">{{ $r->leaveType->name }}</td>
                                 <td class="px-4 py-3 text-neutral-500">{{ $r->start_date->toFormattedDateString() }} – {{ $r->end_date->toFormattedDateString() }}</td>
                                 <td class="px-4 py-3">{{ $r->days }}</td>
-                                <td class="px-4 py-3"><flux:badge size="sm">{{ $r->status->label() }}</flux:badge></td>
+                                <td class="px-4 py-3"><x-status-badge :status="$r->status" /></td>
                                 <td class="px-4 py-3 text-right">
                                     @if ($r->status->value === 'pending' || ($r->status->value === 'approved' && $r->start_date->isFuture()))
                                         <flux:modal.trigger name="cancel-leave-{{ $r->uuid }}">
@@ -96,7 +96,7 @@
                                 {{ $r->employee->fullName() }} — {{ $r->leaveType->name }} — {{ $r->start_date->toFormattedDateString() }} – {{ $r->end_date->toFormattedDateString() }} ({{ $r->days }} {{ __('days') }})
                             </span>
                             <span class="flex items-center gap-2">
-                                <flux:button size="sm" variant="primary" wire:click="approve('{{ $r->uuid }}')">{{ __('Approve') }}</flux:button>
+                                <flux:button size="sm" variant="primary" color="green" icon="check" wire:click="approve('{{ $r->uuid }}')">{{ __('Approve') }}</flux:button>
                                 <flux:modal.trigger name="reject-leave-{{ $r->uuid }}">
                                     <flux:button size="sm" variant="danger">{{ __('Reject') }}</flux:button>
                                 </flux:modal.trigger>

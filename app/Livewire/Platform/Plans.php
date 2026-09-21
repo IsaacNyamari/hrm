@@ -137,4 +137,14 @@ class Plans extends Component
             'intervals' => BillingInterval::cases(),
         ]);
     }
+
+    public function delete(int $planId, Auditor $auditor): void
+    {
+        $this->authorizePlatform(PlatformPermission::PlansManage);
+
+        $plan = Plan::query()->findOrFail($planId);
+        $plan->delete();
+        $auditor->log('platform.plan.deleted', $plan, ['slug' => $plan->slug]);
+        $this->notice = __('Plan “:name” deleted.', ['name' => $plan->name]);
+    }
 }

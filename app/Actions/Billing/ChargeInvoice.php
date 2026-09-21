@@ -4,17 +4,24 @@ declare(strict_types=1);
 
 namespace App\Actions\Billing;
 
+use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
 use App\Services\Payment\PaymentManager;
 use App\Support\Payment\PaymentRequest;
 use App\Support\Payment\PaymentResult;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\HttpClientException;
+use RuntimeException;
 
 /**
  * Kicks off a charge with the provider for a pending Payment and records the
  * provider's response. The payment only becomes "succeeded" later, via a
  * verified webhook processed by PaymentReconciler.
+ *
+ * A provider that cannot be reached (bad credentials, network failure) marks
+ * the payment failed with a user-safe reason instead of bubbling a 500; the
+ * underlying exception is reported for operators.
  */
 class ChargeInvoice
 {
@@ -24,13 +31,24 @@ class ChargeInvoice
     {
         $gateway = $this->payments->gateway($payment->provider);
 
-        $result = $gateway->initiatePayment(new PaymentRequest(
-            amountCents: $payment->amount_cents,
-            currency: $payment->currency,
-            reference: $payment->reference,
-            payer: $payment->payer,
-            description: 'Subscription',
-        ));
+        try {
+            $result = $gateway->initiatePayment(new PaymentRequest(
+                amountCents: $payment->amount_cents,
+                currency: $payment->currency,
+                reference: $payment->reference,
+                payer: $payment->payer,
+                description: 'Subscription',
+            ));
+        } catch (HttpClientException|RuntimeException $exception) {
+            report($exception);
+
+            $result = new PaymentResult(
+                status: PaymentStatus::Failed,
+                reference: $payment->reference,
+                failureReason: __('The payment provider is unavailable right now. Please try again later.'),
+                raw: ['error' => $exception->getMessage()],
+            );
+        }
 
         $payment->forceFill([
             'provider_reference' => $result->externalId ?? $payment->provider_reference,
