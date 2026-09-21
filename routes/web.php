@@ -33,6 +33,7 @@ use App\Http\Controllers\HrRequestController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\JoinController;
 use App\Http\Controllers\JobPositionController;
 use App\Http\Controllers\KpiController;
 use App\Http\Controllers\LeaveBalanceController;
@@ -52,6 +53,7 @@ use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PaystackCallbackController;
 use App\Http\Controllers\PerformanceCycleController;
+use App\Http\Controllers\PricingController;
 use App\Http\Controllers\PerformanceReviewController;
 use App\Http\Controllers\Platform\BillingController as PlatformBillingController;
 use App\Http\Controllers\Platform\TenantController as PlatformTenantController;
@@ -66,7 +68,27 @@ use App\Http\Controllers\VacancyController;
 use App\Http\Controllers\WebhookEndpointController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+/*
+| Public marketing website.
+*/
+Route::view('/', 'marketing.home')->name('home');
+Route::view('features', 'marketing.features')->name('features');
+Route::get('pricing', PricingController::class)->name('pricing');
+Route::view('about', 'marketing.about')->name('about');
+Route::view('docs', 'marketing.docs')->name('docs');
+Route::view('contact', 'marketing.contact')->name('contact');
+Route::view('request-a-quote', 'marketing.quote')->name('quote');
+
+/*
+| Invite-only registration. Public sign-up is closed (Fortify registration is
+| disabled); a platform admin emails a single-use access link from a lead.
+*/
+Route::middleware(['guest', 'throttle:20,1'])->group(function () {
+    Route::get('join/{token}', [JoinController::class, 'open'])->where('token', '[A-Za-z0-9]{64}')->name('join.open');
+    Route::post('join/{token}', [JoinController::class, 'claim'])->where('token', '[A-Za-z0-9]{64}')->name('join.claim');
+    Route::get('join', [JoinController::class, 'create'])->name('join.create');
+    Route::post('join', [JoinController::class, 'store'])->name('join.store');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
@@ -87,6 +109,7 @@ Route::middleware(['auth', 'verified', 'platform'])->prefix('platform')->name('p
     Route::view('billing', 'platform.billing')->name('billing');
     Route::get('billing/payments/{payment:uuid}', [PlatformBillingController::class, 'showPayment'])->name('billing.payments.show');
     Route::get('billing/invoices/{invoice:uuid}/pdf', [PlatformBillingController::class, 'downloadInvoice'])->name('billing.invoices.pdf');
+    Route::view('leads', 'platform.leads')->name('leads');
     Route::view('settings', 'platform.settings')->name('settings');
 });
 

@@ -160,8 +160,9 @@ return [
     |
     */
 
+    // Public registration is closed: organizations sign up through a single-use
+    // access link sent by a platform admin (JoinController).
     'features' => [
-        Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

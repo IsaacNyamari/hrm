@@ -15,12 +15,12 @@ class StatusTone
 {
     private const POSITIVE = [
         'active', 'approved', 'paid', 'present', 'completed', 'hired', 'accepted', 'succeeded',
-        'reimbursed', 'settled', 'acknowledged', 'resolved', 'filled', 'available', 'remote_work',
+        'reimbursed', 'settled', 'acknowledged', 'resolved', 'filled', 'available', 'remote_work', 'invited',
     ];
 
     private const PENDING = [
         'pending', 'submitted', 'in_progress', 'in_review', 'processed', 'trialing', 'probation',
-        'past_due', 'late', 'early_departure', 'half_day', 'on_hold', 'assigned', 'sent', 'in_repair',
+        'past_due', 'late', 'early_departure', 'half_day', 'on_hold', 'assigned', 'sent', 'in_repair', 'contacted',
     ];
 
     private const NEGATIVE = [
@@ -28,7 +28,7 @@ class StatusTone
         'rescinded', 'lost', 'uncollectible', 'void', 'withdrawn',
     ];
 
-    private const INFORMATIONAL = ['open', 'on_leave', 'holiday', 'scheduled'];
+    private const INFORMATIONAL = ['open', 'on_leave', 'holiday', 'scheduled', 'new'];
 
     public static function for(BackedEnum|string|null $status): string
     {

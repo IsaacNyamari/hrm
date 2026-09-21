@@ -263,3 +263,7 @@ select:focus[data-flux-control] {
         background-color: color-mix(in oklab, var(--color-highlight) 6%, transparent);
     }
 }
+
+[x-cloak] {
+    display: none !important;
+}

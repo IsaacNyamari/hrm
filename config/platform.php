@@ -12,6 +12,21 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public contact details (marketing website)
+    |--------------------------------------------------------------------------
+    |
+    | Shown on the Contact page and footer only when set.
+    |
+    */
+
+    'contact' => [
+        'email' => env('CONTACT_EMAIL'),
+        'phone' => env('CONTACT_PHONE'),
+        'location' => env('CONTACT_LOCATION', 'Nairobi, Kenya'),
+    ],
+
     'admin' => [
         'name' => env('PLATFORM_ADMIN_NAME', 'Platform Super Admin'),
         'email' => env('PLATFORM_ADMIN_EMAIL', 'superadmin@hrm.test'),
