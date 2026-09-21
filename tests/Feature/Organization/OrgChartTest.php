@@ -77,3 +77,34 @@ it('serves the reporting tree as JSON over HTTP', function () {
         ->assertOk()
         ->assertJsonStructure(['data']);
 });
+
+it('counts whole teams and department headcount', function () {
+    app(TenantContext::class)->set($this->tenant);
+
+    $engineering = Department::factory()->forTenant($this->tenant)->create(['name' => 'Engineering']);
+    Department::factory()->forTenant($this->tenant)->create(['name' => 'Backend', 'parent_id' => $engineering->id]);
+    $ceo = Employee::factory()->forTenant($this->tenant)->create(['first_name' => 'Cee', 'last_name' => 'Oh', 'department_id' => $engineering->id]);
+    $lead = Employee::factory()->forTenant($this->tenant)->create(['manager_id' => $ceo->id, 'department_id' => $engineering->id]);
+    Employee::factory()->forTenant($this->tenant)->count(2)->create(['manager_id' => $lead->id]);
+
+    $people = app(OrgChartService::class)->reportingTree();
+    $departments = app(OrgChartService::class)->departmentTree();
+
+    expect($people[0]['team_size'])->toBe(3)
+        ->and($people[0]['initials'])->toBe('CO')
+        ->and($departments[0]['headcount'])->toBe(2);
+});
+
+it('draws the organogram with reporting counts and summary stats', function () {
+    app(TenantContext::class)->set($this->tenant);
+    $ceo = Employee::factory()->forTenant($this->tenant)->create(['first_name' => 'Chart', 'last_name' => 'Root']);
+    Employee::factory()->forTenant($this->tenant)->count(2)->create(['manager_id' => $ceo->id]);
+
+    $this->actingAs($this->hr);
+
+    Livewire::test(Chart::class)
+        ->assertSeeHtml('data-test="organogram"')
+        ->assertSee('Chart Root')
+        ->assertSee('2 direct reports')
+        ->assertSee('Managers');
+});

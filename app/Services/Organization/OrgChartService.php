@@ -26,7 +26,7 @@ class OrgChartService
      */
     public function reportingTree(): array
     {
-        return TenantCache::remember('org.reporting-tree', self::CACHE_TTL, fn (): array => $this->buildReportingTree());
+        return TenantCache::remember('org.reporting-tree.v2', self::CACHE_TTL, fn (): array => $this->buildReportingTree());
     }
 
     /**
@@ -44,14 +44,16 @@ class OrgChartService
 
         $build = function (Employee $employee) use (&$build, $byManager): array {
             /** @var Collection<int, Employee> $reports */
-            $reports = $byManager->get($employee->id, new Collection);
+            $reports = $byManager->get($employee->id, new Collection)->map($build)->values()->all();
 
             return [
                 'uuid' => $employee->uuid,
                 'name' => $employee->fullName(),
+                'initials' => $this->initials($employee->first_name.' '.$employee->last_name),
                 'job_title' => $employee->job_title,
                 'department' => $employee->department?->name,
-                'reports' => $reports->map($build)->values()->all(),
+                'reports' => $reports,
+                'team_size' => array_sum(array_map(fn (array $r): int => 1 + $r['team_size'], $reports)),
             ];
         };
 
@@ -69,7 +71,7 @@ class OrgChartService
      */
     public function departmentTree(): array
     {
-        return TenantCache::remember('org.department-tree', self::CACHE_TTL, fn (): array => $this->buildDepartmentTree());
+        return TenantCache::remember('org.department-tree.v2', self::CACHE_TTL, fn (): array => $this->buildDepartmentTree());
     }
 
     /**
@@ -83,17 +85,24 @@ class OrgChartService
 
         $byParent = $departments->groupBy('parent_id');
         $knownIds = $departments->pluck('id')->flip();
+        $headcounts = Employee::query()->active()->whereNotNull('department_id')
+            ->selectRaw('department_id, count(*) as aggregate')->groupBy('department_id')
+            ->pluck('aggregate', 'department_id');
 
-        $build = function (Department $department) use (&$build, $byParent): array {
+        $build = function (Department $department) use (&$build, $byParent, $headcounts): array {
             /** @var Collection<int, Department> $children */
-            $children = $byParent->get($department->id, new Collection);
+            $children = $byParent->get($department->id, new Collection)->map($build)->values()->all();
+            $headcount = (int) ($headcounts[$department->id] ?? 0);
 
             return [
                 'uuid' => $department->uuid,
                 'name' => $department->name,
+                'initials' => $this->initials($department->name),
                 'code' => $department->code,
                 'head' => $department->head?->fullName(),
-                'children' => $children->map($build)->values()->all(),
+                'headcount' => $headcount,
+                'children' => $children,
+                'team_size' => $headcount + array_sum(array_map(fn (array $c): int => $c['team_size'], $children)),
             ];
         };
 
@@ -102,5 +111,14 @@ class OrgChartService
             ->map($build)
             ->values()
             ->all();
+    }
+
+    private function initials(string $name): string
+    {
+        return collect(preg_split('/\s+/', trim($name)) ?: [])
+            ->filter()
+            ->take(2)
+            ->map(fn (string $word): string => mb_strtoupper(mb_substr($word, 0, 1)))
+            ->implode('');
     }
 }

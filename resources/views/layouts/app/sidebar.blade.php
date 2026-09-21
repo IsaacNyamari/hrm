@@ -91,7 +91,7 @@
                         {{ __('Employees') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="rectangle-group" :href="route('org-chart')" :current="request()->routeIs('org-chart')" wire:navigate>
-                        {{ __('Org chart') }}
+                        {{ __('Organogram') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 

@@ -267,3 +267,87 @@ select:focus[data-flux-control] {
 [x-cloak] {
     display: none !important;
 }
+
+/* Organogram: top-down tree with connector lines. */
+.orgchart {
+    --org-line: color-mix(in oklab, var(--color-brand) 35%, transparent);
+    --org-gap: 1.5rem;
+}
+
+.dark .orgchart {
+    --org-line: color-mix(in oklab, var(--color-highlight) 35%, transparent);
+}
+
+.orgchart ul {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: var(--org-gap);
+}
+
+.orgchart > ul {
+    padding-top: 0;
+}
+
+.orgchart li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--org-gap) 0.5rem 0;
+}
+
+.orgchart > ul > li {
+    padding-top: 0;
+}
+
+.orgchart li::before,
+.orgchart li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 50%;
+    width: 50%;
+    height: var(--org-gap);
+    border-top: 2px solid var(--org-line);
+}
+
+.orgchart li::after {
+    right: auto;
+    left: 50%;
+    border-left: 2px solid var(--org-line);
+}
+
+.orgchart li:only-child {
+    padding-top: 0;
+}
+
+.orgchart li:only-child::before,
+.orgchart li:only-child::after,
+.orgchart > ul > li::before,
+.orgchart > ul > li::after {
+    display: none;
+}
+
+.orgchart li:first-child::before,
+.orgchart li:last-child::after {
+    border: 0 none;
+}
+
+.orgchart li:last-child::before {
+    border-right: 2px solid var(--org-line);
+    border-radius: 0 0.5rem 0 0;
+}
+
+.orgchart li:first-child::after {
+    border-radius: 0.5rem 0 0 0;
+}
+
+.orgchart ul ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: var(--org-gap);
+    border-left: 2px solid var(--org-line);
+}
