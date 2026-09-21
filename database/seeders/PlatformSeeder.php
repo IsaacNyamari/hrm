@@ -14,10 +14,10 @@ class PlatformSeeder extends Seeder
     public function run(): void
     {
         $admin = User::query()->firstOrCreate(
-            ['email' => 'superadmin@hrm.test'],
+            ['email' => config('platform.admin.email')],
             [
-                'name' => 'Platform Super Admin',
-                'password' => Hash::make('password'),
+                'name' => config('platform.admin.name'),
+                'password' => Hash::make((string) config('platform.admin.password')),
                 'email_verified_at' => now(),
                 'tenant_id' => null,
                 'is_platform_admin' => true,
