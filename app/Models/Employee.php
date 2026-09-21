@@ -26,6 +26,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $uuid
  * @property int|null $user_id
  * @property string $employee_number
+ * @property string|null $device_password
+ * @property string|null $device_card_number
  * @property string $first_name
  * @property string|null $middle_name
  * @property string $last_name
@@ -79,6 +81,11 @@ class Employee extends Model
     protected $guarded = ['id'];
 
     /**
+     * @var array<int, string>
+     */
+    protected $hidden = ['device_password'];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -93,6 +100,7 @@ class Employee extends Model
             'gender' => Gender::class,
             'marital_status' => MaritalStatus::class,
             'salary_amount_cents' => 'integer',
+            'device_password' => 'encrypted',
         ];
     }
 
@@ -311,6 +319,14 @@ class Employee extends Model
     public function assetAssignments(): HasMany
     {
         return $this->hasMany(AssetAssignment::class);
+    }
+
+    /**
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 
     /* ---------------------------------------------------------------------

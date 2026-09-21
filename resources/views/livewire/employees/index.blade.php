@@ -1,35 +1,36 @@
 <div class="flex flex-col gap-4">
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{{ __('Employees') }}</h1>
-            <p class="text-sm text-neutral-500">{{ $employees->total() }} {{ Str::plural('person', $employees->total()) }}</p>
+            <flux:heading size="xl">{{ __('Employees') }}</flux:heading>
+            <flux:text class="mt-1">{{ $employees->total() }} {{ Str::plural('person', $employees->total()) }}</flux:text>
         </div>
-        <a href="{{ route('employees.export') }}"
-           class="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800">
-            {{ __('Export') }}
-        </a>
+        <div class="flex items-center gap-2">
+            @if ($canCreate)
+                <flux:button variant="primary" wire:click="startCreate">{{ __('Add employee') }}</flux:button>
+            @endif
+            <flux:button variant="ghost" :href="route('employees.export')">{{ __('Export') }}</flux:button>
+        </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-        <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search name, number, email…') }}"
-               class="w-64 rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900" />
+    <div class="flex flex-wrap items-end gap-3">
+        <flux:input wire:model.live.debounce.300ms="search" :label="__('Search')" placeholder="{{ __('Search name, number, email…') }}" class="max-w-xs" />
 
-        <select wire:model.live="status" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900">
-            <option value="">{{ __('All statuses') }}</option>
+        <flux:select wire:model.live="status" :label="__('Status')" class="max-w-[12rem]">
+            <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
             @foreach ($statuses as $case)
-                <option value="{{ $case->value }}">{{ $case->label() }}</option>
+                <flux:select.option value="{{ $case->value }}">{{ $case->label() }}</flux:select.option>
             @endforeach
-        </select>
+        </flux:select>
 
-        <select wire:model.live="department" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900">
-            <option value="">{{ __('All departments') }}</option>
+        <flux:select wire:model.live="department" :label="__('Department')" class="max-w-[12rem]">
+            <flux:select.option value="">{{ __('All departments') }}</flux:select.option>
             @foreach ($departments as $dept)
-                <option value="{{ $dept->uuid }}">{{ $dept->name }}</option>
+                <flux:select.option value="{{ $dept->uuid }}">{{ $dept->name }}</flux:select.option>
             @endforeach
-        </select>
+        </flux:select>
 
         @if ($search !== '' || $status !== '' || $department !== '')
-            <button type="button" wire:click="clearFilters" class="text-sm text-neutral-500 underline">{{ __('Clear') }}</button>
+            <flux:button variant="ghost" size="sm" wire:click="clearFilters">{{ __('Clear') }}</flux:button>
         @endif
     </div>
 
@@ -43,6 +44,9 @@
                     <th class="px-4 py-3">{{ __('Department') }}</th>
                     <th class="px-4 py-3">{{ __('Branch') }}</th>
                     <th class="px-4 py-3">{{ __('Status') }}</th>
+                    @if ($canUpdate || $canDelete)
+                        <th class="px-4 py-3"></th>
+                    @endif
                 </tr>
             </thead>
             <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -53,15 +57,29 @@
                         <td class="px-4 py-3 text-neutral-500">{{ $employee->job_title ?? '—' }}</td>
                         <td class="px-4 py-3 text-neutral-500">{{ $employee->department?->name ?? '—' }}</td>
                         <td class="px-4 py-3 text-neutral-500">{{ $employee->branch?->name ?? '—' }}</td>
-                        <td class="px-4 py-3">
-                            <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                                {{ $employee->status->label() }}
-                            </span>
-                        </td>
+                        <td class="px-4 py-3"><flux:badge size="sm">{{ $employee->status->label() }}</flux:badge></td>
+                        @if ($canUpdate || $canDelete)
+                            <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                                @if ($canUpdate)
+                                    <flux:button size="sm" variant="ghost" wire:click="startEdit('{{ $employee->uuid }}')">{{ __('Edit') }}</flux:button>
+                                @endif
+                                @if ($canDelete)
+                                    <flux:modal.trigger name="delete-employee-{{ $employee->uuid }}">
+                                        <flux:button size="sm" variant="danger">{{ __('Delete') }}</flux:button>
+                                    </flux:modal.trigger>
+                                    <x-confirm-modal
+                                        name="delete-employee-{{ $employee->uuid }}"
+                                        :heading="__('Remove :name?', ['name' => $employee->fullName()])"
+                                        :text="__('This cannot be undone.')"
+                                        :confirm-label="__('Delete')"
+                                        confirm-wire="remove('{{ $employee->uuid }}')" />
+                                @endif
+                            </td>
+                        @endif
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-12 text-center text-neutral-500">{{ __('No employees match your filters.') }}</td>
+                        <td colspan="7" class="px-4 py-12 text-center text-neutral-500">{{ __('No employees match your filters.') }}</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -69,4 +87,65 @@
     </div>
 
     <div>{{ $employees->links() }}</div>
+
+    <flux:modal wire:model.self="showForm" class="max-w-2xl">
+        <form wire:submit="save" class="flex flex-col gap-4">
+            <flux:heading size="lg">{{ $editingUuid ? __('Edit employee') : __('New employee') }}</flux:heading>
+
+            <div class="grid grid-cols-2 gap-4">
+                <flux:input wire:model="form.first_name" :label="__('First name')" />
+                <flux:input wire:model="form.last_name" :label="__('Last name')" />
+                <flux:input type="email" wire:model="form.email" :label="__('Email')" />
+                <flux:input wire:model="form.phone" :label="__('Phone')" />
+                <flux:input wire:model="form.job_title" :label="__('Job title')" />
+                <flux:input type="date" wire:model="form.hire_date" :label="__('Hire date')" />
+
+                <flux:select wire:model="form.status" :label="__('Status')">
+                    @foreach ($statuses as $case)
+                        <flux:select.option value="{{ $case->value }}">{{ $case->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model="form.department_id" :label="__('Department')">
+                    <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                    @foreach ($departments as $dept)
+                        <flux:select.option value="{{ $dept->id }}">{{ $dept->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model="form.designation_id" :label="__('Designation')">
+                    <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                    @foreach ($designations as $d)
+                        <flux:select.option value="{{ $d->id }}">{{ $d->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model="form.branch_id" :label="__('Branch')">
+                    <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                    @foreach ($branches as $b)
+                        <flux:select.option value="{{ $b->id }}">{{ $b->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model="form.employment_type_id" :label="__('Employment type')">
+                    <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                    @foreach ($employmentTypes as $t)
+                        <flux:select.option value="{{ $t->id }}">{{ $t->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model="form.manager_id" :label="__('Manager')">
+                    <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                    @foreach ($managers as $m)
+                        <flux:select.option value="{{ $m->id }}">{{ $m->first_name }} {{ $m->last_name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <flux:button type="button" variant="ghost" wire:click="$set('showForm', false)">{{ __('Cancel') }}</flux:button>
+                <flux:button type="submit" variant="primary">{{ $editingUuid ? __('Save changes') : __('Create employee') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>

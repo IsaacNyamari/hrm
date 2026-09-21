@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Enums\LoanStatus;
 use App\Enums\Role;
+use App\Livewire\Finance\Loans;
 use App\Models\Employee;
 use App\Models\Loan;
 use App\Support\TenantContext;
+use Livewire\Livewire;
 
 beforeEach(function () {
     config(['tenancy.central_domains' => ['hrm.test']]);
@@ -79,4 +82,69 @@ it('gates loan approval behind the payroll permission', function () {
         ->postJson("http://loan-co.hrm.test/loans/{$loan->uuid}/approve")
         ->assertOk()
         ->assertJsonPath('data.status', 'active');
+});
+
+it('lets a payroll manager approve a pending loan from the dashboard', function () {
+    $loan = Loan::factory()->create([
+        'tenant_id' => $this->tenant->id, 'employee_id' => $this->staff->id, 'status' => 'pending',
+    ]);
+
+    $this->actingAs($this->payroll);
+
+    Livewire::test(Loans::class)
+        ->call('approve', $loan->uuid)
+        ->assertDispatched('toast-show');
+
+    expect($loan->fresh()->status)->toBe(LoanStatus::Active);
+});
+
+it('blocks an employee from approving a loan through the dashboard', function () {
+    $loan = Loan::factory()->create([
+        'tenant_id' => $this->tenant->id, 'employee_id' => $this->staff->id, 'status' => 'pending',
+    ]);
+
+    $this->actingAs($this->staffUser);
+
+    Livewire::test(Loans::class)
+        ->call('approve', $loan->uuid)
+        ->assertForbidden();
+});
+
+it('lets the requester cancel their own pending loan from the dashboard', function () {
+    $loan = Loan::factory()->create([
+        'tenant_id' => $this->tenant->id, 'employee_id' => $this->staff->id, 'status' => 'pending',
+    ]);
+
+    $this->actingAs($this->staffUser);
+
+    Livewire::test(Loans::class)->call('cancel', $loan->uuid);
+
+    expect($loan->fresh()->status)->toBe(LoanStatus::Cancelled);
+});
+
+it('lets a payroll manager delete a pending loan with no repayments from the dashboard', function () {
+    $loan = Loan::factory()->create([
+        'tenant_id' => $this->tenant->id, 'employee_id' => $this->staff->id, 'status' => 'pending',
+        'principal_cents' => 100000, 'outstanding_cents' => 100000,
+    ]);
+
+    $this->actingAs($this->payroll);
+
+    Livewire::test(Loans::class)->call('remove', $loan->uuid);
+
+    expect(Loan::query()->find($loan->id))->toBeNull();
+});
+
+it('lets a payroll manager raise a loan on behalf of an employee from the dashboard', function () {
+    $this->actingAs($this->payroll);
+
+    Livewire::test(Loans::class)
+        ->set('employeeId', (string) $this->staff->id)
+        ->set('type', 'loan')
+        ->set('amount', '500')
+        ->set('installments', '2')
+        ->call('request')
+        ->assertDispatched('toast-show');
+
+    expect(Loan::query()->where('employee_id', $this->staff->id)->count())->toBe(1);
 });

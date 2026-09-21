@@ -21,6 +21,8 @@ class ApiTokenController extends Controller
         'leave:read',
         'leave:write',
         'payroll:read',
+        'tasks:read',
+        'tasks:write',
     ];
 
     public function index(Request $request): JsonResponse

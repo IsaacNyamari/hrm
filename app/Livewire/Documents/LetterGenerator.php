@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Livewire\Documents;
 
 use App\Actions\Documents\GenerateLetter;
+use App\Enums\DocumentTemplateType;
 use App\Livewire\Concerns\BindsTenant;
 use App\Models\DocumentTemplate;
 use App\Models\Employee;
 use App\Models\GeneratedLetter;
 use App\Services\Documents\TemplateRenderer;
+use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -28,7 +30,13 @@ class LetterGenerator extends Component
 
     public bool $saveToDocuments = true;
 
-    public ?string $notice = null;
+    // Template management
+    public bool $showTemplateForm = false;
+
+    public ?string $editingTemplateUuid = null;
+
+    /** @var array<string, mixed> */
+    public array $templateForm = [];
 
     public function mount(): void
     {
@@ -64,13 +72,11 @@ class LetterGenerator extends Component
 
     public function generate(GenerateLetter $action): void
     {
-        $this->notice = null;
-
         $employee = Employee::query()->where('uuid', $this->employeeUuid)->first();
         $template = DocumentTemplate::query()->where('uuid', $this->templateUuid)->first();
 
         if ($employee === null || $template === null) {
-            $this->notice = 'Choose an employee and a template.';
+            Flux::toast(variant: 'danger', text: __('Choose an employee and a template.'));
 
             return;
         }
@@ -87,14 +93,102 @@ class LetterGenerator extends Component
             saveToDocuments: $this->saveToDocuments,
         );
 
-        $this->notice = 'Letter generated'.($this->saveToDocuments ? ' and filed to the employee\'s documents.' : '.');
+        Flux::toast(variant: 'success', text: $this->saveToDocuments
+            ? __('Letter generated and filed to the employee\'s documents.')
+            : __('Letter generated.'));
+    }
+
+    // --- Template management ---------------------------------------------
+
+    public function startCreateTemplate(): void
+    {
+        Gate::authorize('create', DocumentTemplate::class);
+        $this->resetErrorBag();
+        $this->editingTemplateUuid = null;
+        $this->templateForm = $this->blankTemplateForm();
+        $this->showTemplateForm = true;
+    }
+
+    public function startEditTemplate(string $uuid): void
+    {
+        $template = DocumentTemplate::query()->where('uuid', $uuid)->firstOrFail();
+        Gate::authorize('update', $template);
+
+        $this->resetErrorBag();
+        $this->editingTemplateUuid = $template->uuid;
+        $this->templateForm = [
+            'name' => $template->name,
+            'type' => $template->type->value,
+            'subject' => $template->subject,
+            'body' => $template->body,
+            'is_active' => $template->is_active,
+        ];
+        $this->showTemplateForm = true;
+    }
+
+    public function saveTemplate(): void
+    {
+        $data = $this->validate([
+            'templateForm.name' => ['required', 'string', 'max:120'],
+            'templateForm.type' => ['required', 'string'],
+            'templateForm.subject' => ['required', 'string', 'max:200'],
+            'templateForm.body' => ['required', 'string', 'max:20000'],
+            'templateForm.is_active' => ['boolean'],
+        ])['templateForm'];
+
+        $attributes = [
+            'name' => $data['name'],
+            'type' => DocumentTemplateType::from($data['type']),
+            'subject' => $data['subject'],
+            'body' => $data['body'],
+            'is_active' => (bool) ($data['is_active'] ?? true),
+        ];
+
+        if ($this->editingTemplateUuid === null) {
+            Gate::authorize('create', DocumentTemplate::class);
+            DocumentTemplate::query()->create($attributes);
+            Flux::toast(variant: 'success', text: __('Template added.'));
+        } else {
+            $template = DocumentTemplate::query()->where('uuid', $this->editingTemplateUuid)->firstOrFail();
+            Gate::authorize('update', $template);
+            $template->update($attributes);
+            Flux::toast(variant: 'success', text: __('Template updated.'));
+        }
+
+        $this->templateForm = $this->blankTemplateForm();
+        $this->editingTemplateUuid = null;
+        $this->showTemplateForm = false;
+    }
+
+    public function removeTemplate(string $uuid): void
+    {
+        $template = DocumentTemplate::query()->where('uuid', $uuid)->firstOrFail();
+        Gate::authorize('delete', $template);
+
+        $template->delete();
+        Flux::modal('delete-template-'.$uuid)->close();
+        Flux::toast(variant: 'success', text: __('Template deleted.'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function blankTemplateForm(): array
+    {
+        return ['name' => '', 'type' => 'custom', 'subject' => '', 'body' => '', 'is_active' => true];
     }
 
     public function render(): View
     {
+        $user = auth()->user();
+        $canManageTemplates = $user?->can('employees.documents.upload');
+
         return view('livewire.documents.letter-generator', [
             'employees' => Employee::query()->active()->orderBy('first_name')->get(['uuid', 'first_name', 'last_name']),
             'templates' => DocumentTemplate::query()->where('is_active', true)->orderBy('name')->get(['uuid', 'name']),
+            'canManageTemplates' => $canManageTemplates,
+            'allTemplates' => $canManageTemplates ? DocumentTemplate::query()->orderBy('name')->get() : collect(),
+            'templateTypes' => DocumentTemplateType::cases(),
         ]);
     }
 }

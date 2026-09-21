@@ -60,6 +60,11 @@ enum Permission: string
     case AssetsView = 'assets.view';
     case AssetsManage = 'assets.manage';
 
+    // Tasks
+    case TasksView = 'tasks.view';
+    case TasksAssign = 'tasks.assign';
+    case TasksManage = 'tasks.manage';
+
     // Developer / integrations
     case WebhooksManage = 'webhooks.manage';
     case ApiTokensManage = 'api.tokens.manage';

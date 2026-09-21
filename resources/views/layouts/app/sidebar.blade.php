@@ -79,6 +79,9 @@
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('Work')" class="grid">
+                    <flux:sidebar.item icon="clipboard-document-check" :href="route('tasks')" :current="request()->routeIs('tasks')" wire:navigate>
+                        {{ __('Tasks') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="banknotes" :href="route('payroll')" :current="request()->routeIs('payroll')" wire:navigate>
                         {{ __('Payroll') }}
                     </flux:sidebar.item>

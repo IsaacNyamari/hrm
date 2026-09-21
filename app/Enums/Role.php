@@ -100,6 +100,7 @@ enum Role: string
                 P::RecruitmentView->value, P::RecruitmentManage->value, P::RecruitmentInterview->value,
                 P::ExpensesView->value, P::ExpensesApprove->value,
                 P::AssetsView->value, P::AssetsManage->value,
+                P::TasksView->value, P::TasksAssign->value, P::TasksManage->value,
                 P::ReportsView->value, P::ReportsExport->value,
             ],
 
@@ -124,6 +125,7 @@ enum Role: string
                 P::PerformanceView->value, P::PerformanceReview->value,
                 P::RecruitmentView->value, P::RecruitmentInterview->value,
                 P::ExpensesApprove->value, P::AssetsView->value,
+                P::TasksView->value, P::TasksAssign->value, P::TasksManage->value,
                 P::ReportsView->value,
             ],
 
@@ -134,6 +136,7 @@ enum Role: string
                 P::PerformanceReview->value,
                 P::RecruitmentInterview->value,
                 P::ExpensesApprove->value,
+                P::TasksView->value, P::TasksAssign->value,
             ],
 
             self::Employee => [

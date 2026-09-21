@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\LeaveRequestController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\PayslipController;
+use App\Http\Controllers\Api\V1\TaskController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,4 +45,7 @@ Route::prefix('v1')
             Route::get('payslips', [PayslipController::class, 'index'])->name('payslips.index');
             Route::get('payslips/{payslip}', [PayslipController::class, 'show'])->name('payslips.show');
         });
+
+        Route::middleware('abilities:tasks:read')->get('tasks', [TaskController::class, 'index'])->name('tasks.index');
+        Route::middleware('abilities:tasks:write')->post('tasks', [TaskController::class, 'store'])->name('tasks.store');
     });

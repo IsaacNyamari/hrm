@@ -6,12 +6,16 @@ use App\Listeners\ApplyTenantMailBranding;
 use App\Listeners\DispatchWebhooks;
 use App\Listeners\RecordAuditTrail;
 use App\Listeners\RecordLoginActivity;
+use App\Listeners\RecordZktecoAttendance;
 use App\Listeners\SendBillingNotifications;
 use App\Listeners\SendExpenseNotifications;
 use App\Listeners\SendLeaveNotifications;
 use App\Listeners\SendPerformanceNotifications;
 use App\Listeners\SendPortalNotifications;
 use App\Listeners\SendRecruitmentNotifications;
+use App\Listeners\SendTaskNotifications;
+use App\Listeners\StoreZktecoUserQueryResults;
+use App\Listeners\SyncZktecoCardNumber;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\Payslip;
@@ -20,6 +24,9 @@ use App\Models\SalaryStructure;
 use App\Models\TaxRule;
 use App\Policies\PayrollPolicy;
 use App\Support\TenantContext;
+use Athwari\LaravelZktecoAdms\Events\AttendanceReceived;
+use Athwari\LaravelZktecoAdms\Events\UserQueryReceived;
+use Athwari\LaravelZktecoAdms\Events\UserSynced;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -59,11 +66,20 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendPerformanceNotifications::class);
         Event::subscribe(SendRecruitmentNotifications::class);
         Event::subscribe(SendExpenseNotifications::class);
+        Event::subscribe(SendTaskNotifications::class);
         Event::subscribe(DispatchWebhooks::class);
         Event::subscribe(RecordAuditTrail::class);
 
         // Per-tenant e-mail From / Reply-To.
         Event::listen(MessageSending::class, [ApplyTenantMailBranding::class, 'handle']);
+
+        // Bridge ZKTeco ADMS device punches into this tenant's attendance records.
+        Event::listen(AttendanceReceived::class, [RecordZktecoAttendance::class, 'handle']);
+
+        // Mirror a card number the device reports back (assigned locally at the
+        // terminal, or returned by a users-list query) onto the employee.
+        Event::listen(UserSynced::class, [SyncZktecoCardNumber::class, 'handle']);
+        Event::listen(UserQueryReceived::class, [StoreZktecoUserQueryResults::class, 'handle']);
 
         // Expose the bound tenant's branding to the markdown mail components.
         View::composer(['mail::header', 'mail::footer', 'mail::layout', 'mail::message'], function ($view): void {

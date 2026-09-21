@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Livewire\Finance\Expenses;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\Notification;
+use Livewire\Livewire;
 
 beforeEach(function () {
     config(['tenancy.central_domains' => ['hrm.test']]);
@@ -109,6 +111,66 @@ it('requires a receipt for travel line items before submitting', function () {
     $this->actingAs($this->staffUser)
         ->postJson("http://exp-co.hrm.test/expense-claims/{$uuid}/submit")
         ->assertStatus(422);
+});
+
+it('lets a manager then finance approve a claim from the dashboard, then reimburse it', function () {
+    $uuid = ($this->draft)();
+    ($this->addItem)($uuid);
+    $this->actingAs($this->staffUser)->postJson("http://exp-co.hrm.test/expense-claims/{$uuid}/submit")->assertOk();
+
+    $this->actingAs($this->managerUser);
+    Livewire::test(Expenses::class)
+        ->call('approveClaim', $uuid)
+        ->assertDispatched('toast-show');
+
+    $this->actingAs($this->finance);
+    Livewire::test(Expenses::class)
+        ->call('approveClaim', $uuid)
+        ->assertDispatched('toast-show');
+
+    expect(Expense::query()->where('uuid', $uuid)->firstOrFail()->status->value)->toBe('approved');
+
+    Livewire::test(Expenses::class)
+        ->call('reimburseClaim', $uuid)
+        ->assertDispatched('toast-show');
+
+    expect(Expense::query()->where('uuid', $uuid)->firstOrFail()->status->value)->toBe('reimbursed');
+});
+
+it('lets a manager reject a claim from the dashboard', function () {
+    $uuid = ($this->draft)();
+    ($this->addItem)($uuid);
+    $this->actingAs($this->staffUser)->postJson("http://exp-co.hrm.test/expense-claims/{$uuid}/submit")->assertOk();
+
+    $this->actingAs($this->managerUser);
+    Livewire::test(Expenses::class)->call('rejectClaim', $uuid);
+
+    expect(Expense::query()->where('uuid', $uuid)->firstOrFail()->status->value)->toBe('rejected');
+});
+
+it('blocks a stranger from deciding a claim through the dashboard', function () {
+    $uuid = ($this->draft)();
+    ($this->addItem)($uuid);
+    $this->actingAs($this->staffUser)->postJson("http://exp-co.hrm.test/expense-claims/{$uuid}/submit")->assertOk();
+
+    $stranger = userForTenant($this->tenant, Role::Employee);
+    Employee::factory()->forTenant($this->tenant)->create(['user_id' => $stranger->id]);
+
+    $this->actingAs($stranger);
+    Livewire::test(Expenses::class)
+        ->call('approveClaim', $uuid)
+        ->assertDispatched('toast-show');
+
+    expect(Expense::query()->where('uuid', $uuid)->firstOrFail()->status->value)->toBe('submitted');
+});
+
+it('lets the owner delete their own draft claim from the dashboard', function () {
+    $uuid = ($this->draft)();
+
+    $this->actingAs($this->staffUser);
+    Livewire::test(Expenses::class)->call('deleteClaim', $uuid);
+
+    expect(Expense::query()->where('uuid', $uuid)->exists())->toBeFalse();
 });
 
 it('keeps claims scoped to their tenant', function () {

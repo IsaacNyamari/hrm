@@ -16,6 +16,7 @@ enum NotificationCategory: string
     case HrRequests = 'hr_requests';
     case Billing = 'billing';
     case System = 'system';
+    case Tasks = 'tasks';
 
     public function label(): string
     {
@@ -35,7 +36,7 @@ enum NotificationCategory: string
     {
         return [
             self::Leave, self::Payroll, self::Expenses, self::Performance,
-            self::Recruitment, self::Documents, self::Announcements, self::HrRequests,
+            self::Recruitment, self::Documents, self::Announcements, self::HrRequests, self::Tasks,
         ];
     }
 }

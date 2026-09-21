@@ -1,0 +1,70 @@
+{
+    "name": "athwari/laravel-zkteco-adms",
+    "description": "Laravel package implementing the ZKTeco ADMS protocol for biometric attendance devices.",
+    "keywords": [
+        "athwari",
+        "laravel",
+        "zkteco",
+        "adms",
+        "biometric",
+        "attendance",
+        "fingerprint",
+        "iclock"
+    ],
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": "^8.3",
+        "illuminate/database": "^13.0",
+        "illuminate/http": "^13.0",
+        "illuminate/support": "^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.24",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.0",
+        "rector/rector": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Athwari\\LaravelZktecoAdms\\": "src/",
+            "Athwari\\LaravelZktecoAdms\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Athwari\\LaravelZktecoAdms\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Athwari\\LaravelZktecoAdms\\LaravelZktecoAdmsServiceProvider"
+            ],
+            "aliases": {
+                "ZktecoAdms": "Athwari\\LaravelZktecoAdms\\Facades\\ZktecoAdms"
+            }
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "test-coverage": "pest --coverage",
+        "analyse": "phpstan analyse --memory-limit=512M",
+        "format": "pint",
+        "refactor": "rector"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "preferred-install": "dist",
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    }
+}

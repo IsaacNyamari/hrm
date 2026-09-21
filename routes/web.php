@@ -58,6 +58,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxRuleController;
 use App\Http\Controllers\UserInvitationController;
 use App\Http\Controllers\VacancyController;
@@ -237,6 +238,13 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
 
     Route::apiResource('kpis', KpiController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('kpis/{kpi}/record', [KpiController::class, 'record'])->name('kpis.record');
+
+    // Tasks
+    Route::view('task-board', 'tasks.index')->name('tasks');
+    Route::apiResource('tasks', TaskController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+    Route::post('tasks/{task}/start', [TaskController::class, 'start'])->name('tasks.start');
+    Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
+    Route::post('tasks/{task}/cancel', [TaskController::class, 'cancel'])->name('tasks.cancel');
 
     Route::get('performance-reviews', [PerformanceReviewController::class, 'index'])->name('performance-reviews.index');
     Route::get('performance-reviews/{performanceReview}', [PerformanceReviewController::class, 'show'])->name('performance-reviews.show');

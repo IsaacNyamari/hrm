@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Livewire\Finance\Assets;
 use App\Models\Asset;
 use App\Models\AssetAssignment;
 use App\Models\Employee;
 use App\Support\TenantContext;
+use Livewire\Livewire;
 
 beforeEach(function () {
     config(['tenancy.central_domains' => ['hrm.test']]);
@@ -78,6 +80,101 @@ it('forbids asset management without the assets permission', function () {
 
     $this->actingAs($staff)
         ->postJson("http://asset-co.hrm.test/assets/{$asset->uuid}/assignments", ['employee_id' => $this->employee->id])
+        ->assertForbidden();
+});
+
+it('creates an asset from the dashboard', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(Assets::class)
+        ->call('startCreate')
+        ->set('form.asset_tag', 'AST-9001')
+        ->set('form.name', 'Dell Latitude')
+        ->set('form.category', 'laptop')
+        ->call('save')
+        ->assertDispatched('toast-show')
+        ->assertSet('showForm', false);
+
+    expect(Asset::query()->where('asset_tag', 'AST-9001')->exists())->toBeTrue();
+});
+
+it('edits an asset from the dashboard', function () {
+    $asset = Asset::factory()->forTenant($this->tenant)->create(['name' => 'Old name']);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(Assets::class)
+        ->call('startEdit', $asset->uuid)
+        ->assertSet('form.name', 'Old name')
+        ->set('form.name', 'New name')
+        ->call('save')
+        ->assertDispatched('toast-show');
+
+    expect($asset->fresh()->name)->toBe('New name');
+});
+
+it('assigns and returns an asset from the dashboard', function () {
+    $asset = Asset::factory()->forTenant($this->tenant)->create();
+
+    $this->actingAs($this->admin);
+
+    $component = Livewire::test(Assets::class)
+        ->call('startAssign', $asset->uuid)
+        ->set('assignEmployeeId', (string) $this->employee->id)
+        ->call('assign')
+        ->assertDispatched('toast-show');
+
+    expect($asset->fresh()->status->value)->toBe('assigned');
+
+    $assignmentUuid = AssetAssignment::query()->where('asset_id', $asset->id)->where('status', 'active')->value('uuid');
+
+    $component->call('returnAsset', $assignmentUuid)->assertDispatched('toast-show');
+
+    expect($asset->fresh()->status->value)->toBe('available');
+});
+
+it('retires an asset from the dashboard', function () {
+    $asset = Asset::factory()->forTenant($this->tenant)->create();
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(Assets::class)
+        ->call('retireAsset', $asset->uuid)
+        ->assertDispatched('toast-show');
+
+    expect($asset->fresh()->status->value)->toBe('retired');
+});
+
+it('deletes an asset with no assignment history from the dashboard', function () {
+    $asset = Asset::factory()->forTenant($this->tenant)->create();
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(Assets::class)->call('remove', $asset->uuid);
+
+    expect(Asset::query()->find($asset->id))->toBeNull();
+});
+
+it('refuses to delete an asset that has assignment history from the dashboard', function () {
+    $asset = Asset::factory()->forTenant($this->tenant)->create(['status' => 'available']);
+    AssetAssignment::factory()->forAsset($asset)->create(['employee_id' => $this->employee->id, 'status' => 'returned']);
+
+    $this->actingAs($this->admin);
+
+    Livewire::test(Assets::class)
+        ->call('remove', $asset->uuid)
+        ->assertDispatched('toast-show');
+
+    expect(Asset::query()->find($asset->id))->not->toBeNull();
+});
+
+it('forbids managing assets from the dashboard without the assets permission', function () {
+    $staff = userForTenant($this->tenant, Role::Employee);
+
+    $this->actingAs($staff);
+
+    Livewire::test(Assets::class)
+        ->call('startCreate')
         ->assertForbidden();
 });
 
