@@ -41,14 +41,28 @@
             <p class="text-center text-xs text-zinc-500">{{ __('Your tracking code was shown when you applied and is in your confirmation email.') }}</p>
         </form>
     @else
-        <div data-test="track-result">
+        <div data-test="track-result"
+            x-data="{ flash: false, destroy() { window.Echo?.leave('application.{{ $application->tracking_code }}') } }"
+            x-init="
+                if (window.Echo) {
+                    window.Echo.channel('application.{{ $application->tracking_code }}')
+                        .listen('.application.updated', () => { $wire.progressUpdated(); flash = true; setTimeout(() => flash = false, 2500); });
+                }
+            "
+            wire:key="track-{{ $application->tracking_code }}">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">{{ $application->tenant->name }}</p>
                     <h2 class="text-xl font-extrabold text-night">{{ $application->vacancy->title }}</h2>
                     <p class="mt-1 text-sm text-zinc-500">{{ __('Applied :date · Code :code', ['date' => $application->applied_at->toFormattedDateString(), 'code' => $application->tracking_code]) }}</p>
                 </div>
-                <span class="rounded-full px-3 py-1 text-xs font-bold {{ $tone[$progress->state] ?? 'bg-zinc-100 text-zinc-600' }}" data-test="track-state">{{ $progress->headline }}</span>
+                <div class="flex flex-col items-end gap-1.5">
+                    <span class="rounded-full px-3 py-1 text-xs font-bold transition {{ $tone[$progress->state] ?? 'bg-zinc-100 text-zinc-600' }}" :class="flash && 'ring-4 ring-highlight/40'" data-test="track-state">{{ $progress->headline }}</span>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+                        <span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-success/60"></span><span class="relative inline-flex size-2 rounded-full bg-success"></span></span>
+                        {{ $liveUpdatedAt ? __('Updated :time', ['time' => $liveUpdatedAt]) : __('Live — updates automatically') }}
+                    </span>
+                </div>
             </div>
 
             <ol class="mt-8 grid grid-cols-5 gap-2">

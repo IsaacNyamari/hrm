@@ -192,7 +192,7 @@
                                 <td class="py-2 text-right text-neutral-500">{{ $money($p['gross_cents']) }}</td>
                                 <td class="py-2 text-right text-neutral-500">{{ $money($p['deductions_cents']) }}</td>
                                 <td class="py-2 text-right font-semibold">{{ $p['currency'] }} {{ $money($p['net_pay_cents']) }}</td>
-                                <td class="py-2 text-right"><a href="{{ route('payslips.pdf', $p['uuid']) }}" target="_blank" class="text-xs font-semibold text-brand hover:underline dark:text-highlight">{{ __('View') }}</a></td>
+                                <td class="py-2 text-right"><a href="{{ route('payslips.pdf', $p['uuid']) }}" class="text-xs font-semibold text-brand hover:underline dark:text-highlight">{{ __('Download') }}</a></td>
                             </tr>
                         @empty
                             <tr><td colspan="6" class="py-6 text-center text-neutral-500">{{ __('No payslips yet. They appear here once payroll is approved.') }}</td></tr>

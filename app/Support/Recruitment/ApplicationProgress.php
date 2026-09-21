@@ -48,13 +48,23 @@ final readonly class ApplicationProgress
             ->first();
         $pendingOffer = $offer !== null && $offer->status === OfferStatus::Sent ? $offer : null;
 
-        $reached = match (true) {
+        // The furthest step shown is whichever is further along: the stage HR
+        // moved the application to, or what has actually happened.
+        $vacancy = $application->vacancy;
+        $byStage = match ($application->stage) {
+            $vacancy->firstStage() => 'applied',
+            'interview' => 'interview',
+            'offer' => 'offer',
+            $vacancy->finalStage() => 'hired',
+            default => 'review',
+        };
+        $byEvidence = match (true) {
             $application->status === ApplicationStatus::Hired => 'hired',
             $offer !== null && $offer->status !== OfferStatus::Draft => 'offer',
             $interviews->isNotEmpty() => 'interview',
-            $application->stage !== $application->vacancy->firstStage() => 'review',
             default => 'applied',
         };
+        $reached = self::STEPS[max(array_search($byStage, self::STEPS, true), array_search($byEvidence, self::STEPS, true))];
 
         [$state, $headline, $message] = match (true) {
             $application->status === ApplicationStatus::Hired && $offer?->converted_employee_id !== null => [
@@ -77,6 +87,15 @@ final readonly class ApplicationProgress
             ],
             $nextInterview !== null => [
                 'interview', 'Interview scheduled', 'You have been invited to an interview. The details are below.',
+            ],
+            $reached === 'hired' => [
+                'accepted', 'You\'re hired!', 'Congratulations! HR is preparing your employee record and will email your account details.',
+            ],
+            $reached === 'offer' => [
+                'offer', 'Offer stage', 'Great news — you have reached the offer stage. Your offer is being prepared and will appear here.',
+            ],
+            $reached === 'interview' && $interviews->isEmpty() => [
+                'interview', 'Shortlisted for interview', 'You have been shortlisted for an interview. The date and details will appear here.',
             ],
             $reached === 'interview' => [
                 'interview', 'Interview stage', 'Your interview has taken place and the team is reviewing the outcome.',

@@ -27,10 +27,13 @@ class CandidateUpdateNotification extends Notification implements ShouldQueue
 
     public const UNSUCCESSFUL = 'unsuccessful';
 
+    public const STAGE = 'stage';
+
     public function __construct(
         public readonly Application $application,
         public readonly string $kind,
         public readonly ?Interview $interview = null,
+        public readonly ?string $stage = null,
     ) {}
 
     /**
@@ -67,12 +70,31 @@ class CandidateUpdateNotification extends Notification implements ShouldQueue
                 ->subject("Your application for {$role} at {$organization}")
                 ->line("Thank you for your interest in **{$role}** at {$organization} and for the time you put into your application.")
                 ->line('After careful consideration, the team has decided not to move forward with your application this time. We encourage you to apply for other openings.'),
+            self::STAGE => $this->stageLines($mail, $role, $organization),
             default => $mail->subject("Update on your application for {$role}"),
         };
 
         return $mail
             ->action('Track my application', route('applications.track', ['code' => $application->tracking_code]))
             ->line("Tracking code: {$application->tracking_code}");
+    }
+
+    /**
+     * Candidate-friendly wording for a move to another hiring stage.
+     */
+    private function stageLines(MailMessage $mail, string $role, string $organization): MailMessage
+    {
+        $stage = (string) $this->stage;
+
+        [$subject, $line] = match ($stage) {
+            'screening' => ["Your application for {$role} is being reviewed", "Your application for **{$role}** at {$organization} has moved to screening: the hiring team is now reviewing it."],
+            'interview' => ["You've been shortlisted: {$role}", "Good news — you have been shortlisted for an interview for **{$role}** at {$organization}. The interview details will follow shortly."],
+            'offer' => ["You've reached the offer stage: {$role}", "Great news — your application for **{$role}** at {$organization} has reached the offer stage. Your offer will be shared with you shortly."],
+            'hired' => ["Congratulations — you're hired: {$role}", "Congratulations! You have been hired as **{$role}** at {$organization}. You will receive an email with your staff account details shortly."],
+            default => ["Update on your application for {$role}", "Your application for **{$role}** at {$organization} has moved to the **".str_replace('_', ' ', $stage).'** stage.'],
+        };
+
+        return $mail->subject($subject)->line($line);
     }
 
     private function interviewLines(MailMessage $mail): MailMessage

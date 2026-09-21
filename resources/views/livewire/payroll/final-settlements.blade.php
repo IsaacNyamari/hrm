@@ -43,7 +43,7 @@
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-2">
                                 @if ($payslip)
-                                    <a href="{{ route('payslips.pdf', $payslip) }}" target="_blank" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Payslip') }}</a>
+                                    <a href="{{ route('payslips.pdf', $payslip) }}" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Download payslip') }}</a>
                                 @endif
                                 @if ($canPrepare && (! $run || $run->status->isMutable()))
                                     <button wire:click="prepare('{{ $employee->uuid }}')" wire:loading.attr="disabled" class="rounded-lg bg-brand px-2 py-1 text-xs font-medium text-white">

@@ -9,6 +9,7 @@ use App\Enums\ApplicationStatus;
 use App\Enums\InterviewStatus;
 use App\Enums\OfferStatus;
 use App\Enums\VacancyStatus;
+use App\Events\ApplicationProgressUpdated;
 use App\Events\ApplicationReceived;
 use App\Events\ApplicationRejected;
 use App\Events\ApplicationStageChanged;
@@ -21,6 +22,7 @@ use App\Models\Interview;
 use App\Models\Offer;
 use App\Models\User;
 use App\Models\Vacancy;
+use App\Support\RealTime;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -277,6 +279,7 @@ class RecruitmentService
         ])->save();
 
         OfferSent::dispatch($offer);
+        RealTime::send(ApplicationProgressUpdated::for($offer->loadMissing('application')->application));
 
         return $offer;
     }
@@ -313,6 +316,7 @@ class RecruitmentService
         }
 
         $offer->forceFill(['status' => OfferStatus::Rescinded])->save();
+        RealTime::send(ApplicationProgressUpdated::for($offer->loadMissing('application')->application));
 
         return $offer;
     }
@@ -351,5 +355,8 @@ class RecruitmentService
             'note' => $note,
             'performed_by' => $actor?->getKey(),
         ]);
+
+        // Every recorded change reaches the candidate's tracking page and the board live.
+        RealTime::send(ApplicationProgressUpdated::for($application));
     }
 }

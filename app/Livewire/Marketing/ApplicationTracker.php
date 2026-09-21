@@ -30,6 +30,9 @@ class ApplicationTracker extends Component
 
     public ?string $notice = null;
 
+    /** When the page last received a live update, for the "updated" indicator. */
+    public ?string $liveUpdatedAt = null;
+
     public function lookup(): void
     {
         $this->validate([
@@ -47,6 +50,7 @@ class ApplicationTracker extends Component
 
         RateLimiter::hit($key, 60);
 
+        $this->code = strtoupper(trim($this->code));
         $this->notice = null;
         $this->found = $this->application() !== null;
 
@@ -79,9 +83,18 @@ class ApplicationTracker extends Component
             : __('You have declined the offer. Thank you for letting us know.');
     }
 
+    /**
+     * Called by the page when the application's broadcast channel reports a
+     * change; re-rendering re-reads the application with the code and email.
+     */
+    public function progressUpdated(): void
+    {
+        $this->liveUpdatedAt = now()->format('H:i:s');
+    }
+
     public function startOver(): void
     {
-        $this->reset('code', 'email', 'found', 'notice');
+        $this->reset('code', 'email', 'found', 'notice', 'liveUpdatedAt');
     }
 
     public function render(): View

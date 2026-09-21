@@ -86,7 +86,7 @@ class Board extends Component
 
         try {
             $service->moveStage($application, $toStage, auth()->user());
-            Flux::toast(variant: 'success', text: __('Candidate moved to :stage.', ['stage' => Str::headline($toStage)]));
+            Flux::toast(variant: 'success', text: __('Candidate moved to :stage. They have been notified.', ['stage' => Str::headline($toStage)]));
         } catch (RecruitmentException $e) {
             Flux::toast(variant: 'danger', text: $e->getMessage());
         }
@@ -468,6 +468,24 @@ class Board extends Component
             ? __(':name is now an employee. A welcome email with their account link has been sent.', ['name' => $employee->fullName()])
             : __(':name is now an employee. No login was created (missing email, or the email is used by another organization).', ['name' => $employee->fullName()]));
     }
+
+    /**
+     * Live updates: any change to this organization's applications (a new
+     * application, a candidate accepting an offer, a colleague moving a card)
+     * re-renders the board.
+     *
+     * @return array<string, string>
+     */
+    protected function getListeners(): array
+    {
+        $tenantId = auth()->user()?->tenant_id;
+
+        return $tenantId === null ? [] : [
+            "echo-private:tenant.{$tenantId}.recruitment,.application.updated" => 'refreshBoard',
+        ];
+    }
+
+    public function refreshBoard(): void {}
 
     public function render(): View
     {

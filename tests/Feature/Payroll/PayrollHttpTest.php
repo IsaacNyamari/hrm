@@ -87,8 +87,9 @@ it('lets an employee see only their own payslip and download the PDF', function 
 
     $payslipUuid = $list->json('data.0.uuid');
     $document = $this->actingAs($this->employeeUser)->get("http://pay-co.hrm.test/payslips/{$payslipUuid}/pdf");
-    $document->assertOk();
-    expect($document->headers->get('content-type'))->toMatch('#application/pdf|text/html#');
+    $document->assertOk()->assertDownload();
+    expect($document->headers->get('content-type'))->toBe('application/pdf')
+        ->and($document->getContent())->toStartWith('%PDF');
 });
 
 it('validates a salary component formula on save', function () {

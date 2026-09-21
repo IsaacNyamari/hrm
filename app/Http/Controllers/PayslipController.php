@@ -6,9 +6,10 @@ namespace App\Http\Controllers;
 
 use App\Facades\Tenancy;
 use App\Models\Payslip;
-use Illuminate\Contracts\View\Factory as ViewFactory;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class PayslipController extends Controller
@@ -64,26 +65,20 @@ class PayslipController extends Controller
     }
 
     /**
-     * A print-ready payslip document. The Blade uses PDF-safe markup so a PDF
-     * renderer (e.g. barryvdh/laravel-dompdf) can be dropped in later by
-     * swapping the final response for `Pdf::loadView(...)->download()`.
+     * The payslip as a downloadable, receipt-style PDF (A5).
      */
-    public function pdf(Payslip $payslip, ViewFactory $view): Response
+    public function pdf(Payslip $payslip): Response
     {
         $this->authorize('viewPayslip', $payslip);
 
         $payslip->load(['lines', 'employee', 'run.period']);
+        $tenant = Tenancy::getOrFail()->loadMissing('branding');
 
-        $filename = "payslip-{$payslip->employee_number}-{$payslip->run->period->pay_date->format('Y-m')}.html";
+        $filename = 'payslip-'.Str::slug($payslip->employee_number.'-'.$payslip->run->period->name).'.pdf';
 
-        $html = $view->make('payroll.payslip', [
-            'payslip' => $payslip,
-            'tenant' => Tenancy::getOrFail(),
-        ])->render();
-
-        return response($html, 200, [
-            'Content-Type' => 'text/html',
-            'Content-Disposition' => "inline; filename=\"{$filename}\"",
-        ]);
+        return Pdf::loadView('payroll.payslip', ['payslip' => $payslip, 'tenant' => $tenant])
+            ->setPaper('a5')
+            ->setOption('isFontSubsettingEnabled', true)
+            ->download($filename);
     }
 }

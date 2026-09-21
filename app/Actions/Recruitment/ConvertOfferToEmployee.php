@@ -8,9 +8,11 @@ use App\Actions\Employees\CreateEmployee;
 use App\Actions\Employees\CreateStaffAccount;
 use App\Enums\EmploymentStatus;
 use App\Enums\OfferStatus;
+use App\Events\ApplicationProgressUpdated;
 use App\Exceptions\RecruitmentException;
 use App\Models\Employee;
 use App\Models\Offer;
+use App\Support\RealTime;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +74,8 @@ class ConvertOfferToEmployee
                 $offer->forceFill(['converted_employee_id' => $employee->getKey()])->save();
 
                 $this->createAccount->handle($employee);
+
+                RealTime::send(ApplicationProgressUpdated::for($application));
 
                 return $employee;
             });

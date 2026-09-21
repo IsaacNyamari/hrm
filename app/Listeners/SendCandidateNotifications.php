@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Events\ApplicationReceived;
 use App\Events\ApplicationRejected;
+use App\Events\ApplicationStageChanged;
 use App\Events\InterviewScheduled;
 use App\Events\OfferSent;
 use App\Models\Application;
@@ -35,6 +36,11 @@ class SendCandidateNotifications
         $this->send($event->offer->loadMissing('application')->application, CandidateUpdateNotification::OFFER);
     }
 
+    public function stageChanged(ApplicationStageChanged $event): void
+    {
+        $this->send($event->application, CandidateUpdateNotification::STAGE, stage: $event->toStage);
+    }
+
     public function rejected(ApplicationRejected $event): void
     {
         $this->send($event->application, CandidateUpdateNotification::UNSUCCESSFUL);
@@ -50,15 +56,16 @@ class SendCandidateNotifications
             InterviewScheduled::class => 'interview',
             OfferSent::class => 'offer',
             ApplicationRejected::class => 'rejected',
+            ApplicationStageChanged::class => 'stageChanged',
         ];
     }
 
-    private function send(Application $application, string $kind, ?Interview $interview = null): void
+    private function send(Application $application, string $kind, ?Interview $interview = null, ?string $stage = null): void
     {
         $email = $application->applicant()->withoutGlobalScopes()->value('email');
 
         if ($email) {
-            Notification::route('mail', $email)->notify(new CandidateUpdateNotification($application, $kind, $interview));
+            Notification::route('mail', $email)->notify(new CandidateUpdateNotification($application, $kind, $interview, $stage));
         }
     }
 }

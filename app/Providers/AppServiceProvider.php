@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\ApplyTenantMailBranding;
+use App\Listeners\BroadcastDatabaseNotifications;
 use App\Listeners\DispatchWebhooks;
 use App\Listeners\RecordAuditTrail;
 use App\Listeners\RecordLoginActivity;
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -71,6 +73,9 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendTaskNotifications::class);
         Event::subscribe(DispatchWebhooks::class);
         Event::subscribe(RecordAuditTrail::class);
+
+        // Push every in-app notification to the user's browser in real time.
+        Event::listen(NotificationSent::class, [BroadcastDatabaseNotifications::class, 'handle']);
 
         // Per-tenant e-mail From / Reply-To.
         Event::listen(MessageSending::class, [ApplyTenantMailBranding::class, 'handle']);

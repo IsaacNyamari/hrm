@@ -1,126 +1,157 @@
 @php
     $currency = $payslip->currency;
     $money = fn (int $cents) => number_format($cents / 100, 2);
-    $earnings = $payslip->lines->where('type.value', 'earning');
-    $deductions = $payslip->lines->where('type.value', 'deduction');
+    $num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
     $period = $payslip->run->period;
+    $snapshot = (array) $payslip->snapshot;
+    $earnings = $payslip->lines->where('type.value', 'earning')->filter(fn ($l) => $l->amount_cents > 0);
+    $deductions = $payslip->lines->where('type.value', 'deduction')->filter(fn ($l) => $l->amount_cents > 0);
+    $settlement = $snapshot['final_settlement'] ?? null;
+    $attendance = $snapshot['attendance'] ?? null;
+    $reference = 'PS-'.strtoupper(substr(str_replace('-', '', $payslip->uuid), 0, 10));
+    $status = $payslip->status->value;
+    [$stampText, $stampColor] = match ($status) {
+        'paid' => ['PAID', '#198754'],
+        'approved' => ['APPROVED', '#0d6efd'],
+        default => ['DRAFT', '#6c757d'],
+    };
+
+    $branding = $tenant->branding;
+    $logo = null;
+    if ($branding?->logo_path) {
+        $disk = \Illuminate\Support\Facades\Storage::disk($branding->logo_disk ?? 'public');
+        if ($disk->exists($branding->logo_path)) {
+            $logo = 'data:'.($disk->mimeType($branding->logo_path) ?: 'image/png').';base64,'.base64_encode($disk->get($branding->logo_path));
+        }
+    }
 @endphp
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
+    <title>{{ $reference }}</title>
     <style>
-        * { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1a1a1a; }
-        h1 { font-size: 16px; margin: 0; }
-        .muted { color: #666; }
-        table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-        th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid #e5e5e5; }
-        th { background: #f5f5f5; text-transform: uppercase; font-size: 9px; letter-spacing: .04em; }
-        td.amt, th.amt { text-align: right; }
-        .totals td { font-weight: bold; border-top: 2px solid #333; border-bottom: none; }
-        .net { background: #111; color: #fff; padding: 10px 12px; margin-top: 14px; font-size: 13px; }
-        .grid { width: 100%; }
-        .grid td { border: none; padding: 2px 8px 2px 0; vertical-align: top; }
-        .cols { width: 100%; }
-        .cols td { border: none; vertical-align: top; width: 50%; }
+        @page { margin: 18px 24px; }
+        * { font-family: DejaVu Sans, sans-serif; color: #1f2937; }
+        body { font-size: 9.5px; margin: 0; }
+        .center { text-align: center; }
+        .muted { color: #6b7280; }
+        .brand { color: #423a8e; }
+        .logo { height: 34px; }
+        table.badge { margin: 0 auto; border-collapse: collapse; }
+        table.badge td { width: 34px; height: 34px; border-radius: 17px; background: #423a8e; color: #fff; font-weight: bold; font-size: 12px; text-align: center; vertical-align: middle; padding: 0; }
+        .org { font-size: 13px; font-weight: bold; margin-top: 4px; }
+        .title { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+        .amount-label { font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+        .amount { font-size: 20px; font-weight: bold; margin: 2px 0 1px; }
+        .stamp { display: inline-block; border: 1.5px solid; border-radius: 3px; padding: 2px 8px; font-size: 9px; font-weight: bold; letter-spacing: 2px; margin-top: 4px; }
+        .rule { border-top: 1px dashed #c7c9d1; margin: 8px 0; }
+        table.rows { width: 100%; border-collapse: collapse; }
+        table.rows td { padding: 2.5px 0; vertical-align: top; }
+        table.rows td.value { text-align: right; font-weight: bold; }
+        table.rows tr.dotted td { border-bottom: 1px dotted #e5e7eb; }
+        .section { font-size: 8.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: #423a8e; margin: 2px 0 4px; }
+        tr.total td { border-top: 1px solid #1f2937; padding-top: 4px; font-weight: bold; }
+        .net { background: #f3f2fb; border-radius: 4px; padding: 4px 8px; margin-top: 8px; }
+        .net td { font-size: 11px; font-weight: bold; }
+        .note { font-size: 8px; margin-top: 6px; line-height: 1.4; }
+        .notice { border: 1px solid #dc3545; color: #dc3545; padding: 6px 8px; border-radius: 4px; font-size: 9px; margin-top: 10px; }
+        .notice * { color: #dc3545; }
+        .footer { font-size: 7.5px; color: #9ca3af; margin-top: 6px; line-height: 1.5; }
     </style>
 </head>
 <body>
-    <table class="grid">
-        <tr>
-            <td style="width:60%">
-                <h1>{{ $tenant->name }}</h1>
-                <div class="muted">{{ $tenant->legal_name }}</div>
-                <div class="muted">PIN: {{ $tenant->tax_number }}</div>
-            </td>
-            <td style="text-align:right">
-                <strong>PAYSLIP</strong><br>
-                <span class="muted">{{ $period->name }}</span><br>
-                <span class="muted">Pay date: {{ $period->pay_date->toFormattedDateString() }}</span>
-            </td>
-        </tr>
+    <div class="center">
+        @if ($logo)
+            <img src="{{ $logo }}" class="logo" alt="">
+        @else
+            <table class="badge"><tr><td>{{ \Illuminate\Support\Str::of($tenant->name)->substr(0, 2)->upper() }}</td></tr></table>
+        @endif
+        <div class="org">{{ $tenant->name }}</div>
+        @if ($tenant->tax_number)
+            <div class="muted">PIN {{ $tenant->tax_number }}</div>
+        @endif
+
+        <div class="title muted">{{ $settlement ? 'Final settlement receipt' : 'Payslip receipt' }}</div>
+
+        <div class="amount-label muted">Net pay</div>
+        <div class="amount brand">{{ $currency }} {{ $money($payslip->net_pay_cents) }}</div>
+        <div class="muted">to {{ $payslip->employee->fullName() }}</div>
+        <div class="stamp" style="color: {{ $stampColor }}; border-color: {{ $stampColor }}">{{ $stampText }}</div>
+    </div>
+
+    <div class="rule"></div>
+
+    <table class="rows">
+        <tr class="dotted"><td class="muted">Reference</td><td class="value">{{ $reference }}</td></tr>
+        <tr class="dotted"><td class="muted">Pay period</td><td class="value">{{ $period->name }}</td></tr>
+        <tr class="dotted"><td class="muted">Pay date</td><td class="value">{{ $period->pay_date->format('d M Y') }}</td></tr>
+        <tr class="dotted"><td class="muted">Employee no.</td><td class="value">{{ $payslip->employee_number }}</td></tr>
+        @if (! empty($snapshot['designation']) || ! empty($snapshot['department']))
+            <tr class="dotted"><td class="muted">Position</td><td class="value">{{ collect([$snapshot['designation'] ?? null, $snapshot['department'] ?? null])->filter()->implode(' · ') }}</td></tr>
+        @endif
+        @if (! empty($snapshot['kra_pin']))
+            <tr class="dotted"><td class="muted">KRA PIN</td><td class="value">{{ $snapshot['kra_pin'] }}</td></tr>
+        @endif
+        @if (! empty($snapshot['bank']))
+            <tr class="dotted"><td class="muted">Paid to account</td><td class="value">{{ $snapshot['bank'] }}</td></tr>
+        @endif
+        @if (is_array($attendance) && ($attendance['working_days'] ?? 0) > 0)
+            <tr class="dotted" data-test="payslip-attendance">
+                <td class="muted">Attendance</td>
+                <td class="value">
+                    {{ $num($attendance['payable_days'] ?? 0) }} of {{ $num($attendance['cycle_working_days'] ?? $attendance['working_days']) }} days paid
+                    ({{ match ($snapshot['salary_basis'] ?? 'fixed') { 'attendance' => 'attendance-based pay', 'hourly' => 'hourly pay', default => 'fixed salary' } }})<br>
+                    <span class="muted" style="font-weight: normal">Hours: {{ $num($attendance['worked_hours'] ?? 0) }} · Overtime: {{ $num(($attendance['overtime_hours'] ?? 0) + ($attendance['rest_day_hours'] ?? 0)) }} h</span>
+                </td>
+            </tr>
+        @endif
     </table>
 
-    <table class="grid" style="margin-top:12px">
-        <tr>
-            <td><strong>{{ $payslip->employee->fullName() }}</strong></td>
-            <td>Employee No: {{ $payslip->employee_number }}</td>
-        </tr>
-        <tr>
-            <td class="muted">{{ $payslip->snapshot['designation'] ?? '' }} · {{ $payslip->snapshot['department'] ?? '' }}</td>
-            <td class="muted">KRA PIN: {{ $payslip->snapshot['kra_pin'] ?? '—' }}</td>
-        </tr>
-        <tr>
-            <td class="muted">Bank: {{ $payslip->snapshot['bank'] ?? '—' }}</td>
-            <td class="muted">Currency: {{ $currency }}</td>
-        </tr>
-    </table>
-
-    @php($settlement = $payslip->snapshot['final_settlement'] ?? null)
     @if (is_array($settlement))
-        <div style="margin-top:10px; padding:8px 10px; border:1px solid #dc3545; color:#dc3545" data-test="payslip-final-settlement">
-            <strong style="color:#dc3545">FINAL SETTLEMENT</strong> —
-            {{ $settlement['reason'] ?? '' }}, exit date {{ \Carbon\CarbonImmutable::parse($settlement['exit_date'])->toFormattedDateString() }}.
-            Covers pay up to the exit date{{ ($settlement['leave_days_encashed'] ?? 0) > 0 ? ' and '.rtrim(rtrim(number_format((float) $settlement['leave_days_encashed'], 2, '.', ''), '0'), '.').' days of untaken leave' : '' }}.
+        <div class="notice" data-test="payslip-final-settlement">
+            <strong>Final settlement</strong> — {{ $settlement['reason'] ?? '' }}, exit date {{ \Carbon\CarbonImmutable::parse($settlement['exit_date'])->format('d M Y') }}.
+            @if (($settlement['leave_days_encashed'] ?? 0) > 0)
+                Includes {{ $num($settlement['leave_days_encashed']) }} days of untaken leave.
+            @endif
         </div>
     @endif
 
-    @php($attendance = $payslip->snapshot['attendance'] ?? null)
-    @if (is_array($attendance) && $attendance !== [])
-        @php($num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.'))
-        <table class="grid" style="margin-top:8px" data-test="payslip-attendance">
-            <tr>
-                <td class="muted">
-                    Attendance ({{ match ($payslip->snapshot['salary_basis'] ?? 'fixed') { 'attendance' => 'attendance-based pay', 'hourly' => 'hourly pay', default => 'fixed salary' } }}):
-                    {{ $num($attendance['payable_days'] ?? 0) }} of {{ $num($attendance['working_days'] ?? 0) }} working days paid
-                    ({{ $num($attendance['present_days'] ?? 0) }} present, {{ $num($attendance['paid_leave_days'] ?? 0) }} paid leave, {{ $num($attendance['absent_days'] ?? 0) }} absent)
-                </td>
-                <td class="muted" style="text-align:right">
-                    Hours worked: {{ $num($attendance['worked_hours'] ?? 0) }} · Overtime: {{ $num($attendance['overtime_hours'] ?? 0) }} h
-                    @if (($attendance['rest_day_hours'] ?? 0) > 0)
-                        · Rest-day: {{ $num($attendance['rest_day_hours']) }} h
-                    @endif
-                </td>
-            </tr>
-        </table>
-    @endif
+    <div class="rule"></div>
 
-    <table class="cols">
-        <tr>
-            <td>
-                <table>
-                    <thead><tr><th>Earnings</th><th class="amt">Amount</th></tr></thead>
-                    <tbody>
-                        @foreach ($earnings as $line)
-                            <tr><td>{{ $line->name }}</td><td class="amt">{{ $money($line->amount_cents) }}</td></tr>
-                        @endforeach
-                        <tr class="totals"><td>Gross Earnings</td><td class="amt">{{ $money($payslip->gross_earnings_cents) }}</td></tr>
-                    </tbody>
-                </table>
-            </td>
-            <td>
-                <table>
-                    <thead><tr><th>Deductions</th><th class="amt">Amount</th></tr></thead>
-                    <tbody>
-                        @foreach ($deductions as $line)
-                            <tr><td>{{ $line->name }}{{ $line->is_statutory ? ' *' : '' }}</td><td class="amt">{{ $money($line->amount_cents) }}</td></tr>
-                        @endforeach
-                        <tr class="totals"><td>Total Deductions</td><td class="amt">{{ $money($payslip->total_deductions_cents) }}</td></tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
+    <div class="section">Earnings</div>
+    <table class="rows">
+        @forelse ($earnings as $line)
+            <tr><td>{{ $line->name }}</td><td class="value" style="font-weight: normal">{{ $money($line->amount_cents) }}</td></tr>
+        @empty
+            <tr><td class="muted">No earnings this period</td><td class="value">0.00</td></tr>
+        @endforelse
+        <tr class="total"><td>Gross pay</td><td class="value">{{ $money($payslip->gross_earnings_cents) }}</td></tr>
     </table>
 
-    <table class="grid" style="margin-top:8px">
-        <tr>
-            <td class="muted">Taxable income: {{ $currency }} {{ $money($payslip->taxable_income_cents) }}</td>
-            <td class="muted" style="text-align:right">Statutory: {{ $currency }} {{ $money($payslip->statutory_deductions_cents) }}</td>
-        </tr>
+    <div class="section" style="margin-top: 8px">Deductions</div>
+    <table class="rows">
+        @forelse ($deductions as $line)
+            <tr><td>{{ $line->name }}</td><td class="value" style="font-weight: normal">{{ $money($line->amount_cents) }}</td></tr>
+        @empty
+            <tr><td class="muted">No deductions</td><td class="value">0.00</td></tr>
+        @endforelse
+        <tr class="total"><td>Total deductions</td><td class="value">{{ $money($payslip->total_deductions_cents) }}</td></tr>
     </table>
 
-    <div class="net">NET PAY &nbsp; {{ $currency }} {{ $money($payslip->net_pay_cents) }}</div>
+    <div class="net">
+        <table class="rows"><tr><td>NET PAY</td><td class="value">{{ $currency }} {{ $money($payslip->net_pay_cents) }}</td></tr></table>
+    </div>
 
-    <p class="muted" style="margin-top:16px">* statutory deduction. This is a computer-generated payslip.</p>
+    <div class="note muted">
+        Taxable income {{ $currency }} {{ $money($payslip->taxable_income_cents) }} · Statutory deductions (PAYE, NSSF, SHIF, Housing Levy) {{ $currency }} {{ $money($payslip->statutory_deductions_cents) }}
+    </div>
+
+    <div class="rule"></div>
+
+    <div class="footer center">
+        Computer-generated receipt — no signature required. Queries: {{ $tenant->name }} HR.<br>
+        Ref {{ $reference }} · Generated {{ now()->format('d M Y, H:i') }}
+    </div>
 </body>
 </html>
