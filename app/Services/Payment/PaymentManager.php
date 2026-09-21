@@ -14,13 +14,15 @@ use InvalidArgumentException;
 
 class PaymentManager
 {
+    public function __construct(private readonly GatewayCredentials $credentials) {}
+
     public function gateway(PaymentProvider|string $provider): PaymentGateway
     {
         $key = $provider instanceof PaymentProvider ? $provider->value : $provider;
 
         return match ($key) {
-            PaymentProvider::Paystack->value => new PaystackGateway((array) config('paystack', [])),
-            PaymentProvider::Mpesa->value => new MpesaGateway((array) config('services.mpesa', [])),
+            PaymentProvider::Paystack->value => $this->paystack(),
+            PaymentProvider::Mpesa->value => new MpesaGateway($this->credentials->for(PaymentProvider::Mpesa)),
             PaymentProvider::Manual->value => new ManualGateway,
             default => throw new InvalidArgumentException("No payment gateway registered for [{$key}]."),
         };
@@ -56,5 +58,17 @@ class PaymentManager
     public function selectableProviders(): array
     {
         return (array) config('billing.providers', [PaymentProvider::Paystack->value]);
+    }
+
+    /**
+     * The Paystack package reads config('paystack.*') directly, so the
+     * effective (admin-edited) credentials are applied to config first.
+     */
+    private function paystack(): PaystackGateway
+    {
+        $config = $this->credentials->for(PaymentProvider::Paystack);
+        config(['paystack' => $config]);
+
+        return new PaystackGateway($config);
     }
 }
