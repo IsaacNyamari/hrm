@@ -43,6 +43,18 @@
                             </div>
                         </td>
                     </tr>
+                    @if ($run && ! empty($unpaidByRun[$run->id]))
+                        <tr wire:key="pp-warn-{{ $period->uuid }}">
+                            <td colspan="5" class="bg-warning/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200" data-test="zero-days-warning">
+                                <span class="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
+                                    <flux:icon.exclamation-triangle variant="mini" />
+                                    {{ trans_choice(':count employee is paid for 0 days|:count employees are paid for 0 days', count($unpaidByRun[$run->id])) }}
+                                </span>
+                                — {{ $unpaidByRun[$run->id]->take(8)->implode(', ') }}{{ count($unpaidByRun[$run->id]) > 8 ? '…' : '' }}.
+                                {{ __('Check their attendance records (or approved leave) before approving.') }}
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr><td colspan="5" class="px-4 py-10 text-center text-neutral-500">{{ __('No payroll periods yet.') }}</td></tr>
                 @endforelse

@@ -145,6 +145,15 @@
                         <li>{{ __('Open a payroll period and create a run. The run calculates gross pay, PAYE, NSSF, SHIF and the Affordable Housing Levy using the tax rules in your workspace.') }}</li>
                         <li>{{ __('Review, approve, then mark the run paid. Payslips become available to each employee in My HR and through the API.') }}</li>
                     </ol>
+                    <h3 class="mt-6 font-bold text-night">{{ __('Attendance-based pay & overtime') }}</h3>
+                    <p class="{{ $p }}">{{ __('Payroll reads attendance automatically. Under Payroll → Pay rules choose how salary is calculated:') }}</p>
+                    <ul class="mt-3 space-y-2 text-sm text-zinc-600">
+                        <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span><strong>{{ __('Attendance-based (default):') }}</strong> {{ __('basic salary × payable days ÷ working days. Days present count fully, half days count ½, and approved paid leave counts as worked. Weekends and public holidays are not working days, so they never reduce pay.') }}</span></li>
+                        <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span><strong>{{ __('Fixed:') }}</strong> {{ __('the full monthly basic is paid regardless of attendance.') }}</span></li>
+                        <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span><strong>{{ __('Hourly staff') }}</strong> {{ __('(pay frequency “hourly”) earn their hourly rate × regular hours worked.') }}</span></li>
+                        <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span><strong>{{ __('Overtime') }}</strong> {{ __('is added as a taxable earning: hours beyond the shift (after its overtime threshold) at 1.5× the hourly rate, and every hour worked on a rest day or public holiday at 2×. Both rates are configurable. Hourly rate = basic ÷ (working days × standard daily hours).') }}</span></li>
+                    </ul>
+                    <p class="{{ $p }}">{{ __('Each payslip shows the days paid, hours worked and overtime, and the payroll run warns you about anyone paid for zero days before you approve it.') }}</p>
                     <p class="mt-4 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm text-zinc-700">{{ __('Statutory rates change from time to time. Check the tax rules under Payroll settings before your first run and after any government announcement.') }}</p>
                 </div>
 

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Livewire\Payroll;
 
+use App\Enums\PayrollRunStatus;
 use App\Exceptions\PayrollException;
 use App\Livewire\Concerns\BindsTenant;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
+use App\Models\Payslip;
 use App\Services\Payroll\PayrollService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
@@ -73,8 +76,41 @@ class Runs extends Component
 
     public function render(): View
     {
+        $periods = PayrollPeriod::query()->with('runs')->orderByDesc('start_date')->get();
+
         return view('livewire.payroll.runs', [
-            'periods' => PayrollPeriod::query()->with('runs')->orderByDesc('start_date')->get(),
+            'periods' => $periods,
+            'unpaidByRun' => $this->unpaidEmployees($periods),
         ]);
+    }
+
+    /**
+     * Employees paid for zero days on attendance-based runs still awaiting
+     * approval — usually missing clock-ins rather than a month of absence.
+     *
+     * @param  Collection<int, PayrollPeriod>  $periods
+     * @return array<int, Collection<int, string>>
+     */
+    private function unpaidEmployees(Collection $periods): array
+    {
+        $runIds = $periods
+            ->map(fn (PayrollPeriod $period) => $period->runs->sortByDesc('id')->first())
+            ->filter(fn (?PayrollRun $run) => $run?->status === PayrollRunStatus::Processed)
+            ->map->getKey()
+            ->values();
+
+        if ($runIds->isEmpty()) {
+            return [];
+        }
+
+        return Payslip::query()
+            ->whereIn('payroll_run_id', $runIds)
+            ->with('employee:id,first_name,last_name')
+            ->get(['id', 'payroll_run_id', 'employee_id', 'snapshot'])
+            ->filter(fn (Payslip $payslip) => ($payslip->snapshot['salary_basis'] ?? null) === 'attendance'
+                && (float) ($payslip->snapshot['attendance']['payable_days'] ?? 1) <= 0)
+            ->groupBy('payroll_run_id')
+            ->map(fn (Collection $slips) => $slips->map(fn (Payslip $p) => $p->employee?->fullName() ?? '—')->values())
+            ->all();
     }
 }

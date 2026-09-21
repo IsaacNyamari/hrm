@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
     $this->tenant = tenantWithRoles();
+    // These tests cover the salary / statutory / loan arithmetic, so pay the
+    // full contractual salary. Attendance-based pay is covered in PayrollAttendanceTest.
+    $this->tenant->forceFill(['settings' => [...(array) $this->tenant->settings, 'payroll' => ['salary_basis' => 'fixed']]])->save();
     app(TenantContext::class)->set($this->tenant);
     $this->service = app(PayrollService::class);
 

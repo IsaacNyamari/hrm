@@ -24,9 +24,12 @@ class PayrollContext
         public readonly CarbonImmutable $payDate,
         public readonly int $basicSalaryCents,
         public readonly int $workingDays,
-        public readonly int $daysWorked,
+        public readonly float $daysWorked,
         public readonly float $overtimeHours,
         public readonly float $hourlyRate,
+        /** @var array<string, float> attendance summary for the period (see AttendancePayCalculator) */
+        public readonly array $attendance = [],
+        public readonly float $overtimeMultiplier = 1.5,
     ) {}
 
     public function addEarning(string $code, int $cents): void
@@ -50,8 +53,11 @@ class PayrollContext
             'working_days' => (float) $this->workingDays,
             'days_worked' => (float) $this->daysWorked,
             'overtime_hours' => $this->overtimeHours,
-            'overtime_rate' => $this->hourlyRate * 1.5,
+            'overtime_rate' => $this->hourlyRate * $this->overtimeMultiplier,
             'hourly_rate' => $this->hourlyRate,
+            'payable_days' => (float) ($this->attendance['payable_days'] ?? $this->daysWorked),
+            'worked_hours' => (float) ($this->attendance['worked_hours'] ?? 0),
+            'rest_day_hours' => (float) ($this->attendance['rest_day_hours'] ?? 0),
         ];
 
         foreach ($this->earnings as $code => $cents) {

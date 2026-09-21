@@ -56,6 +56,26 @@
         </tr>
     </table>
 
+    @php($attendance = $payslip->snapshot['attendance'] ?? null)
+    @if (is_array($attendance) && $attendance !== [])
+        @php($num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.'))
+        <table class="grid" style="margin-top:8px" data-test="payslip-attendance">
+            <tr>
+                <td class="muted">
+                    Attendance ({{ match ($payslip->snapshot['salary_basis'] ?? 'fixed') { 'attendance' => 'attendance-based pay', 'hourly' => 'hourly pay', default => 'fixed salary' } }}):
+                    {{ $num($attendance['payable_days'] ?? 0) }} of {{ $num($attendance['working_days'] ?? 0) }} working days paid
+                    ({{ $num($attendance['present_days'] ?? 0) }} present, {{ $num($attendance['paid_leave_days'] ?? 0) }} paid leave, {{ $num($attendance['absent_days'] ?? 0) }} absent)
+                </td>
+                <td class="muted" style="text-align:right">
+                    Hours worked: {{ $num($attendance['worked_hours'] ?? 0) }} · Overtime: {{ $num($attendance['overtime_hours'] ?? 0) }} h
+                    @if (($attendance['rest_day_hours'] ?? 0) > 0)
+                        · Rest-day: {{ $num($attendance['rest_day_hours']) }} h
+                    @endif
+                </td>
+            </tr>
+        </table>
+    @endif
+
     <table class="cols">
         <tr>
             <td>

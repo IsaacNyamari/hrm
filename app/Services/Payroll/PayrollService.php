@@ -13,7 +13,6 @@ use App\Enums\SalaryComponentType;
 use App\Events\PayrollApproved;
 use App\Events\PayrollProcessed;
 use App\Exceptions\PayrollException;
-use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Loan;
 use App\Models\LoanRepayment;
@@ -22,8 +21,8 @@ use App\Models\PayrollRun;
 use App\Models\Payslip;
 use App\Models\SalaryComponent;
 use App\Models\User;
-use App\Services\Leave\WorkingDayCalculator;
 use App\Support\Payroll\PayrollContext;
+use App\Support\Payroll\PayRules;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -35,7 +34,7 @@ class PayrollService
         private readonly TenantContext $context,
         private readonly FormulaEvaluator $formula,
         private readonly StatutoryEngine $statutory,
-        private readonly WorkingDayCalculator $workingDays,
+        private readonly AttendancePayCalculator $attendancePay,
     ) {}
 
     /**
@@ -158,18 +157,20 @@ class PayrollService
      */
     private function buildPayslip(PayrollRun $run, PayrollPeriod $period, Employee $employee, Collection $components): Payslip
     {
-        $ctx = $this->context($employee, $period);
+        $rules = PayRules::for($period->tenant);
+        $ctx = $this->context($employee, $period, $rules);
         $taxableCodes = [];
         $pensionableCodes = [];
 
         $lines = [];
         $sort = 0;
 
-        // 1. Basic
-        $ctx->addEarning('BASIC', $ctx->basicSalaryCents);
+        // 1. Basic — prorated by attendance (or hours, for hourly staff) per the pay rules
+        [$basicCents, $basicLabel] = $this->earnedBasic($ctx, $rules);
+        $ctx->addEarning('BASIC', $basicCents);
         $taxableCodes['BASIC'] = true;
         $pensionableCodes['BASIC'] = true;
-        $lines[] = ['type' => SalaryComponentType::Earning, 'code' => 'BASIC', 'name' => 'Basic Salary', 'amount_cents' => $ctx->basicSalaryCents, 'is_taxable' => true, 'is_statutory' => false, 'sort_order' => $sort++];
+        $lines[] = ['type' => SalaryComponentType::Earning, 'code' => 'BASIC', 'name' => $basicLabel, 'amount_cents' => $basicCents, 'is_taxable' => true, 'is_statutory' => false, 'sort_order' => $sort++];
 
         // 2. Other recurring earnings, in sort order
         $assigned = $employee->salaryComponents
@@ -183,12 +184,29 @@ class PayrollService
                 continue;
             }
 
+            // With automatic overtime on, OVERTIME is calculated from attendance below.
+            if ($component->code === 'OVERTIME' && $rules->overtimeEnabled) {
+                continue;
+            }
+
             $cents = max(0, $this->amountFor($component, $esc->amount_cents, $esc->rate, $esc->formula, $ctx));
             $ctx->addEarning($component->code, $cents);
             $taxableCodes[$component->code] = $component->is_taxable;
             $pensionableCodes[$component->code] = $component->is_pensionable;
 
             $lines[] = ['type' => SalaryComponentType::Earning, 'code' => $component->code, 'name' => $component->name, 'amount_cents' => $cents, 'is_taxable' => $component->is_taxable, 'is_statutory' => false, 'sort_order' => $sort++];
+        }
+
+        // 2b. Overtime from attendance (replaces any assigned OVERTIME component).
+        if ($rules->overtimeEnabled) {
+            [$overtimeCents, $overtimeLabel] = $this->overtimePay($ctx, $rules);
+
+            if ($overtimeCents > 0) {
+                $ctx->addEarning('OVERTIME', $overtimeCents);
+                $taxableCodes['OVERTIME'] = true;
+                $pensionableCodes['OVERTIME'] = true;
+                $lines[] = ['type' => SalaryComponentType::Earning, 'code' => 'OVERTIME', 'name' => $overtimeLabel, 'amount_cents' => $overtimeCents, 'is_taxable' => true, 'is_statutory' => false, 'sort_order' => $sort++];
+            }
         }
 
         $gross = $ctx->grossCents();
@@ -251,6 +269,8 @@ class PayrollService
                 'kra_pin' => $employee->statutoryDetail?->tax_pin,
                 'bank' => $employee->bankAccounts->firstWhere('is_primary', true)?->maskedAccountNumber()
                     ?? $employee->bankAccounts->first()?->maskedAccountNumber(),
+                'salary_basis' => $this->isHourly($employee) ? 'hourly' : $rules->salaryBasis,
+                'attendance' => $ctx->attendance,
             ],
         ]);
 
@@ -265,25 +285,16 @@ class PayrollService
         return $payslip;
     }
 
-    private function context(Employee $employee, PayrollPeriod $period): PayrollContext
+    private function context(Employee $employee, PayrollPeriod $period, PayRules $rules): PayrollContext
     {
-        $workingDays = (int) $this->workingDays->countWorkingDays($period->start_date, $period->end_date);
-
-        $daysWorked = (int) Attendance::query()
-            ->where('employee_id', $employee->getKey())
-            ->whereDate('work_date', '>=', $period->start_date->toDateString())
-            ->whereDate('work_date', '<=', $period->end_date->toDateString())
-            ->whereIn('status', ['present', 'late', 'early_departure', 'half_day', 'remote_work'])
-            ->count();
-
-        $overtimeMinutes = (int) Attendance::query()
-            ->where('employee_id', $employee->getKey())
-            ->whereDate('work_date', '>=', $period->start_date->toDateString())
-            ->whereDate('work_date', '<=', $period->end_date->toDateString())
-            ->sum('overtime_minutes');
-
+        $attendance = $this->attendancePay->summarize($employee, $period);
+        $workingDays = (int) $attendance['working_days'];
         $basic = $this->basicSalaryCents($employee, $period->pay_date);
-        $hourlyRate = $workingDays > 0 ? $basic / ($workingDays * 8) : 0.0;
+
+        // Hourly staff: the salary amount *is* the hourly rate.
+        $hourlyRate = $this->isHourly($employee)
+            ? (float) $basic
+            : ($workingDays > 0 ? $basic / ($workingDays * $rules->standardDailyHours) : 0.0);
 
         return new PayrollContext(
             employee: $employee,
@@ -291,10 +302,77 @@ class PayrollService
             payDate: $period->pay_date,
             basicSalaryCents: $basic,
             workingDays: $workingDays,
-            daysWorked: $daysWorked,
-            overtimeHours: round($overtimeMinutes / 60, 2),
+            daysWorked: $attendance['present_days'],
+            overtimeHours: $attendance['overtime_hours'],
             hourlyRate: $hourlyRate,
+            attendance: $attendance,
+            overtimeMultiplier: $rules->overtimeMultiplier,
         );
+    }
+
+    /**
+     * Basic pay actually earned this period, with its payslip label.
+     *
+     * @return array{0: int, 1: string}
+     */
+    private function earnedBasic(PayrollContext $ctx, PayRules $rules): array
+    {
+        $attendance = $ctx->attendance;
+
+        if ($this->isHourly($ctx->employee)) {
+            $hours = (float) ($attendance['regular_hours'] ?? 0);
+
+            return [(int) round($ctx->hourlyRate * $hours), sprintf('Basic Pay (%s h × %s)', $this->number($hours), number_format($ctx->hourlyRate / 100, 2))];
+        }
+
+        if (! $rules->isAttendanceBased() || $ctx->workingDays <= 0) {
+            return [$ctx->basicSalaryCents, 'Basic Salary'];
+        }
+
+        $payable = (float) ($attendance['payable_days'] ?? 0);
+
+        if ($payable >= $ctx->workingDays) {
+            return [$ctx->basicSalaryCents, 'Basic Salary'];
+        }
+
+        return [
+            (int) round($ctx->basicSalaryCents * $payable / $ctx->workingDays),
+            sprintf('Basic Salary (%s of %d days)', $this->number($payable), $ctx->workingDays),
+        ];
+    }
+
+    /**
+     * Overtime from attendance: working-day overtime at the overtime rate, rest
+     * day / public holiday hours at the rest-day rate.
+     *
+     * @return array{0: int, 1: string}
+     */
+    private function overtimePay(PayrollContext $ctx, PayRules $rules): array
+    {
+        $normal = (float) ($ctx->attendance['overtime_hours'] ?? 0);
+        $restDay = (float) ($ctx->attendance['rest_day_hours'] ?? 0);
+
+        $cents = (int) round($ctx->hourlyRate * ($normal * $rules->overtimeMultiplier + $restDay * $rules->restDayMultiplier));
+
+        $parts = [];
+        if ($normal > 0) {
+            $parts[] = $this->number($normal).' h × '.$this->number($rules->overtimeMultiplier);
+        }
+        if ($restDay > 0) {
+            $parts[] = $this->number($restDay).' h rest day × '.$this->number($rules->restDayMultiplier);
+        }
+
+        return [$cents, 'Overtime ('.implode(', ', $parts).')'];
+    }
+
+    private function isHourly(Employee $employee): bool
+    {
+        return $employee->pay_frequency === 'hourly';
+    }
+
+    private function number(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 
     private function basicSalaryCents(Employee $employee, CarbonImmutable $payDate): int
