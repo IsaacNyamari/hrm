@@ -14,6 +14,7 @@ use App\Events\PayrollApproved;
 use App\Events\PayrollProcessed;
 use App\Exceptions\PayrollException;
 use App\Models\Employee;
+use App\Models\LeaveBalance;
 use App\Models\Loan;
 use App\Models\LoanRepayment;
 use App\Models\PayrollPeriod;
@@ -60,8 +61,11 @@ class PayrollService
             $this->rollBack($run);
 
             $employees = Employee::query()
-                ->active()
-                ->when($employeeUuids !== [], fn ($q) => $q->whereIn('uuid', $employeeUuids))
+                ->when(
+                    $period->isFinalSettlement(),
+                    fn ($q) => $q->whereKey($period->employee_id),
+                    fn ($q) => $q->active()->when($employeeUuids !== [], fn ($q) => $q->whereIn('uuid', $employeeUuids)),
+                )
                 ->with(['salaryComponents.component', 'loans', 'bankAccounts', 'statutoryDetail', 'department:id,name', 'designation:id,name'])
                 ->get();
 
@@ -153,12 +157,85 @@ class PayrollService
     /* -------------------------------------------------------------------- */
 
     /**
+     * Earnings accrued so far in a period — the live "earned to date" figure.
+     * Nothing is persisted and no loans are touched.
+     *
+     * @param  Collection<string, SalaryComponent>|null  $components
+     * @return array{gross_cents: int, basic_cents: int, overtime_cents: int, full_basic_cents: int, attendance: array<string, float>}
+     */
+    public function estimate(Employee $employee, PayrollPeriod $period, CarbonImmutable $asOf, ?Collection $components = null): array
+    {
+        $employee->loadMissing(['salaryComponents.component', 'loans']);
+        $calculation = $this->calculate($period, $employee, $components ?? SalaryComponent::query()->get()->keyBy('code'), $asOf);
+        $earnings = collect($calculation['lines'])->where('type', SalaryComponentType::Earning);
+
+        return [
+            'gross_cents' => $calculation['gross'],
+            'basic_cents' => (int) ($earnings->firstWhere('code', 'BASIC')['amount_cents'] ?? 0),
+            'overtime_cents' => (int) ($earnings->firstWhere('code', 'OVERTIME')['amount_cents'] ?? 0),
+            'full_basic_cents' => $calculation['full_basic'],
+            'attendance' => $calculation['attendance'],
+        ];
+    }
+
+    /**
      * @param  Collection<string, SalaryComponent>  $components
      */
     private function buildPayslip(PayrollRun $run, PayrollPeriod $period, Employee $employee, Collection $components): Payslip
     {
+        $calculation = $this->calculate($period, $employee, $components);
+
+        $payslip = Payslip::query()->create([
+            'payroll_run_id' => $run->getKey(),
+            'employee_id' => $employee->getKey(),
+            'employee_number' => $employee->employee_number,
+            'currency' => $employee->salary_currency ?? $period->tenant->currency,
+            'gross_earnings_cents' => $calculation['gross'],
+            'taxable_income_cents' => $calculation['taxable'],
+            'statutory_deductions_cents' => $calculation['statutory'],
+            'other_deductions_cents' => $calculation['other_deductions'],
+            'total_deductions_cents' => $calculation['total_deductions'],
+            'net_pay_cents' => $calculation['net'],
+            'status' => PayslipStatus::Draft,
+            'snapshot' => [
+                'department' => $employee->department?->name,
+                'designation' => $employee->designation?->name,
+                'kra_pin' => $employee->statutoryDetail?->tax_pin,
+                'bank' => $employee->bankAccounts->firstWhere('is_primary', true)?->maskedAccountNumber()
+                    ?? $employee->bankAccounts->first()?->maskedAccountNumber(),
+                'salary_basis' => $calculation['basis'],
+                'attendance' => $calculation['attendance'],
+                'final_settlement' => $period->isFinalSettlement() ? [
+                    'exit_date' => $period->end_date->toDateString(),
+                    'reason' => $employee->status->label(),
+                    'leave_days_encashed' => $calculation['leave_days_encashed'],
+                ] : null,
+            ],
+        ]);
+
+        foreach ($calculation['lines'] as $line) {
+            $payslip->lines()->create($line);
+        }
+
+        foreach ($calculation['loan_repayments'] as [$loan, $due]) {
+            $this->applyLoanRepayment($loan, $payslip->getKey(), $due, $period->pay_date);
+        }
+
+        return $payslip;
+    }
+
+    /**
+     * Work out an employee's pay for a period (optionally only up to $asOf).
+     * Returns the lines and totals without writing anything.
+     *
+     * @param  Collection<string, SalaryComponent>  $components
+     * @return array{lines: array<int, array<string, mixed>>, gross: int, taxable: int, statutory: int, other_deductions: int, total_deductions: int, net: int, basis: string, attendance: array<string, float>, full_basic: int, leave_days_encashed: float, loan_repayments: array<int, array{0: Loan, 1: int}>}
+     */
+    private function calculate(PayrollPeriod $period, Employee $employee, Collection $components, ?CarbonImmutable $asOf = null): array
+    {
         $rules = PayRules::for($period->tenant);
-        $ctx = $this->context($employee, $period, $rules);
+        $ctx = $this->context($employee, $period, $rules, $asOf);
+        $isFinal = $period->isFinalSettlement();
         $taxableCodes = [];
         $pensionableCodes = [];
 
@@ -190,6 +267,12 @@ class PayrollService
             }
 
             $cents = max(0, $this->amountFor($component, $esc->amount_cents, $esc->rate, $esc->formula, $ctx));
+
+            // Fixed allowances accrue with time on a partial cycle (month to date, final pay).
+            if ($component->calculation_method === CalculationMethod::Fixed && $ctx->proration < 1.0) {
+                $cents = (int) round($cents * $ctx->proration);
+            }
+
             $ctx->addEarning($component->code, $cents);
             $taxableCodes[$component->code] = $component->is_taxable;
             $pensionableCodes[$component->code] = $component->is_pensionable;
@@ -206,6 +289,19 @@ class PayrollService
                 $taxableCodes['OVERTIME'] = true;
                 $pensionableCodes['OVERTIME'] = true;
                 $lines[] = ['type' => SalaryComponentType::Earning, 'code' => 'OVERTIME', 'name' => $overtimeLabel, 'amount_cents' => $overtimeCents, 'is_taxable' => true, 'is_statutory' => false, 'sort_order' => $sort++];
+            }
+        }
+
+        // 2c. Final settlement: pay out untaken annual leave.
+        $leaveDays = 0.0;
+        if ($isFinal) {
+            $leaveDays = $this->untakenAnnualLeave($employee, $period->end_date);
+            $leaveCents = (int) round($leaveDays * $this->dayRate($ctx, $rules));
+
+            if ($leaveCents > 0) {
+                $ctx->addEarning('LEAVE_PAY', $leaveCents);
+                $taxableCodes['LEAVE_PAY'] = true;
+                $lines[] = ['type' => SalaryComponentType::Earning, 'code' => 'LEAVE_PAY', 'name' => sprintf('Untaken leave (%s days)', $this->number($leaveDays)), 'amount_cents' => $leaveCents, 'is_taxable' => true, 'is_statutory' => false, 'sort_order' => $sort++];
             }
         }
 
@@ -233,62 +329,58 @@ class PayrollService
             $lines[] = ['type' => SalaryComponentType::Deduction, 'code' => $component->code, 'name' => $component->name, 'amount_cents' => $cents, 'is_taxable' => false, 'is_statutory' => false, 'sort_order' => $sort++];
         }
 
-        // 5. Loans / advances
+        // 5. Loans / advances — a final settlement recovers the whole balance, as far as the pay covers it
         $loanRepayments = [];
         foreach ($employee->loans as $loan) {
             if (! $loan->isRepaying() || $loan->start_date->greaterThan($ctx->payDate)) {
                 continue;
             }
-            $due = $loan->dueThisRun();
+            $due = $isFinal
+                ? min((int) $loan->outstanding_cents, max(0, $gross - $statutoryTotal - $otherDeductions))
+                : $loan->dueThisRun();
             if ($due <= 0) {
                 continue;
             }
             $otherDeductions += $due;
             $loanRepayments[] = [$loan, $due];
-            $lines[] = ['type' => SalaryComponentType::Deduction, 'code' => 'LOAN-'.$loan->getKey(), 'name' => $loan->type->label().' repayment', 'amount_cents' => $due, 'is_taxable' => false, 'is_statutory' => false, 'sort_order' => $sort++];
+            $name = $loan->type->label().($isFinal ? ' balance recovered' : ' repayment');
+            $lines[] = ['type' => SalaryComponentType::Deduction, 'code' => 'LOAN-'.$loan->getKey(), 'name' => $name, 'amount_cents' => $due, 'is_taxable' => false, 'is_statutory' => false, 'sort_order' => $sort++];
         }
 
         $totalDeductions = $statutoryTotal + $otherDeductions;
-        $net = max(0, $gross - $totalDeductions);
 
-        $payslip = Payslip::query()->create([
-            'payroll_run_id' => $run->getKey(),
-            'employee_id' => $employee->getKey(),
-            'employee_number' => $employee->employee_number,
-            'currency' => $employee->salary_currency ?? $period->tenant->currency,
-            'gross_earnings_cents' => $gross,
-            'taxable_income_cents' => $taxable,
-            'statutory_deductions_cents' => $statutoryTotal,
-            'other_deductions_cents' => $otherDeductions,
-            'total_deductions_cents' => $totalDeductions,
-            'net_pay_cents' => $net,
-            'status' => PayslipStatus::Draft,
-            'snapshot' => [
-                'department' => $employee->department?->name,
-                'designation' => $employee->designation?->name,
-                'kra_pin' => $employee->statutoryDetail?->tax_pin,
-                'bank' => $employee->bankAccounts->firstWhere('is_primary', true)?->maskedAccountNumber()
-                    ?? $employee->bankAccounts->first()?->maskedAccountNumber(),
-                'salary_basis' => $this->isHourly($employee) ? 'hourly' : $rules->salaryBasis,
-                'attendance' => $ctx->attendance,
-            ],
-        ]);
-
-        foreach ($lines as $line) {
-            $payslip->lines()->create($line);
-        }
-
-        foreach ($loanRepayments as [$loan, $due]) {
-            $this->applyLoanRepayment($loan, $payslip->getKey(), $due, $ctx->payDate);
-        }
-
-        return $payslip;
+        return [
+            'lines' => $lines,
+            'gross' => $gross,
+            'taxable' => $taxable,
+            'statutory' => $statutoryTotal,
+            'other_deductions' => $otherDeductions,
+            'total_deductions' => $totalDeductions,
+            'net' => max(0, $gross - $totalDeductions),
+            'basis' => $this->isHourly($employee) ? 'hourly' : $rules->salaryBasis,
+            'attendance' => $ctx->attendance,
+            'full_basic' => $ctx->basicSalaryCents,
+            'leave_days_encashed' => $leaveDays,
+            'loan_repayments' => $loanRepayments,
+        ];
     }
 
-    private function context(Employee $employee, PayrollPeriod $period, PayRules $rules): PayrollContext
+    /**
+     * Attendance for the days being paid (the period, cut off at $asOf), with
+     * rates taken from the full pay cycle so a partial cycle earns pro rata.
+     */
+    private function context(Employee $employee, PayrollPeriod $period, PayRules $rules, ?CarbonImmutable $asOf = null): PayrollContext
     {
-        $attendance = $this->attendancePay->summarize($employee, $period);
-        $workingDays = (int) $attendance['working_days'];
+        [$cycleStart, $cycleEnd] = $this->payCycle($period);
+        $end = $asOf !== null && $asOf->lessThan($period->end_date) ? $asOf->startOfDay() : $period->end_date;
+
+        $attendance = $this->attendancePay->summarizeRange($employee, $period->start_date, $end);
+        $windowDays = (int) $attendance['working_days'];
+        $workingDays = $cycleStart->equalTo($period->start_date) && $end->equalTo($cycleEnd)
+            ? $windowDays
+            : $this->attendancePay->workingDays($cycleStart, $cycleEnd);
+        $attendance['cycle_working_days'] = (float) $workingDays;
+
         $basic = $this->basicSalaryCents($employee, $period->pay_date);
 
         // Hourly staff: the salary amount *is* the hourly rate.
@@ -307,7 +399,31 @@ class PayrollService
             hourlyRate: $hourlyRate,
             attendance: $attendance,
             overtimeMultiplier: $rules->overtimeMultiplier,
+            proration: $workingDays > 0 ? min(1.0, $windowDays / $workingDays) : 1.0,
         );
+    }
+
+    /**
+     * The full pay cycle a period's rates are based on. A final settlement
+     * uses the regular period (or calendar month) its exit date falls in.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
+     */
+    private function payCycle(PayrollPeriod $period): array
+    {
+        if (! $period->isFinalSettlement()) {
+            return [$period->start_date, $period->end_date];
+        }
+
+        $exit = $period->end_date;
+        $regular = PayrollPeriod::query()->regular()
+            ->whereDate('start_date', '<=', $exit->toDateString())
+            ->whereDate('end_date', '>=', $exit->toDateString())
+            ->first();
+
+        return $regular !== null
+            ? [$regular->start_date, $regular->end_date]
+            : [$exit->startOfMonth(), $exit->endOfMonth()->startOfDay()];
     }
 
     /**
@@ -325,20 +441,48 @@ class PayrollService
             return [(int) round($ctx->hourlyRate * $hours), sprintf('Basic Pay (%s h × %s)', $this->number($hours), number_format($ctx->hourlyRate / 100, 2))];
         }
 
-        if (! $rules->isAttendanceBased() || $ctx->workingDays <= 0) {
+        if ($ctx->workingDays <= 0) {
             return [$ctx->basicSalaryCents, 'Basic Salary'];
         }
 
-        $payable = (float) ($attendance['payable_days'] ?? 0);
+        // Attendance basis pays the days credited; fixed basis pays the days elapsed.
+        $days = $rules->isAttendanceBased()
+            ? (float) ($attendance['payable_days'] ?? 0)
+            : (float) ($attendance['working_days'] ?? $ctx->workingDays);
 
-        if ($payable >= $ctx->workingDays) {
+        if ($days >= $ctx->workingDays) {
             return [$ctx->basicSalaryCents, 'Basic Salary'];
         }
 
         return [
-            (int) round($ctx->basicSalaryCents * $payable / $ctx->workingDays),
-            sprintf('Basic Salary (%s of %d days)', $this->number($payable), $ctx->workingDays),
+            (int) round($ctx->basicSalaryCents * $days / $ctx->workingDays),
+            sprintf('Basic Salary (%s of %d days)', $this->number($days), $ctx->workingDays),
         ];
+    }
+
+    /**
+     * One day's pay, used to value untaken leave.
+     */
+    private function dayRate(PayrollContext $ctx, PayRules $rules): float
+    {
+        return $this->isHourly($ctx->employee)
+            ? $ctx->hourlyRate * $rules->standardDailyHours
+            : $ctx->dailyRate();
+    }
+
+    /**
+     * Annual leave days still owed to the employee in the year they leave
+     * (pending requests are cancelled by leaving, so they count as untaken).
+     */
+    private function untakenAnnualLeave(Employee $employee, CarbonImmutable $exitDate): float
+    {
+        $balance = LeaveBalance::query()
+            ->where('employee_id', $employee->getKey())
+            ->where('year', $exitDate->year)
+            ->whereHas('leaveType', fn ($q) => $q->where('code', 'ANNUAL'))
+            ->first();
+
+        return $balance !== null ? max(0.0, $balance->remainingDays() + $balance->pending_days) : 0.0;
     }
 
     /**

@@ -41,19 +41,21 @@ class AttendancePayCalculator
      */
     public function summarize(Employee $employee, PayrollPeriod $period): array
     {
-        $start = $period->start_date->startOfDay();
-        $end = $period->end_date->startOfDay();
+        return $this->summarizeRange($employee, $period->start_date, $period->end_date);
+    }
 
-        $weekend = $this->calendar->weekendDays();
-        $holidays = $this->calendar->holidayDates($start, $end);
+    /**
+     * Same as {@see self::summarize()} for an arbitrary date range, e.g. month
+     * to date or up to an employee's exit date.
+     *
+     * @return array{working_days: float, payable_days: float, present_days: float, paid_leave_days: float, absent_days: float, worked_hours: float, regular_hours: float, overtime_hours: float, rest_day_hours: float}
+     */
+    public function summarizeRange(Employee $employee, CarbonImmutable $start, CarbonImmutable $end): array
+    {
+        $start = $start->startOfDay();
+        $end = $end->startOfDay();
 
-        $workingDates = [];
-        foreach (CarbonPeriod::create($start, $end) as $day) {
-            $day = CarbonImmutable::parse($day);
-            if (! $this->calendar->isNonWorking($day, $weekend, $holidays)) {
-                $workingDates[$day->toDateString()] = true;
-            }
-        }
+        $workingDates = $this->workingDates($start, $end);
 
         $attendanceCredit = [];
         $workedMinutes = 0;
@@ -118,6 +120,37 @@ class AttendancePayCalculator
             'overtime_hours' => round($overtimeMinutes / 60, 2),
             'rest_day_hours' => round($restDayMinutes / 60, 2),
         ];
+    }
+
+    /**
+     * Number of working days (excluding weekends and public holidays) in a range.
+     */
+    public function workingDays(CarbonImmutable $start, CarbonImmutable $end): int
+    {
+        return count($this->workingDates($start->startOfDay(), $end->startOfDay()));
+    }
+
+    /**
+     * @return array<string, bool> date => true for every working day in the range
+     */
+    private function workingDates(CarbonImmutable $start, CarbonImmutable $end): array
+    {
+        if ($end->lessThan($start)) {
+            return [];
+        }
+
+        $weekend = $this->calendar->weekendDays();
+        $holidays = $this->calendar->holidayDates($start, $end);
+
+        $workingDates = [];
+        foreach (CarbonPeriod::create($start, $end) as $day) {
+            $day = CarbonImmutable::parse($day);
+            if (! $this->calendar->isNonWorking($day, $weekend, $holidays)) {
+                $workingDates[$day->toDateString()] = true;
+            }
+        }
+
+        return $workingDates;
     }
 
     /**

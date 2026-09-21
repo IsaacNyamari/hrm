@@ -38,6 +38,18 @@ it('creates a period and processes a run', function () {
         ->assertJsonPath('data.employee_count', 1);
 });
 
+it('rejects a second regular period for the same dates', function () {
+    PayrollPeriod::factory()->forTenant($this->tenant)->forMonth(2026, 9)->create();
+
+    $this->actingAs($this->payrollManager)
+        ->postJson('http://pay-co.hrm.test/payroll-periods', [
+            'name' => 'September again', 'frequency' => 'monthly',
+            'start_date' => '2026-09-01', 'end_date' => '2026-09-30', 'pay_date' => '2026-09-30',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('start_date');
+});
+
 it('gates processing and approval by permission', function () {
     $period = PayrollPeriod::factory()->forTenant($this->tenant)->forMonth(2026, 9)->create();
 

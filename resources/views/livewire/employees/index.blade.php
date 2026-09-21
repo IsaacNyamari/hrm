@@ -63,6 +63,9 @@
                                 @if ($canUpdate)
                                     <flux:button size="sm" variant="ghost" wire:click="startEdit('{{ $employee->uuid }}')">{{ __('Edit') }}</flux:button>
                                 @endif
+                                @if (! $employee->status->isCurrentlyEmployed() && $canSettle)
+                                    <flux:button size="sm" variant="ghost" icon="banknotes" :href="route('payroll').'#final-settlements'" wire:navigate>{{ __('Final pay') }}</flux:button>
+                                @endif
                                 @if ($canDelete)
                                     <flux:modal.trigger name="delete-employee-{{ $employee->uuid }}">
                                         <flux:button size="sm" variant="danger">{{ __('Delete') }}</flux:button>
@@ -100,11 +103,15 @@
                 <flux:input wire:model="form.job_title" :label="__('Job title')" />
                 <flux:input type="date" wire:model="form.hire_date" :label="__('Hire date')" />
 
-                <flux:select wire:model="form.status" :label="__('Status')">
+                <flux:select wire:model.live="form.status" :label="__('Status')">
                     @foreach ($statuses as $case)
                         <flux:select.option value="{{ $case->value }}">{{ $case->label() }}</flux:select.option>
                     @endforeach
                 </flux:select>
+
+                @if (\App\Enums\EmploymentStatus::tryFrom($form['status'] ?? '')?->isCurrentlyEmployed() === false)
+                    <flux:input type="date" wire:model="form.exit_date" :label="__('Exit date')" :description="__('Last day worked. Defaults to today.')" />
+                @endif
 
                 <flux:select wire:model="form.department_id" :label="__('Department')">
                     <flux:select.option value="">{{ __('None') }}</flux:select.option>

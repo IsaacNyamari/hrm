@@ -14,6 +14,7 @@ use App\Services\Payroll\PayrollService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Runs extends Component
@@ -73,6 +74,12 @@ class Runs extends Component
             $this->error = $e->getMessage();
         }
     }
+
+    /**
+     * Re-render when another panel (e.g. a final settlement) changes payroll.
+     */
+    #[On('payroll-updated')]
+    public function refreshRuns(): void {}
 
     public function render(): View
     {

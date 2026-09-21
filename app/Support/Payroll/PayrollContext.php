@@ -30,7 +30,17 @@ class PayrollContext
         /** @var array<string, float> attendance summary for the period (see AttendancePayCalculator) */
         public readonly array $attendance = [],
         public readonly float $overtimeMultiplier = 1.5,
+        /** Share of the pay cycle's working days this calculation covers (1 for a full period). */
+        public readonly float $proration = 1.0,
     ) {}
+
+    /**
+     * Pay for one working day of the full cycle.
+     */
+    public function dailyRate(): float
+    {
+        return $this->workingDays > 0 ? $this->basicSalaryCents / $this->workingDays : 0.0;
+    }
 
     public function addEarning(string $code, int $cents): void
     {

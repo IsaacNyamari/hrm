@@ -20,7 +20,12 @@
                 @forelse ($periods as $period)
                     @php($run = $period->runs->sortByDesc('id')->first())
                     <tr wire:key="pp-{{ $period->uuid }}">
-                        <td class="px-4 py-3 font-medium">{{ $period->name }}</td>
+                        <td class="px-4 py-3 font-medium">
+                            {{ $period->name }}
+                            @if ($period->isFinalSettlement())
+                                <span class="ml-1 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-medium text-danger">{{ __('Final pay') }}</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-neutral-500">{{ $period->pay_date->toFormattedDateString() }}</td>
                         <td class="px-4 py-3">
                             <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{{ $period->status->label() }}</span>

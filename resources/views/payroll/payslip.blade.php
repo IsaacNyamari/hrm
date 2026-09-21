@@ -56,6 +56,15 @@
         </tr>
     </table>
 
+    @php($settlement = $payslip->snapshot['final_settlement'] ?? null)
+    @if (is_array($settlement))
+        <div style="margin-top:10px; padding:8px 10px; border:1px solid #dc3545; color:#dc3545" data-test="payslip-final-settlement">
+            <strong style="color:#dc3545">FINAL SETTLEMENT</strong> —
+            {{ $settlement['reason'] ?? '' }}, exit date {{ \Carbon\CarbonImmutable::parse($settlement['exit_date'])->toFormattedDateString() }}.
+            Covers pay up to the exit date{{ ($settlement['leave_days_encashed'] ?? 0) > 0 ? ' and '.rtrim(rtrim(number_format((float) $settlement['leave_days_encashed'], 2, '.', ''), '0'), '.').' days of untaken leave' : '' }}.
+        </div>
+    @endif
+
     @php($attendance = $payslip->snapshot['attendance'] ?? null)
     @if (is_array($attendance) && $attendance !== [])
         @php($num = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.'))

@@ -9,6 +9,7 @@ use App\Models\PayrollPeriod;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PayrollPeriodController extends Controller
@@ -45,6 +46,15 @@ class PayrollPeriodController extends Controller
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'pay_date' => ['required', 'date', 'after_or_equal:start_date'],
         ]);
+
+        $duplicate = PayrollPeriod::query()->regular()
+            ->whereDate('start_date', $data['start_date'])
+            ->whereDate('end_date', $data['end_date'])
+            ->exists();
+
+        if ($duplicate) {
+            throw ValidationException::withMessages(['start_date' => __('A payroll period already covers these dates.')]);
+        }
 
         $period = PayrollPeriod::query()->create($data);
 

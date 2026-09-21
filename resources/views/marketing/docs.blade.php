@@ -154,6 +154,16 @@
                         <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span><strong>{{ __('Overtime') }}</strong> {{ __('is added as a taxable earning: hours beyond the shift (after its overtime threshold) at 1.5× the hourly rate, and every hour worked on a rest day or public holiday at 2×. Both rates are configurable. Hourly rate = basic ÷ (working days × standard daily hours).') }}</span></li>
                     </ul>
                     <p class="{{ $p }}">{{ __('Each payslip shows the days paid, hours worked and overtime, and the payroll run warns you about anyone paid for zero days before you approve it.') }}</p>
+
+                    <h3 class="mt-6 font-bold text-night">{{ __('Earnings to date & final pay') }}</h3>
+                    <p class="{{ $p }}">{{ __('The Payroll page shows what each employee has earned so far in the current pay cycle. It is worked out from attendance up to today, so the figure grows with every day worked.') }}</p>
+                    <p class="{{ $p }}">{{ __('When someone leaves, set their status to terminated, resigned or retired and enter an exit date. Under Payroll → Final settlements, click “Prepare final pay”. This works out everything they are owed:') }}</p>
+                    <ul class="mt-3 space-y-2 text-sm text-zinc-600">
+                        <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span>{{ __('Pay from the day after their last payroll up to the exit date, including overtime.') }}</span></li>
+                        <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span>{{ __('Their untaken annual leave, paid out at their daily rate.') }}</span></li>
+                        <li class="{{ $li }}"><flux:icon.check-circle variant="micro" class="mt-1 text-success" /> <span>{{ __('Less tax and statutory deductions, with any outstanding loan recovered in full as far as their pay covers it.') }}</span></li>
+                    </ul>
+                    <p class="{{ $p }}">{{ __('The settlement then appears in the payroll runs list, where you approve it and mark it paid like any other run.') }}</p>
                     <p class="mt-4 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm text-zinc-700">{{ __('Statutory rates change from time to time. Check the tax rules under Payroll settings before your first run and after any government announcement.') }}</p>
                 </div>
 

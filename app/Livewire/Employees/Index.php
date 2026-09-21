@@ -15,6 +15,7 @@ use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\EmploymentType;
+use App\Models\PayrollPeriod;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
@@ -89,6 +90,7 @@ class Index extends Component
             'job_title' => (string) $employee->job_title,
             'status' => $employee->status->value,
             'hire_date' => (string) $employee->hire_date?->toDateString(),
+            'exit_date' => (string) $employee->exit_date?->toDateString(),
             'department_id' => (string) $employee->department_id,
             'designation_id' => (string) $employee->designation_id,
             'branch_id' => (string) $employee->branch_id,
@@ -108,6 +110,7 @@ class Index extends Component
             'form.job_title' => ['nullable', 'string', 'max:150'],
             'form.status' => ['required', 'string'],
             'form.hire_date' => ['nullable', 'date'],
+            'form.exit_date' => ['nullable', 'date'],
             'form.department_id' => ['nullable', 'integer'],
             'form.designation_id' => ['nullable', 'integer'],
             'form.branch_id' => ['nullable', 'integer'],
@@ -121,8 +124,14 @@ class Index extends Component
             'email' => $data['email'] !== '' ? $data['email'] : null,
             'phone' => $data['phone'] !== '' ? $data['phone'] : null,
             'job_title' => $data['job_title'] !== '' ? $data['job_title'] : null,
-            'status' => EmploymentStatus::from($data['status']),
+            'status' => $status = EmploymentStatus::from($data['status']),
             'hire_date' => $data['hire_date'] !== '' ? $data['hire_date'] : null,
+            // Leavers need an exit date for their final pay; default it to today.
+            'exit_date' => match (true) {
+                ($data['exit_date'] ?? '') !== '' => $data['exit_date'],
+                ! $status->isCurrentlyEmployed() => now()->toDateString(),
+                default => null,
+            },
             'department_id' => $data['department_id'] !== '' ? (int) $data['department_id'] : null,
             'designation_id' => $data['designation_id'] !== '' ? (int) $data['designation_id'] : null,
             'branch_id' => $data['branch_id'] !== '' ? (int) $data['branch_id'] : null,
@@ -138,8 +147,11 @@ class Index extends Component
             } else {
                 $employee = Employee::query()->where('uuid', $this->editingUuid)->firstOrFail();
                 Gate::authorize('update', $employee);
+                $wasEmployed = $employee->status->isCurrentlyEmployed();
                 $update->handle($employee, $attributes);
-                Flux::toast(variant: 'success', text: __('Employee updated.'));
+                Flux::toast(variant: 'success', text: $wasEmployed && ! $status->isCurrentlyEmployed()
+                    ? __('Employee updated. Settle their final pay under Payroll → Final settlements.')
+                    : __('Employee updated.'));
             }
         } catch (PlanLimitExceededException $e) {
             Flux::toast(variant: 'danger', text: $e->getMessage());
@@ -170,7 +182,7 @@ class Index extends Component
     {
         return [
             'first_name' => '', 'last_name' => '', 'email' => '', 'phone' => '', 'job_title' => '',
-            'status' => 'active', 'hire_date' => '', 'department_id' => '', 'designation_id' => '',
+            'status' => 'active', 'hire_date' => '', 'exit_date' => '', 'department_id' => '', 'designation_id' => '',
             'branch_id' => '', 'employment_type_id' => '', 'manager_id' => '',
         ];
     }
@@ -198,6 +210,7 @@ class Index extends Component
             'canCreate' => $user?->can('employees.create'),
             'canUpdate' => $user?->can('employees.update'),
             'canDelete' => $user?->can('employees.delete'),
+            'canSettle' => Gate::allows('create', PayrollPeriod::class),
         ]);
     }
 }
