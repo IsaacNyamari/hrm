@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Recruitment;
 
+use App\Actions\Recruitment\ConvertOfferToEmployee;
 use App\Enums\VacancyStatus;
+use App\Exceptions\PlanLimitExceededException;
 use App\Exceptions\RecruitmentException;
 use App\Facades\Tenancy;
 use App\Livewire\Concerns\BindsTenant;
@@ -419,6 +421,54 @@ class Board extends Component
         }
     }
 
+    /**
+     * Record the candidate's answer when they reply outside the tracking page.
+     */
+    public function recordOfferResponse(string $offerUuid, bool $accepted, RecruitmentService $service): void
+    {
+        $offer = Offer::query()->where('uuid', $offerUuid)->first();
+
+        if ($offer === null || Gate::denies('manage', $offer)) {
+            Flux::toast(variant: 'danger', text: __('You cannot update that offer.'));
+
+            return;
+        }
+
+        try {
+            $service->respondToOffer($offer, $accepted, null, auth()->user());
+            Flux::toast(variant: 'success', text: $accepted ? __('Offer marked as accepted.') : __('Offer marked as declined.'));
+        } catch (RecruitmentException $e) {
+            Flux::toast(variant: 'danger', text: $e->getMessage());
+        }
+    }
+
+    /**
+     * Turn an accepted offer into an employee with a staff login; the new hire
+     * is emailed a link to set their password.
+     */
+    public function hire(string $offerUuid, ConvertOfferToEmployee $convert): void
+    {
+        $offer = Offer::query()->where('uuid', $offerUuid)->first();
+
+        if ($offer === null || Gate::denies('manage', $offer)) {
+            Flux::toast(variant: 'danger', text: __('You cannot hire from that offer.'));
+
+            return;
+        }
+
+        try {
+            $employee = $convert->handle($offer);
+        } catch (RecruitmentException|PlanLimitExceededException $e) {
+            Flux::toast(variant: 'danger', text: $e->getMessage());
+
+            return;
+        }
+
+        Flux::toast(variant: 'success', text: $employee->user_id !== null
+            ? __(':name is now an employee. A welcome email with their account link has been sent.', ['name' => $employee->fullName()])
+            : __(':name is now an employee. No login was created (missing email, or the email is used by another organization).', ['name' => $employee->fullName()]));
+    }
+
     public function render(): View
     {
         $user = auth()->user();
@@ -452,7 +502,11 @@ class Board extends Component
             : collect();
 
         $offersToSend = $canManage
-            ? Offer::query()->where('status', 'draft')->with(['application.applicant:id,first_name,last_name'])->latest('id')->get()
+            ? Offer::query()
+                ->where(fn ($q) => $q->whereIn('status', ['draft', 'sent'])
+                    ->orWhere(fn ($q) => $q->where('status', 'accepted')->whereNull('converted_employee_id')))
+                ->with(['application.applicant:id,first_name,last_name'])
+                ->latest('id')->get()
             : collect();
 
         return view('livewire.recruitment.board', [

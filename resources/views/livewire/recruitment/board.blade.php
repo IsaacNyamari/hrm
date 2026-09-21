@@ -119,17 +119,28 @@
             </div>
 
             <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
-                <flux:heading size="sm">{{ __('Offers to send') }}</flux:heading>
-                <ul class="mt-2 space-y-2 text-sm">
+                <flux:heading size="sm">{{ __('Offers') }}</flux:heading>
+                <ul class="mt-2 space-y-3 text-sm">
                     @forelse ($offersToSend as $offer)
-                        <li wire:key="offer-{{ $offer->uuid }}" class="flex items-center justify-between">
+                        <li wire:key="offer-{{ $offer->uuid }}" class="flex flex-wrap items-center justify-between gap-2">
                             <span class="text-neutral-600 dark:text-neutral-400">
                                 {{ $offer->application->applicant->fullName() }} — {{ $offer->job_title }}
+                                <span class="ml-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs dark:bg-neutral-800">{{ $offer->status->label() }}</span>
                             </span>
-                            <flux:button size="sm" variant="primary" wire:click="sendOffer('{{ $offer->uuid }}')">{{ __('Send') }}</flux:button>
+                            <span class="flex gap-1">
+                                @if ($offer->status->value === 'draft')
+                                    <flux:button size="sm" variant="primary" wire:click="sendOffer('{{ $offer->uuid }}')">{{ __('Send') }}</flux:button>
+                                @elseif ($offer->status->value === 'sent')
+                                    <flux:button size="sm" variant="ghost" wire:click="recordOfferResponse('{{ $offer->uuid }}', true)">{{ __('Accepted') }}</flux:button>
+                                    <flux:button size="sm" variant="ghost" wire:click="recordOfferResponse('{{ $offer->uuid }}', false)">{{ __('Declined') }}</flux:button>
+                                @else
+                                    <flux:button size="sm" variant="primary" icon="user-plus" wire:click="hire('{{ $offer->uuid }}')"
+                                        wire:confirm="{{ __('Create the employee record and staff account, and email the welcome link?') }}">{{ __('Hire & create account') }}</flux:button>
+                                @endif
+                            </span>
                         </li>
                     @empty
-                        <li class="text-neutral-500">{{ __('No draft offers.') }}</li>
+                        <li class="text-neutral-500">{{ __('No open offers.') }}</li>
                     @endforelse
                 </ul>
             </div>

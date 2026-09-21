@@ -12,6 +12,8 @@
         ['features', __('Features')],
         ['pricing', __('Pricing')],
         ['about', __('About')],
+        ['jobs.index', __('Jobs')],
+        ['applications.track', __('Track application')],
         ['docs', __('Docs')],
         ['contact', __('Contact')],
     ];
@@ -51,7 +53,7 @@
                     <span class="text-base font-extrabold tracking-tight transition" :class="scrolled || open ? 'text-night' : 'text-white'">{{ $appName }}</span>
                 </a>
 
-                <div class="hidden items-center gap-1 lg:flex">
+                <div class="hidden items-center gap-1 xl:flex">
                     @foreach ($links as [$route, $label])
                         <a href="{{ route($route) }}"
                            class="rounded-lg px-3 py-2 text-sm font-medium transition"
@@ -61,7 +63,7 @@
                     @endforeach
                 </div>
 
-                <div class="hidden items-center gap-2 lg:flex">
+                <div class="hidden items-center gap-2 xl:flex">
                     @auth
                         <a href="{{ route('dashboard') }}" class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand/25 transition hover:bg-indigo-700">{{ __('Open dashboard') }}</a>
                     @else
@@ -70,13 +72,13 @@
                     @endauth
                 </div>
 
-                <button type="button" @click="open = !open" class="grid size-10 place-items-center rounded-lg transition lg:hidden" :class="scrolled || open ? 'text-zinc-700 hover:bg-zinc-100' : 'text-white hover:bg-white/10'" :aria-expanded="open" aria-label="{{ __('Menu') }}">
+                <button type="button" @click="open = !open" class="grid size-10 place-items-center rounded-lg transition xl:hidden" :class="scrolled || open ? 'text-zinc-700 hover:bg-zinc-100' : 'text-white hover:bg-white/10'" :aria-expanded="open" aria-label="{{ __('Menu') }}">
                     <flux:icon.bars-3 x-show="!open" />
                     <flux:icon.x-mark x-show="open" x-cloak />
                 </button>
             </nav>
 
-            <div x-show="open" x-cloak x-transition.origin.top class="border-t border-zinc-100 bg-white px-4 pb-6 pt-2 shadow-lg lg:hidden">
+            <div x-show="open" x-cloak x-transition.origin.top class="border-t border-zinc-100 bg-white px-4 pb-6 pt-2 shadow-lg xl:hidden">
                 @foreach ($links as [$route, $label])
                     <a href="{{ route($route) }}" class="block rounded-lg px-3 py-2.5 text-base font-medium {{ request()->routeIs($route) ? 'bg-brand/5 text-brand' : 'text-zinc-700' }}">{{ $label }}</a>
                 @endforeach
@@ -98,7 +100,7 @@
         {{-- Footer --}}
         <footer class="bg-night text-zinc-400">
             <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-                <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
+                <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-6">
                     <div class="lg:col-span-2">
                         <a href="{{ route('home') }}" class="flex items-center gap-2.5">
                             <span class="grid size-9 place-items-center rounded-lg bg-linear-to-br from-brand to-highlight">
@@ -117,6 +119,7 @@
                     @foreach ([
                         __('Product') => [['features', __('Features')], ['pricing', __('Pricing')], ['docs', __('Documentation')]],
                         __('Company') => [['about', __('About us')], ['contact', __('Contact')], ['quote', __('Request a quote')]],
+                        __('Careers') => [['jobs.index', __('Open jobs')], ['applications.track', __('Track application')]],
                         __('Account') => [['login', __('Log in')], ['password.request', __('Reset password')]],
                     ] as $heading => $items)
                         <div>

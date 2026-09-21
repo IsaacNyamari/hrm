@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Livewire\Payroll;
 
-use App\Enums\PayrollFrequency;
 use App\Facades\Tenancy;
 use App\Livewire\Concerns\BindsTenant;
 use App\Models\Employee;
 use App\Models\PayrollPeriod;
 use App\Models\SalaryComponent;
 use App\Services\Payroll\PayrollService;
+use App\Support\Payroll\CurrentPayCycle;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
@@ -34,7 +34,7 @@ class EarningsToDate extends Component
     public function render(PayrollService $payroll): View
     {
         $today = CarbonImmutable::today();
-        $period = $this->currentCycle($today);
+        $period = CurrentPayCycle::for(Tenancy::getOrFail(), $today);
         $components = SalaryComponent::query()->get()->keyBy('code');
 
         $rows = Employee::query()
@@ -67,33 +67,5 @@ class EarningsToDate extends Component
             'daysInCycle' => (int) $period->start_date->diffInDays($period->end_date) + 1,
             'currency' => Tenancy::getOrFail()->currency,
         ]);
-    }
-
-    /**
-     * The regular period covering today, or the calendar month when payroll
-     * periods have not been set up that far ahead.
-     */
-    private function currentCycle(CarbonImmutable $today): PayrollPeriod
-    {
-        $period = PayrollPeriod::query()->regular()
-            ->whereDate('start_date', '<=', $today->toDateString())
-            ->whereDate('end_date', '>=', $today->toDateString())
-            ->first();
-
-        if ($period !== null) {
-            return $period;
-        }
-
-        $tenant = Tenancy::getOrFail();
-        $period = new PayrollPeriod([
-            'name' => $today->format('F Y'),
-            'frequency' => PayrollFrequency::Monthly,
-            'start_date' => $today->startOfMonth(),
-            'end_date' => $today->endOfMonth()->startOfDay(),
-            'pay_date' => $today->endOfMonth()->startOfDay(),
-        ]);
-        $period->tenant_id = $tenant->getKey();
-
-        return $period->setRelation('tenant', $tenant);
     }
 }

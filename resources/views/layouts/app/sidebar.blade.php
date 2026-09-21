@@ -57,6 +57,24 @@
                             </flux:sidebar.item>
                         @endif
                     </flux:sidebar.group>
+                @elseif (auth()->user()->isSelfServiceOnly())
+                <flux:sidebar.group :heading="__('Me')" class="grid">
+                    <flux:sidebar.item icon="user-circle" :href="route('portal')" :current="request()->routeIs('portal')" wire:navigate>
+                        {{ __('My HR') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="clock" :href="route('attendance.index')" :current="request()->routeIs('attendance.*')" wire:navigate>
+                        {{ __('Time clock') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="calendar-days" :href="route('leave')" :current="request()->routeIs('leave')" wire:navigate>
+                        {{ __('My leave') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="clipboard-document-check" :href="route('tasks')" :current="request()->routeIs('tasks')" wire:navigate>
+                        {{ __('My tasks') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="bell" :href="route('notifications')" :current="request()->routeIs('notifications')" wire:navigate>
+                        {{ __('Notifications') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
                 @else
                 <flux:sidebar.group :heading="__('Overview')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>

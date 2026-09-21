@@ -33,8 +33,9 @@ use App\Http\Controllers\HrRequestController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\InvitationController;
-use App\Http\Controllers\JoinController;
 use App\Http\Controllers\JobPositionController;
+use App\Http\Controllers\JobsController;
+use App\Http\Controllers\JoinController;
 use App\Http\Controllers\KpiController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveCalendarController;
@@ -53,10 +54,10 @@ use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PaystackCallbackController;
 use App\Http\Controllers\PerformanceCycleController;
-use App\Http\Controllers\PricingController;
 use App\Http\Controllers\PerformanceReviewController;
 use App\Http\Controllers\Platform\BillingController as PlatformBillingController;
 use App\Http\Controllers\Platform\TenantController as PlatformTenantController;
+use App\Http\Controllers\PricingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
@@ -66,6 +67,7 @@ use App\Http\Controllers\TaxRuleController;
 use App\Http\Controllers\UserInvitationController;
 use App\Http\Controllers\VacancyController;
 use App\Http\Controllers\WebhookEndpointController;
+use App\Http\Controllers\WelcomeNewHireController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -78,6 +80,21 @@ Route::view('about', 'marketing.about')->name('about');
 Route::view('docs', 'marketing.docs')->name('docs');
 Route::view('contact', 'marketing.contact')->name('contact');
 Route::view('request-a-quote', 'marketing.quote')->name('quote');
+
+/*
+| Public job board (all organizations) and no-account application tracking.
+*/
+Route::get('jobs', [JobsController::class, 'index'])->name('jobs.index');
+Route::get('jobs/{organization}/{vacancy}', [JobsController::class, 'show'])->name('jobs.show');
+Route::view('track-application', 'marketing.track')->name('applications.track');
+
+/*
+| First sign-in for a new hire: signed, single-use link from the welcome email.
+*/
+Route::middleware('throttle:20,1')->group(function () {
+    Route::get('welcome/{user}', [WelcomeNewHireController::class, 'show'])->name('welcome.show');
+    Route::post('welcome/{user}', [WelcomeNewHireController::class, 'store'])->name('welcome.store');
+});
 
 /*
 | Invite-only registration. Public sign-up is closed (Fortify registration is

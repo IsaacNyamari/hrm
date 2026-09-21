@@ -8,6 +8,7 @@ use App\Listeners\RecordAuditTrail;
 use App\Listeners\RecordLoginActivity;
 use App\Listeners\RecordZktecoAttendance;
 use App\Listeners\SendBillingNotifications;
+use App\Listeners\SendCandidateNotifications;
 use App\Listeners\SendExpenseNotifications;
 use App\Listeners\SendLeaveNotifications;
 use App\Listeners\SendPerformanceNotifications;
@@ -65,6 +66,7 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SendPortalNotifications::class);
         Event::subscribe(SendPerformanceNotifications::class);
         Event::subscribe(SendRecruitmentNotifications::class);
+        Event::subscribe(SendCandidateNotifications::class);
         Event::subscribe(SendExpenseNotifications::class);
         Event::subscribe(SendTaskNotifications::class);
         Event::subscribe(DispatchWebhooks::class);

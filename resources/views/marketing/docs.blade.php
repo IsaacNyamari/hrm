@@ -174,7 +174,10 @@
 
                 <div id="recruitment" x-intersect.margin.-40%="active = 'recruitment'">
                     <h2 class="{{ $h2 }}">{{ __('Recruitment') }}</h2>
-                    <p class="{{ $p }}">{{ __('Publish vacancies to your careers page, where candidates apply directly. Track each application through its stages, schedule interviews, and send offers. An accepted offer can be converted into an employee record in one click.') }}</p>
+                    <p class="{{ $p }}">{{ __('Publish a vacancy and it appears on the public Jobs page, where candidates apply online with their CV. No account is needed. Each applicant gets a tracking code by email and can follow their progress on the Track application page.') }}</p>
+                    <p class="{{ $p }}">{{ __('Move applications through the stages, schedule interviews and send offers. Candidates are emailed at each step: when their application is received, when they are invited to an interview, when they get an offer, and when they are unsuccessful. They can accept or decline an offer on the tracking page.') }}</p>
+                    <p class="{{ $p }}">{{ __('On the recruitment board, click “Hire & create account” on an accepted offer. This creates the employee record and a staff login, and emails the new hire a one-time link to set their password. The link is valid for 7 days.') }}</p>
+                    <p class="{{ $p }}">{{ __('New hires sign in to My HR. There they see what they have earned so far this month, salary received this year, and their payslips. They can also see their tasks, leave balances and requests, attendance, and company announcements.') }}</p>
                 </div>
 
                 <div id="finance" x-intersect.margin.-40%="active = 'finance'">

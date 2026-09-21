@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property int $tenant_id
  * @property string $uuid
+ * @property string $tracking_code what the candidate uses on the public tracking page
  * @property int $vacancy_id
  * @property int $applicant_id
  * @property string $stage
@@ -45,6 +46,40 @@ class Application extends Model
     use HasUuid;
 
     protected $guarded = ['id'];
+
+    /** Unambiguous characters only (no 0/O, 1/I/L), so codes can be read out and typed. */
+    private const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+
+    protected static function booted(): void
+    {
+        static::creating(function (Application $application): void {
+            $application->tracking_code ??= self::newTrackingCode();
+        });
+    }
+
+    public static function newTrackingCode(): string
+    {
+        do {
+            $code = 'APP-';
+            for ($i = 0; $i < 8; $i++) {
+                $code .= self::CODE_ALPHABET[random_int(0, strlen(self::CODE_ALPHABET) - 1)];
+            }
+        } while (static::query()->withoutGlobalScopes()->where('tracking_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Find an application for the public tracking page. Both the code and the
+     * applicant's email must match, so a leaked code alone reveals nothing.
+     */
+    public static function findForTracking(string $code, string $email): ?self
+    {
+        return static::query()->withoutGlobalScopes()
+            ->where('tracking_code', strtoupper(trim($code)))
+            ->whereHas('applicant', fn ($q) => $q->withoutGlobalScopes()->where('email', mb_strtolower(trim($email))))
+            ->first();
+    }
 
     /**
      * @return array<string, string>

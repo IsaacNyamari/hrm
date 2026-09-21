@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Recruitment;
 
 use App\Actions\Employees\CreateEmployee;
+use App\Actions\Employees\CreateStaffAccount;
 use App\Enums\EmploymentStatus;
 use App\Enums\OfferStatus;
 use App\Exceptions\RecruitmentException;
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Turns an accepted offer into an active employee record, links it back to the
- * applicant and closes out the application. Reuses {@see CreateEmployee} so the
+ * applicant and closes out the application. The new hire also gets a staff
+ * login and a welcome email to set their password. Reuses {@see CreateEmployee} so the
  * plan-limit check and employee-number generation still apply.
  */
 class ConvertOfferToEmployee
@@ -24,6 +26,7 @@ class ConvertOfferToEmployee
     public function __construct(
         private readonly TenantContext $context,
         private readonly CreateEmployee $createEmployee,
+        private readonly CreateStaffAccount $createAccount,
     ) {}
 
     /**
@@ -67,6 +70,8 @@ class ConvertOfferToEmployee
                 $employee = $this->createEmployee->handle($tenant, $attributes);
 
                 $offer->forceFill(['converted_employee_id' => $employee->getKey()])->save();
+
+                $this->createAccount->handle($employee);
 
                 return $employee;
             });

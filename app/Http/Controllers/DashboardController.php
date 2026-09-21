@@ -16,6 +16,10 @@ class DashboardController extends Controller
             return redirect()->route('platform.dashboard');
         }
 
+        if ($request->user()?->isSelfServiceOnly() === true) {
+            return redirect()->route('portal');
+        }
+
         return view('dashboard');
     }
 }

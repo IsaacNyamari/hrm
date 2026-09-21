@@ -82,6 +82,31 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasOne(Employee::class);
     }
 
+    /**
+     * A regular staff member whose only role is Employee: they get the
+     * self-service ("My HR") experience instead of the management dashboard.
+     */
+    public function isSelfServiceOnly(): bool
+    {
+        if ($this->tenant_id === null || $this->isPlatformAdmin()) {
+            return false;
+        }
+
+        return once(function (): bool {
+            $registrar = app(PermissionRegistrar::class);
+            $previous = $registrar->getPermissionsTeamId();
+            $registrar->setPermissionsTeamId($this->tenant_id);
+
+            try {
+                $roles = $this->roles()->pluck('name');
+            } finally {
+                $registrar->setPermissionsTeamId($previous);
+            }
+
+            return $roles->isNotEmpty() && $roles->diff([Role::Employee->value])->isEmpty();
+        });
+    }
+
     public function isPlatformAdmin(): bool
     {
         return $this->is_platform_admin === true;
