@@ -120,11 +120,28 @@ class Records extends Component
         ];
     }
 
+    /**
+     * New punches and corrections appear without a reload.
+     *
+     * @return array<string, string>
+     */
+    protected function getListeners(): array
+    {
+        $tenantId = auth()->user()?->tenant_id;
+
+        return $tenantId === null ? [] : [
+            "echo-private:tenant.{$tenantId}.attendance,.attendance.logged" => 'refreshRecords',
+        ];
+    }
+
+    public function refreshRecords(): void {}
+
     public function render(): View
     {
         $records = Attendance::query()
             ->with(['employee:id,first_name,last_name,employee_number'])
             ->orderByDesc('work_date')
+            ->orderByDesc('updated_at')
             ->paginate(20);
 
         return view('livewire.attendance.records', [

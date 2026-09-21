@@ -79,6 +79,21 @@ class Clock extends Component
         }
     }
 
+    /**
+     * Refresh when this employee's attendance changes elsewhere (a biometric
+     * device, an HR correction or another open tab).
+     *
+     * @return array<string, string>
+     */
+    protected function getListeners(): array
+    {
+        $id = auth()->id();
+
+        return $id === null ? [] : ["echo-private:App.Models.User.{$id},.attendance.logged" => 'refreshOwnAttendance'];
+    }
+
+    public function refreshOwnAttendance(): void {}
+
     public function render(): View
     {
         $employee = auth()->user()?->employee;

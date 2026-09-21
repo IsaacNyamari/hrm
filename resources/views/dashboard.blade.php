@@ -18,6 +18,10 @@
             </div>
         </div>
 
+        @can('viewAny', \App\Models\Attendance::class)
+            <livewire:attendance.live-today />
+        @endcan
+
         <livewire:analytics.overview />
 
         <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-neutral-200 p-6 dark:border-neutral-700">

@@ -6,12 +6,14 @@ namespace App\Services\Attendance;
 
 use App\Enums\AttendanceSource;
 use App\Enums\AttendanceStatus;
+use App\Events\AttendanceLogged;
 use App\Exceptions\AttendanceException;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Shift;
 use App\Support\Attendance\PunchData;
 use App\Support\Geo;
+use App\Support\RealTime;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +64,8 @@ class AttendanceService
                 'recorded_by' => $punch->recordedBy,
             ])->save();
 
+            RealTime::send(AttendanceLogged::for($employee, $attendance, AttendanceLogged::CLOCK_IN));
+
             return $attendance;
         });
     }
@@ -101,6 +105,8 @@ class AttendanceService
                 'status' => $this->departureStatus($attendance->status, $shift, $at),
             ])->save();
 
+            RealTime::send(AttendanceLogged::for($employee, $attendance, AttendanceLogged::CLOCK_OUT));
+
             return $attendance;
         });
     }
@@ -122,6 +128,8 @@ class AttendanceService
             $attendance->breaks()->create(['started_at' => $punch->time()]);
         });
 
+        RealTime::send(AttendanceLogged::for($employee, $attendance, AttendanceLogged::BREAK_START));
+
         return $attendance->refresh();
     }
 
@@ -134,6 +142,8 @@ class AttendanceService
         }
 
         DB::transaction(fn () => $this->closeBreak($attendance, $punch->time()));
+
+        RealTime::send(AttendanceLogged::for($employee, $attendance, AttendanceLogged::BREAK_END));
 
         return $attendance->refresh();
     }
@@ -168,6 +178,8 @@ class AttendanceService
             }
 
             $attendance->save();
+
+            RealTime::send(AttendanceLogged::for($employee, $attendance, AttendanceLogged::CORRECTED));
 
             return $attendance->refresh();
         });

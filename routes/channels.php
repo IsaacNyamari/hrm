@@ -20,6 +20,14 @@ Broadcast::channel('tenant.{tenantId}.recruitment', function (User $user, int $t
 });
 
 /*
+| Private: live attendance (punches, breaks, corrections) for staff of that
+| organization who can see attendance.
+*/
+Broadcast::channel('tenant.{tenantId}.attendance', function (User $user, int $tenantId): bool {
+    return $user->tenant_id === $tenantId && $user->can(Permission::AttendanceView->value);
+});
+
+/*
 | Public: `application.{trackingCode}` needs no authorisation. Its events carry
 | only the stage and status; the tracking page re-reads details itself using
 | the code *and* the applicant's email.
