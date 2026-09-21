@@ -7,7 +7,9 @@ use App\Enums\Role;
 use App\Livewire\Billing\Overview;
 use App\Models\Payment;
 use App\Models\Plan;
+use App\Models\PlatformSetting;
 use App\Models\Subscription;
+use App\Services\Payment\PaymentManager;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
@@ -32,7 +34,7 @@ it('renders the billing page instead of json when a trial has ended', function (
         ->assertHeader('content-type', 'text/html; charset=UTF-8')
         ->assertSeeLivewire(Overview::class)
         ->assertSee('Your free trial has ended')
-        ->assertSee('Pay with M-Pesa');
+        ->assertSee('Renew plan');
 });
 
 it('tells users without billing access to contact their administrator', function () {
@@ -43,10 +45,11 @@ it('tells users without billing access to contact their administrator', function
         ->assertOk()
         ->assertSee('Your free trial has ended')
         ->assertSee('Please contact your administrator')
-        ->assertDontSee('Pay with M-Pesa');
+        ->assertDontSee('Renew plan');
 });
 
 it('subscribes to a plan and sends an M-Pesa STK push', function () {
+    PlatformSetting::put(PaymentManager::ACTIVE_PROVIDER_SETTING, 'mpesa');
     config(['services.mpesa' => [
         'environment' => 'sandbox',
         'base_url' => 'https://sandbox.safaricom.co.ke',
@@ -84,6 +87,7 @@ it('subscribes to a plan and sends an M-Pesa STK push', function () {
 });
 
 it('fails the payment gracefully when M-Pesa rejects the credentials', function () {
+    PlatformSetting::put(PaymentManager::ACTIVE_PROVIDER_SETTING, 'mpesa');
     config(['services.mpesa' => [
         'base_url' => 'https://sandbox.safaricom.co.ke',
         'consumer_key' => 'wrong',
@@ -111,6 +115,7 @@ it('fails the payment gracefully when M-Pesa rejects the credentials', function 
 });
 
 it('rejects an invalid M-Pesa number', function () {
+    PlatformSetting::put(PaymentManager::ACTIVE_PROVIDER_SETTING, 'mpesa');
     app(TenantContext::class)->set($this->tenant);
     $this->actingAs(userForTenant($this->tenant, Role::TenantOwner));
 

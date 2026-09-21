@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AttendanceDeviceWebhookController;
 use App\Http\Controllers\Api\MpesaWebhookController;
+use App\Http\Controllers\Api\PaystackWebhookController;
 use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\LeaveRequestController;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 | Provider webhooks. Unauthenticated (no session), verified inside each
 | gateway's handleWebhook(). Processing is idempotent.
 */
+Route::post('webhooks/paystack', PaystackWebhookController::class)->name('webhooks.paystack');
 Route::post('webhooks/mpesa', MpesaWebhookController::class)->name('webhooks.mpesa');
 
 // Attendance device ingestion — authenticated by the device's shared secret.

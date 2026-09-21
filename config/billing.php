@@ -4,7 +4,15 @@ use App\Enums\PaymentProvider;
 
 return [
 
-    'default_provider' => env('BILLING_DEFAULT_PROVIDER', PaymentProvider::Mpesa->value),
+    // Gateway tenants pay through until a platform admin picks one under
+    // Platform → Settings (stored in platform_settings, which takes precedence).
+    'default_provider' => env('BILLING_DEFAULT_PROVIDER', PaymentProvider::Paystack->value),
+
+    // Gateways the platform admin can choose from. Tenants never choose.
+    'providers' => [
+        PaymentProvider::Paystack->value,
+        PaymentProvider::Mpesa->value,
+    ],
 
     'currency' => env('BILLING_CURRENCY', 'KES'),
 

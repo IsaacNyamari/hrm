@@ -10,6 +10,7 @@ final readonly class PaymentResult
 {
     /**
      * @param  array<string, mixed>  $raw
+     * @param  string|null  $redirectUrl  Hosted checkout page the payer must visit (e.g. Paystack), if any.
      */
     public function __construct(
         public PaymentStatus $status,
@@ -18,6 +19,7 @@ final readonly class PaymentResult
         public ?int $amountCents = null,
         public ?string $failureReason = null,
         public array $raw = [],
+        public ?string $redirectUrl = null,
     ) {}
 
     public function successful(): bool

@@ -6,6 +6,7 @@ namespace App\Enums;
 
 enum PaymentProvider: string
 {
+    case Paystack = 'paystack';
     case Mpesa = 'mpesa';
     case AirtelMoney = 'airtel_money';
     case Pesapal = 'pesapal';
@@ -16,6 +17,7 @@ enum PaymentProvider: string
     public function label(): string
     {
         return match ($this) {
+            self::Paystack => 'Paystack',
             self::Mpesa => 'M-Pesa',
             self::AirtelMoney => 'Airtel Money',
             self::Pesapal => 'Pesapal',

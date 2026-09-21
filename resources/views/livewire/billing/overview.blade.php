@@ -1,6 +1,13 @@
 <div class="flex flex-col gap-6">
     <flux:heading size="xl">{{ __('Billing & subscription') }}</flux:heading>
 
+    @if (session()->has('billing.status'))
+        @php([$statusTone, $statusMessage] = session('billing.status'))
+        <flux:callout :variant="$statusTone === 'success' ? 'success' : ($statusTone === 'danger' ? 'danger' : 'warning')" icon="credit-card" data-test="billing-status">
+            <flux:callout.text>{{ $statusMessage }}</flux:callout.text>
+        </flux:callout>
+    @endif
+
     @unless ($hasAccess)
         <flux:callout variant="danger" icon="exclamation-triangle">
             <flux:callout.heading>
@@ -63,7 +70,7 @@
                         @if ($canManage)
                             <div class="mt-auto pt-2">
                                 <flux:button class="w-full" variant="primary" wire:click="choosePlan('{{ $plan->slug }}')">
-                                    {{ __('Pay with M-Pesa') }}
+                                    {{ $subscription?->plan_id === $plan->id ? __('Renew plan') : __('Choose plan') }}
                                 </flux:button>
                             </div>
                         @endif
@@ -107,16 +114,37 @@
 
     @if ($canManage)
     <flux:modal wire:model.self="showPayment" class="max-w-lg">
+        @php($isMpesa = $provider === \App\Enums\PaymentProvider::Mpesa)
         <form wire:submit="subscribe" class="space-y-5">
             <div>
-                <flux:heading size="lg">{{ __('Pay with M-Pesa') }}</flux:heading>
-                <flux:text class="mt-1">{{ __('You will receive a prompt on this phone to enter your M-Pesa PIN.') }}</flux:text>
+                <flux:heading size="lg">{{ __('Complete payment') }}</flux:heading>
+                <flux:text class="mt-1">
+                    {{ $isMpesa ? __('You will receive a prompt on your phone to enter your M-Pesa PIN.') : __('You will be taken to Paystack\'s secure checkout to pay by card, M-Pesa or bank.') }}
+                </flux:text>
             </div>
-            <flux:input wire:model="payer" :label="__('M-Pesa phone number')" placeholder="0712345678" required />
+
+            <div class="flex items-center gap-3 rounded-xl border border-brand/30 bg-brand/5 p-4">
+                <span class="grid size-10 place-items-center rounded-lg bg-brand text-white">
+                    <flux:icon :name="$isMpesa ? 'device-phone-mobile' : 'credit-card'" variant="mini" />
+                </span>
+                <div class="leading-tight">
+                    <p class="text-sm font-semibold text-zinc-900 dark:text-white" data-test="payment-method">{{ $isMpesa ? __('M-Pesa') : $provider->label() }}</p>
+                    <p class="text-xs text-zinc-500">{{ __('Payment method') }}</p>
+                </div>
+            </div>
+
+            @if ($isMpesa)
+                <flux:input wire:model="payer" :label="__('M-Pesa phone number')" placeholder="0712345678" required />
+            @else
+                <flux:input wire:model="payer" type="email" :label="__('Billing email')" :description="__('Your receipt is sent here.')" required />
+            @endif
             <flux:error name="selectedPlan" />
+
             <div class="flex justify-end gap-2">
                 <flux:button type="button" variant="ghost" wire:click="cancelChoice">{{ __('Cancel') }}</flux:button>
-                <flux:button type="submit" variant="primary">{{ __('Send payment request') }}</flux:button>
+                <flux:button type="submit" variant="primary">
+                    {{ $isMpesa ? __('Send payment request') : __('Continue to Paystack') }}
+                </flux:button>
             </div>
         </form>
     </flux:modal>

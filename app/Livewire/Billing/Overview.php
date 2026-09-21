@@ -12,6 +12,7 @@ use App\Facades\Tenancy;
 use App\Livewire\Concerns\BindsTenant;
 use App\Models\Invoice;
 use App\Models\Plan;
+use App\Services\Payment\PaymentManager;
 use App\Services\Subscription\SubscriptionManager;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
@@ -38,6 +39,7 @@ class Overview extends Component
 
         $this->resetErrorBag();
         $this->selectedPlan = $slug;
+        $this->payer = $this->activeProvider() === PaymentProvider::Mpesa ? '' : (string) auth()->user()?->email;
         $this->showPayment = true;
     }
 
@@ -50,11 +52,16 @@ class Overview extends Component
     {
         abort_unless(auth()->user()?->can(Permission::SubscriptionManage->value), 403);
 
-        $this->payer = preg_replace('/[\s-]/', '', $this->payer) ?? '';
+        // The gateway is chosen by the platform admin, never by the tenant.
+        $provider = $this->activeProvider();
+        $isMpesa = $provider === PaymentProvider::Mpesa;
+        $this->payer = $isMpesa ? (preg_replace('/[\s-]/', '', $this->payer) ?? '') : trim($this->payer);
 
         $this->validate([
             'selectedPlan' => ['required', 'string', 'exists:plans,slug'],
-            'payer' => ['required', 'string', 'regex:/^(?:\+?254|0)?[17]\d{8}$/'],
+            'payer' => $isMpesa
+                ? ['required', 'string', 'regex:/^(?:\+?254|0)?[17]\d{8}$/']
+                : ['required', 'email'],
         ], [
             'payer.regex' => __('Enter a valid M-Pesa phone number, e.g. 0712345678.'),
         ]);
@@ -64,14 +71,20 @@ class Overview extends Component
         [, , $payment] = $subscriptions->subscribe(
             Tenancy::getOrFail(),
             $plan,
-            PaymentProvider::Mpesa,
-            $this->normalisedPhone(),
+            $provider,
+            $isMpesa ? $this->normalisedPhone() : $this->payer,
         );
 
         if ($payment === null) {
             Flux::toast(variant: 'success', text: __('You are now on the :plan plan.', ['plan' => $plan->name]));
         } else {
             $result = $charge->handle($payment);
+
+            if ($result->redirectUrl !== null && $result->pending()) {
+                $this->redirect($result->redirectUrl);
+
+                return;
+            }
 
             $result->pending() || $result->successful()
                 ? Flux::toast(variant: 'success', text: __('Check your phone and enter your M-Pesa PIN to complete the payment.'))
@@ -98,7 +111,13 @@ class Overview extends Component
             'trialEnded' => $current?->status === SubscriptionStatus::Trialing && ! $current->onTrial(),
             'plans' => $canView ? Plan::query()->where('is_active', true)->orderBy('sort_order')->get() : collect(),
             'invoices' => $canView ? Invoice::query()->latest()->limit(20)->get() : collect(),
+            'provider' => $this->activeProvider(),
         ]);
+    }
+
+    private function activeProvider(): PaymentProvider
+    {
+        return app(PaymentManager::class)->activeProvider();
     }
 
     /**

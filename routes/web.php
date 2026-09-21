@@ -50,6 +50,7 @@ use App\Http\Controllers\OrgChartController;
 use App\Http\Controllers\PayrollPeriodController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PayslipController;
+use App\Http\Controllers\PaystackCallbackController;
 use App\Http\Controllers\PerformanceCycleController;
 use App\Http\Controllers\PerformanceReviewController;
 use App\Http\Controllers\Platform\BillingController as PlatformBillingController;
@@ -86,6 +87,7 @@ Route::middleware(['auth', 'verified', 'platform'])->prefix('platform')->name('p
     Route::view('billing', 'platform.billing')->name('billing');
     Route::get('billing/payments/{payment:uuid}', [PlatformBillingController::class, 'showPayment'])->name('billing.payments.show');
     Route::get('billing/invoices/{invoice:uuid}/pdf', [PlatformBillingController::class, 'downloadInvoice'])->name('billing.invoices.pdf');
+    Route::view('settings', 'platform.settings')->name('settings');
 });
 
 /*
@@ -112,6 +114,7 @@ Route::post('invitations/{invitation}', [InvitationController::class, 'store'])-
 Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])->group(function () {
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
     Route::get('billing/invoices/{invoice:uuid}/pdf', [BillingController::class, 'invoicePdf'])->name('billing.invoices.pdf');
+    Route::get('billing/paystack/callback', PaystackCallbackController::class)->name('billing.paystack.callback');
     Route::post('subscription', [SubscriptionController::class, 'store'])->name('subscription.store');
     Route::delete('subscription', [SubscriptionController::class, 'destroy'])->name('subscription.destroy');
 

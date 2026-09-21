@@ -9,31 +9,37 @@ use App\Enums\PaymentProvider;
 use App\Enums\Permission;
 use App\Facades\Tenancy;
 use App\Models\Plan;
+use App\Services\Payment\PaymentManager;
 use App\Services\Subscription\SubscriptionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Enum;
 
 class SubscriptionController extends Controller
 {
-    public function store(Request $request, SubscriptionManager $subscriptions, ChargeInvoice $charge): JsonResponse
+    /**
+     * The payment gateway is the one the platform admin made active; tenants
+     * cannot pick it.
+     */
+    public function store(Request $request, SubscriptionManager $subscriptions, ChargeInvoice $charge, PaymentManager $payments): JsonResponse
     {
         abort_unless($request->user()?->can(Permission::SubscriptionManage->value), 403);
 
         $validated = $request->validate([
             'plan' => ['required', 'string', 'exists:plans,slug'],
-            'provider' => ['required', new Enum(PaymentProvider::class)],
-            'payer' => ['nullable', 'string', 'max:20'],
+            'payer' => ['nullable', 'string', 'max:255'],
         ]);
 
         $plan = Plan::query()->where('slug', $validated['plan'])->where('is_active', true)->firstOrFail();
-        $provider = PaymentProvider::from($validated['provider']);
+        $provider = $payments->activeProvider();
+
+        // Paystack needs the payer's email; fall back to the signed-in user's.
+        $payer = $validated['payer'] ?? ($provider === PaymentProvider::Paystack ? $request->user()?->email : null);
 
         [$subscription, $invoice, $payment] = $subscriptions->subscribe(
             Tenancy::getOrFail(),
             $plan,
             $provider,
-            $validated['payer'] ?? null,
+            $payer,
         );
 
         $result = $payment !== null ? $charge->handle($payment) : null;
@@ -46,6 +52,8 @@ class SubscriptionController extends Controller
                     'uuid' => $payment->uuid,
                     'reference' => $payment->reference,
                     'status' => $result?->status->value ?? $payment->status->value,
+                    'provider' => $provider->value,
+                    'checkout_url' => $result?->redirectUrl,
                 ],
             ],
         ], 201);

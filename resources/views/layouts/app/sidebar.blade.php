@@ -46,6 +46,11 @@
                         <flux:sidebar.item icon="banknotes" :href="route('platform.billing')" :current="request()->routeIs('platform.billing') || request()->routeIs('platform.billing.*')" wire:navigate>
                             {{ __('Billing') }}
                         </flux:sidebar.item>
+                        @if (auth()->user()->canOnPlatform(\App\Enums\PlatformPermission::SettingsManage))
+                            <flux:sidebar.item icon="cog-6-tooth" :href="route('platform.settings')" :current="request()->routeIs('platform.settings')" wire:navigate>
+                                {{ __('Settings') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
                 @else
                 <flux:sidebar.group :heading="__('Overview')" class="grid">
