@@ -4,7 +4,7 @@
         :title="__('Get access for your organization')"
         :subtitle="__('Sign-up is by invitation while we onboard organizations personally. Tell us about your team and we will send a quote and a secure link to create your workspace.')" />
 
-    <section class="bg-canvas pb-24">
+    <section class="relative bg-canvas pb-24">
         <div class="mx-auto -mt-10 grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-5 lg:px-8">
             <div class="rounded-2xl bg-white p-6 shadow-xl shadow-brand/5 sm:p-8 lg:col-span-3">
                 <h2 class="text-lg font-bold text-night">{{ __('Your details') }}</h2>

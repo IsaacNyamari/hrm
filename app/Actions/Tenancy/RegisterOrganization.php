@@ -42,7 +42,8 @@ class RegisterOrganization
                 'status' => TenantStatus::Pending,
             ]);
 
-            $owner = User::query()->create([
+            // tenant_id / verification are not mass-assignable on User, so set them explicitly.
+            $owner = (new User)->forceFill([
                 'name' => $name,
                 'email' => $invitation->email,
                 'password' => Hash::make($password),
@@ -50,6 +51,7 @@ class RegisterOrganization
                 'tenant_id' => $tenant->getKey(),
                 'is_platform_admin' => false,
             ]);
+            $owner->save();
 
             $this->subscriptions->startTrial($tenant, $this->entryPlan());
 

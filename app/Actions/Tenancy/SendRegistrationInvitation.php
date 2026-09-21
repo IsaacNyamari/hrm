@@ -17,9 +17,14 @@ use Illuminate\Support\Str;
  * Grants a prospect access to register an organization: creates a single-use
  * link and emails it. Any earlier unopened link for the same address is
  * revoked so only the newest one works.
+ *
+ * The plain link is exposed once via {@see self::$lastUrl} so an operator can
+ * pass it on manually when outgoing mail is not configured yet.
  */
 class SendRegistrationInvitation
 {
+    public ?string $lastUrl = null;
+
     public function handle(
         string $email,
         ?string $name = null,
@@ -54,6 +59,8 @@ class SendRegistrationInvitation
         });
 
         Notification::route('mail', $email)->notify(new RegistrationAccessNotification($invitation, $token));
+
+        $this->lastUrl = route('join.open', ['token' => $token]);
 
         return $invitation;
     }

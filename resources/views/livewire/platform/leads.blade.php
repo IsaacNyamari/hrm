@@ -20,6 +20,18 @@
         <flux:callout variant="success" icon="check-circle" :heading="$notice" />
     @endif
 
+    @if ($manualLink)
+        <div class="rounded-xl border border-warning/50 bg-warning/10 p-4 text-sm" x-data="{ copied: false }" data-test="manual-link">
+            <p class="font-semibold text-zinc-900 dark:text-white">{{ __('Outgoing email is not configured, so this link was only written to the log. Send it to the client yourself — it is shown only once:') }}</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+                <code class="min-w-0 flex-1 truncate rounded-lg bg-white px-3 py-2 text-xs dark:bg-zinc-900">{{ $manualLink }}</code>
+                <flux:button size="sm" icon="clipboard" x-on:click="navigator.clipboard.writeText(@js($manualLink)); copied = true">
+                    <span x-text="copied ? '{{ __('Copied') }}' : '{{ __('Copy') }}'"></span>
+                </flux:button>
+            </div>
+        </div>
+    @endif
+
     <div class="flex flex-wrap gap-3">
         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search name, email or organization…')" class="max-w-sm" />
         <flux:select wire:model.live="status" class="max-w-48">

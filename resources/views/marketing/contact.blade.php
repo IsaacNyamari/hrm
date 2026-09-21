@@ -6,7 +6,7 @@
         :title="__('Let\'s talk about your team')"
         :subtitle="__('Questions, a demo request or help choosing a plan — send us a message and we will get back to you within one business day.')" />
 
-    <section class="bg-canvas pb-24">
+    <section class="relative bg-canvas pb-24">
         <div class="mx-auto -mt-10 grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-5 lg:px-8">
             <div class="space-y-4 lg:col-span-2">
                 <div class="rounded-2xl bg-white p-6 shadow-xl shadow-brand/5">

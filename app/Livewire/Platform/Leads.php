@@ -37,6 +37,9 @@ class Leads extends Component
 
     public ?string $viewingUuid = null;
 
+    /** Shown once when outgoing mail only logs, so the link can be sent by hand. */
+    public ?string $manualLink = null;
+
     public function mount(): void
     {
         $this->authorizePlatform(PlatformPermission::LeadsManage);
@@ -70,6 +73,7 @@ class Leads extends Component
 
         $this->viewingUuid = null;
         $this->notice = __('Access link sent to :email.', ['email' => $lead->email]);
+        $this->manualLink = in_array(config('mail.default'), ['log', 'array'], true) ? $send->lastUrl : null;
     }
 
     public function setStatus(string $uuid, string $status, Auditor $auditor): void
