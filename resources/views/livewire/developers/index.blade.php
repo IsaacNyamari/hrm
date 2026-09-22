@@ -47,6 +47,27 @@
         </ul>
     </div>
 
+    <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+        <h2 class="text-sm font-semibold">{{ __('Mobile app devices') }}</h2>
+        <p class="mt-1 text-xs text-neutral-500">{{ __('Phones and tablets signed in to the HRM mobile app with your account. Signing a device out also stops its push notifications.') }}</p>
+
+        <ul class="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
+            @forelse ($mobileSessions as $session)
+                <li class="flex items-center justify-between py-2">
+                    <span>
+                        {{ $session->name }}
+                        <span class="text-xs text-neutral-500">
+                            {{ $session->last_used_at ? __('Last active :time', ['time' => $session->last_used_at->diffForHumans()]) : __('Signed in :time', ['time' => $session->created_at?->diffForHumans()]) }}
+                        </span>
+                    </span>
+                    <button type="button" wire:click="signOutDevice({{ $session->id }})" wire:confirm="{{ __('Sign this device out?') }}" class="text-xs text-red-600 hover:underline">{{ __('Sign out') }}</button>
+                </li>
+            @empty
+                <li class="py-2 text-neutral-500">{{ __('No devices are signed in to the mobile app.') }}</li>
+            @endforelse
+        </ul>
+    </div>
+
     @if ($canManageWebhooks)
         <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
             <h2 class="text-sm font-semibold">{{ __('Webhook endpoints') }}</h2>

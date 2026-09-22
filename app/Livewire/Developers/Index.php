@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Livewire\Developers;
 
+use App\Actions\Mobile\IssueMobileToken;
 use App\Enums\WebhookEvent;
 use App\Http\Controllers\ApiTokenController;
 use App\Livewire\Concerns\BindsTenant;
+use App\Models\DeviceToken;
 use App\Models\WebhookEndpoint;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 use Livewire\Component;
 
 class Index extends Component
@@ -53,6 +56,23 @@ class Index extends Component
         $this->notice = 'Token revoked.';
     }
 
+    /**
+     * Sign a mobile device out: its token stops working and it gets no more
+     * push notifications.
+     */
+    public function signOutDevice(int $id): void
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return;
+        }
+
+        DeviceToken::query()->where('user_id', $user->getKey())->where('personal_access_token_id', $id)->delete();
+        $user->tokens()->whereKey($id)->delete();
+        $this->notice = 'Device signed out.';
+    }
+
     public function createWebhook(): void
     {
         $this->reset('notice');
@@ -86,9 +106,12 @@ class Index extends Component
     public function render(): View
     {
         $user = Auth::user();
+        [$mobileSessions, $tokens] = ($user !== null ? $user->tokens()->latest('id')->get() : collect())
+            ->partition(fn (PersonalAccessToken $token): bool => in_array(IssueMobileToken::ABILITY, (array) $token->abilities, true));
 
         return view('livewire.developers.index', [
-            'tokens' => $user !== null ? $user->tokens()->latest('id')->get() : collect(),
+            'tokens' => $tokens,
+            'mobileSessions' => $mobileSessions,
             'abilities' => ApiTokenController::ABILITIES,
             'canManageWebhooks' => $user?->can('webhooks.manage') === true,
             'webhooks' => ($user?->can('webhooks.manage') === true)

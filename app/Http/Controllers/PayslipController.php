@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Payroll\RenderPayslipPdf;
 use App\Facades\Tenancy;
 use App\Models\Payslip;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class PayslipController extends Controller
@@ -67,18 +66,10 @@ class PayslipController extends Controller
     /**
      * The payslip as a downloadable, receipt-style PDF (A5).
      */
-    public function pdf(Payslip $payslip): Response
+    public function pdf(Payslip $payslip, RenderPayslipPdf $renderer): Response
     {
         $this->authorize('viewPayslip', $payslip);
 
-        $payslip->load(['lines', 'employee', 'run.period']);
-        $tenant = Tenancy::getOrFail()->loadMissing('branding');
-
-        $filename = 'payslip-'.Str::slug($payslip->employee_number.'-'.$payslip->run->period->name).'.pdf';
-
-        return Pdf::loadView('payroll.payslip', ['payslip' => $payslip, 'tenant' => $tenant])
-            ->setPaper('a5')
-            ->setOption('isFontSubsettingEnabled', true)
-            ->download($filename);
+        return $renderer->download($payslip, Tenancy::getOrFail());
     }
 }

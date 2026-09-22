@@ -6,10 +6,9 @@ namespace App\Listeners;
 
 use App\Events\UserNotified;
 use App\Models\User;
+use App\Support\NotificationSummary;
 use App\Support\RealTime;
 use Illuminate\Notifications\Events\NotificationSent;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 
 /**
  * Every notification stored in a user's in-app inbox is also pushed to their
@@ -23,18 +22,12 @@ class BroadcastDatabaseNotifications
             return;
         }
 
-        $data = method_exists($event->notification, 'toArray') ? (array) $event->notification->toArray($event->notifiable) : [];
-
-        $detail = collect(['applicant', 'employee', 'vacancy', 'title', 'subject', 'reference'])
-            ->map(fn (string $key) => Arr::get($data, $key))
-            ->filter(fn ($value) => is_string($value) && $value !== '')
-            ->take(2)
-            ->implode(' · ');
+        $summary = NotificationSummary::for($event->notification, $event->notifiable);
 
         RealTime::send(new UserNotified(
             (int) $event->notifiable->getKey(),
-            Str::headline((string) ($data['type'] ?? 'New notification')),
-            $detail,
+            $summary->title,
+            $summary->detail,
         ));
     }
 }

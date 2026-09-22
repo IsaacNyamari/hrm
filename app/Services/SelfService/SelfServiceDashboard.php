@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\SelfService;
 
 use App\Enums\EmploymentStatus;
-use App\Enums\PayrollRunStatus;
 use App\Enums\TaskStatus;
 use App\Models\Announcement;
 use App\Models\Employee;
@@ -131,13 +130,11 @@ class SelfServiceDashboard
      *
      * @return array<string, mixed>
      */
-    private function salary(Employee $employee, int $year): array
+    public function salary(Employee $employee, int $year): array
     {
         $released = Payslip::query()
             ->where('employee_id', $employee->getKey())
-            ->whereHas('run', fn ($q) => $q->whereIn('status', [
-                PayrollRunStatus::Approved->value, PayrollRunStatus::Paid->value, PayrollRunStatus::Locked->value,
-            ]))
+            ->released()
             ->with('run.period:id,name,pay_date')
             ->get()
             ->sortByDesc(fn (Payslip $p) => $p->run->period->pay_date)
@@ -200,18 +197,7 @@ class SelfServiceDashboard
     private function leave(Employee $employee, int $year): array
     {
         return [
-            'balances' => LeaveType::query()->where('is_active', true)->orderBy('name')->get()
-                ->map(function (LeaveType $type) use ($employee, $year): array {
-                    $balance = $this->leave->balanceFor($employee, $type, $year);
-
-                    return [
-                        'type' => $type->name,
-                        'entitled' => round($balance->allocated_days + $balance->carried_forward_days + $balance->adjustment_days, 2),
-                        'used' => $balance->used_days,
-                        'pending' => $balance->pending_days,
-                        'remaining' => $balance->remainingDays(),
-                    ];
-                })->all(),
+            'balances' => $this->leaveBalances($employee, $year),
             'requests' => LeaveRequest::query()
                 ->where('employee_id', $employee->getKey())
                 ->with('leaveType:id,name')
@@ -228,11 +214,46 @@ class SelfServiceDashboard
     }
 
     /**
+     * Entitled / used / pending / remaining days per active leave type — the
+     * figures on the web "My HR" leave card and the mobile leave screen.
+     *
+     * @return array<int, array{type_uuid: string, type: string, entitled: float, used: float, pending: float, remaining: float}>
+     */
+    public function leaveBalances(Employee $employee, ?int $year = null): array
+    {
+        $year ??= CarbonImmutable::now()->year;
+
+        return LeaveType::query()->where('is_active', true)->orderBy('name')->get()
+            ->map(function (LeaveType $type) use ($employee, $year): array {
+                $balance = $this->leave->balanceFor($employee, $type, $year);
+
+                return [
+                    'type_uuid' => $type->uuid,
+                    'type' => $type->name,
+                    'entitled' => round($balance->allocated_days + $balance->carried_forward_days + $balance->adjustment_days, 2),
+                    'used' => $balance->used_days,
+                    'pending' => $balance->pending_days,
+                    'remaining' => $balance->remainingDays(),
+                ];
+            })->all();
+    }
+
+    /**
      * @return array{present_days: float, working_days_so_far: float, worked_hours: float, overtime_hours: float, paid_leave_days: float}
      */
     private function attendanceThisMonth(Employee $employee): array
     {
-        $summary = $this->attendancePay->summarizeRange($employee, CarbonImmutable::today()->startOfMonth(), CarbonImmutable::today());
+        return $this->attendanceBetween($employee, CarbonImmutable::today()->startOfMonth(), CarbonImmutable::today());
+    }
+
+    /**
+     * Attendance totals for a date range, computed exactly as payroll does.
+     *
+     * @return array{present_days: float, working_days_so_far: float, worked_hours: float, overtime_hours: float, paid_leave_days: float}
+     */
+    public function attendanceBetween(Employee $employee, CarbonImmutable $start, CarbonImmutable $end): array
+    {
+        $summary = $this->attendancePay->summarizeRange($employee, $start, $end);
 
         return [
             'present_days' => $summary['present_days'],

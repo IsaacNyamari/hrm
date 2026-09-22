@@ -6,8 +6,10 @@ namespace App\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasUuid;
+use App\Enums\PayrollRunStatus;
 use App\Enums\PayslipStatus;
 use Database\Factories\PayslipFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -88,5 +90,18 @@ class Payslip extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(PayslipLine::class)->orderBy('type')->orderBy('sort_order');
+    }
+
+    /**
+     * Payslips released to the employee: those from approved, paid or locked
+     * runs. Drafts still being checked by payroll stay hidden from self-service.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeReleased(Builder $query): void
+    {
+        $query->whereHas('run', fn (Builder $q) => $q->whereIn('status', [
+            PayrollRunStatus::Approved->value, PayrollRunStatus::Paid->value, PayrollRunStatus::Locked->value,
+        ]));
     }
 }

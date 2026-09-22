@@ -14,6 +14,7 @@ use App\Listeners\SendExpenseNotifications;
 use App\Listeners\SendLeaveNotifications;
 use App\Listeners\SendPerformanceNotifications;
 use App\Listeners\SendPortalNotifications;
+use App\Listeners\SendPushNotifications;
 use App\Listeners\SendRecruitmentNotifications;
 use App\Listeners\SendTaskNotifications;
 use App\Listeners\StoreZktecoUserQueryResults;
@@ -76,6 +77,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Push every in-app notification to the user's browser in real time.
         Event::listen(NotificationSent::class, [BroadcastDatabaseNotifications::class, 'handle']);
+
+        // ...and to their phone (Expo push), with attendance recorded for them elsewhere.
+        Event::subscribe(SendPushNotifications::class);
 
         // Per-tenant e-mail From / Reply-To.
         Event::listen(MessageSending::class, [ApplyTenantMailBranding::class, 'handle']);

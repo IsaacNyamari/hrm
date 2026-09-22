@@ -50,6 +50,26 @@ function userForTenant(Tenant $tenant, Role $role = Role::HrManager): User
     return $user;
 }
 
+/**
+ * A plain-text mobile-app token for $user (what `POST api/v1/auth/login` issues).
+ */
+function mobileToken(User $user, string $device = 'Test phone'): string
+{
+    return $user->createToken($device, ['mobile'])->plainTextToken;
+}
+
+/**
+ * Make the next request as $user through a fresh mobile token. Forgets the
+ * resolved guards first: Sanctum otherwise keeps the previous request's user
+ * for the rest of the test.
+ */
+function asMobileUser(User $user): TestCase
+{
+    app('auth')->forgetGuards();
+
+    return test()->withToken(mobileToken($user));
+}
+
 expect()->extend('toBeOne', function () {
     return $this->toBe(1);
 });

@@ -35,6 +35,15 @@ return [
         ],
     ],
 
+    /*
+    | Expo push notifications for the mobile app. The access token is optional
+    | (only needed when enhanced push security is on for the Expo project).
+    */
+    'expo' => [
+        'push_url' => env('EXPO_PUSH_URL', 'https://exp.host/--/api/v2/push/send'),
+        'access_token' => env('EXPO_ACCESS_TOKEN'),
+    ],
+
     'mpesa' => [
         'environment' => env('MPESA_ENVIRONMENT', 'sandbox'), // sandbox | production
         'base_url' => env('MPESA_BASE_URL', 'https://sandbox.safaricom.co.ke'),
