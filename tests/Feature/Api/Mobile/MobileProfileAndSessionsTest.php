@@ -31,7 +31,13 @@ it('returns the signed-in profile with permissions for role-aware screens', func
         ->assertJsonPath('data.self_service_only', false)
         ->assertJsonPath('data.manages_people', true)
         ->assertJsonPath('data.tenant.name', 'Prof Co')
+        ->assertJsonPath('data.channels.user', 'App.Models.User.'.$supervisor->id)
+        ->assertJsonPath('data.channels.attendance', 'tenant.'.$this->tenant->id.'.attendance')
         ->assertJson(fn ($json) => $json->where('data.abilities', fn ($abilities) => collect($abilities)->contains('leave.approve'))->etc());
+
+    asMobileUser($this->user)
+        ->getJson('/api/v1/me/profile')
+        ->assertJsonPath('data.channels.attendance', null);
 });
 
 it('returns exactly the web My HR dashboard payload', function () {

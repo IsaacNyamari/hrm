@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Mobile;
 
+use App\Enums\Permission;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\TenantContext;
@@ -21,7 +22,7 @@ class IssueMobileToken
     public function __construct(private readonly TenantContext $context) {}
 
     /**
-     * @return array{token: string, user: array<string, mixed>, employee: array<string, mixed>|null, abilities: array<int, string>, roles: array<int, string>, self_service_only: bool, manages_people: bool, tenant: array<string, mixed>}
+     * @return array{token: string, user: array<string, mixed>, employee: array<string, mixed>|null, abilities: array<int, string>, roles: array<int, string>, self_service_only: bool, manages_people: bool, channels: array{user: string, attendance: string|null}, tenant: array<string, mixed>}
      */
     public function handle(User $user, string $deviceName): array
     {
@@ -35,7 +36,7 @@ class IssueMobileToken
      * permission names, evaluated in their organisation) and the organisation's
      * name, currency and branding.
      *
-     * @return array{user: array<string, mixed>, employee: array<string, mixed>|null, abilities: array<int, string>, roles: array<int, string>, self_service_only: bool, manages_people: bool, tenant: array<string, mixed>}
+     * @return array{user: array<string, mixed>, employee: array<string, mixed>|null, abilities: array<int, string>, roles: array<int, string>, self_service_only: bool, manages_people: bool, channels: array{user: string, attendance: string|null}, tenant: array<string, mixed>}
      */
     public function profile(User $user): array
     {
@@ -74,6 +75,11 @@ class IssueMobileToken
                 'self_service_only' => $user->isSelfServiceOnly(),
                 // Line managers approve their reports' leave even without the leave.approve permission.
                 'manages_people' => $employee !== null && $employee->directReports()->exists(),
+                // Private Reverb channels this user may join (see routes/channels.php).
+                'channels' => [
+                    'user' => 'App.Models.User.'.$user->getKey(),
+                    'attendance' => $user->can(Permission::AttendanceView->value) ? 'tenant.'.$tenant->getKey().'.attendance' : null,
+                ],
                 'tenant' => [
                     'uuid' => $tenant->uuid,
                     'name' => $tenant->name,
