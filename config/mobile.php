@@ -36,7 +36,7 @@ return [
         'url' => env('MOBILE_SUPPORT_URL', rtrim((string) env('APP_URL'), '/').'/contact'),
     ],
 
-    'privacy_url' => env('MOBILE_PRIVACY_URL'),
+    'privacy_url' => env('MOBILE_PRIVACY_URL', rtrim((string) env('APP_URL'), '/').'/privacy'),
 
     /*
     | Two-factor sign-in: how long the challenge issued after a correct password

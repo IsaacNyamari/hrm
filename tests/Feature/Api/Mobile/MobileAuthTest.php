@@ -176,3 +176,9 @@ it('serves the public start-up config', function () {
         ->assertJsonStructure(['data' => ['support' => ['email', 'phone', 'url'], 'broadcasting_auth_url']])
         ->assertJsonMissingPath('data.reverb.secret');
 });
+
+it('links the app to the privacy policy page by default', function () {
+    expect(config('mobile.privacy_url'))->toEndWith('/privacy');
+
+    $this->getJson('/api/v1/config')->assertJsonPath('data.privacy_url', config('mobile.privacy_url'));
+});

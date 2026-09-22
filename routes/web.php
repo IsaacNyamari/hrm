@@ -79,6 +79,7 @@ Route::get('pricing', PricingController::class)->name('pricing');
 Route::view('about', 'marketing.about')->name('about');
 Route::view('docs', 'marketing.docs')->name('docs');
 Route::view('contact', 'marketing.contact')->name('contact');
+Route::view('privacy', 'marketing.privacy')->name('privacy');
 Route::view('request-a-quote', 'marketing.quote')->name('quote');
 
 /*

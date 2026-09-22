@@ -118,7 +118,7 @@
 
                     @foreach ([
                         __('Product') => [['features', __('Features')], ['pricing', __('Pricing')], ['docs', __('Documentation')]],
-                        __('Company') => [['about', __('About us')], ['contact', __('Contact')], ['quote', __('Request a quote')]],
+                        __('Company') => [['about', __('About us')], ['contact', __('Contact')], ['quote', __('Request a quote')], ['privacy', __('Privacy policy')]],
                         __('Careers') => [['jobs.index', __('Open jobs')], ['applications.track', __('Track application')]],
                         __('Account') => [['login', __('Log in')], ['password.request', __('Reset password')]],
                     ] as $heading => $items)
