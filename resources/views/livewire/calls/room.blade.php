@@ -97,10 +97,10 @@
 
             <div class="mx-1 h-8 w-px bg-neutral-200 dark:bg-neutral-700"></div>
 
-            <flux:button size="sm" variant="ghost" icon="user-plus" @click="showInvite = ! showInvite">{{ __('Add people') }}</flux:button>
+            <flux:button size="sm" variant="ghost" icon="user-plus" @click="showInvite = ! showInvite">{{ __('') }}</flux:button>
 
-            <flux:button size="sm" variant="danger" icon="phone-x-mark" @click="leaveCall()">{{ __('Leave') }}</flux:button>
-            <flux:button size="sm" variant="danger" icon="phone-x-mark" x-show="isInitiator" @click="endForEveryone()">{{ __('End for everyone') }}</flux:button>
+            <flux:button size="sm" variant="danger" icon="phone-x-mark" @click="leaveCall()">{{ __('') }}</flux:button>
+            <flux:button size="sm" variant="danger" icon="phone-x-mark" x-show="isInitiator" @click="endForEveryone()">{{ __('End') }}</flux:button>
 
             <div x-show="showInvite" x-cloak @click.outside="showInvite = false"
                  class="absolute bottom-full mb-2 w-72 rounded-xl border border-neutral-200 bg-white p-3 shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
