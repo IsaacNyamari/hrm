@@ -100,7 +100,7 @@ class DashboardMetrics
                 'key' => 'hr_requests_open',
                 'label' => 'Open HR requests',
                 'value' => HrRequest::query()->whereIn('status', ['open', 'assigned', 'in_progress'])->count(),
-                'href' => '/hr-requests',
+                'href' => '/hr-requests-board',
             ];
         }
 
