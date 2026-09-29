@@ -1,19 +1,38 @@
 <div wire:ignore x-data="{
         ringing: null,
+        ringtone: null,
+        ringTimeout: null,
         boot() {
+            this.ringtone = new Audio('/sounds/call-ringing.wav');
+            this.ringtone.loop = true;
+
             window.Echo.private('App.Models.User.{{ $authUserId }}')
                 .listen('.call.incoming', (e) => {
                     this.ringing = e;
-                });
+                    this.ringtone.currentTime = 0;
+                    this.ringtone.play().catch(() => {});
+
+                    // Ring for a bounded time, like a real phone — the caller
+                    // isn't on this channel yet, so there's no other signal
+                    // that would tell us to stop on our own.
+                    clearTimeout(this.ringTimeout);
+                    this.ringTimeout = setTimeout(() => this.stopRinging(), 30000);
+                },
+            );
+        },
+        stopRinging() {
+            clearTimeout(this.ringTimeout);
+            this.ringtone?.pause();
+            this.ringing = null;
         },
         accept() {
             const uuid = this.ringing.call_uuid;
-            this.ringing = null;
+            this.stopRinging();
             this.$wire.accept(uuid);
         },
         decline() {
             this.$wire.decline(this.ringing.call_uuid);
-            this.ringing = null;
+            this.stopRinging();
         },
     }" x-init="boot()">
     <div x-show="ringing" x-cloak

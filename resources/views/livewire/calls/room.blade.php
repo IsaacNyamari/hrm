@@ -48,8 +48,18 @@
         <p x-show="mediaError" x-text="mediaError" class="max-w-sm text-sm text-red-500"></p>
     </div>
 
+    {{-- Ringing out: we've joined, waiting for someone to answer --}}
+    <div x-show="inCall && ringingOut" x-cloak class="flex flex-col items-center gap-4 rounded-xl border border-dashed border-neutral-300 p-12 text-center dark:border-neutral-700">
+        <span class="relative flex size-16 items-center justify-center rounded-full bg-brand/10 text-brand dark:text-highlight">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/20"></span>
+            <flux:icon.phone class="relative size-7" />
+        </span>
+        <p class="text-sm font-medium text-neutral-700 dark:text-neutral-200">{{ __('Calling…') }}</p>
+        <flux:button size="sm" variant="danger" @click="leaveCall()">{{ __('Cancel') }}</flux:button>
+    </div>
+
     {{-- In an active call --}}
-    <div x-show="inCall" x-cloak class="flex flex-col gap-4">
+    <div x-show="inCall && ! ringingOut" x-cloak class="flex flex-col gap-4">
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div class="relative aspect-video overflow-hidden rounded-xl bg-neutral-900">
                 <video id="local-video" autoplay playsinline muted class="h-full w-full object-cover"></video>

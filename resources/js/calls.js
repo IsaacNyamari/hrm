@@ -20,6 +20,12 @@
 
 const ICE_SERVERS = [{urls: 'stun:stun.l.google.com:19302'}];
 
+// Played to the caller while an outgoing call is ringing out (no one has
+// joined yet). Browsers generally allow this without restriction since it's
+// always started from a user gesture (clicking "Call").
+const connectingSound = new Audio('/sounds/call-connecting.wav');
+connectingSound.loop = true;
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('callRoom', (config) => ({
         userId: config.userId,
@@ -33,6 +39,7 @@ document.addEventListener('alpine:init', () => {
         inCall: false,
         callUuid: null,
         joining: false,
+        ringingOut: false,
         isInitiator: false,
         participants: {},
         micMuted: false,
@@ -140,13 +147,15 @@ document.addEventListener('alpine:init', () => {
 
             this.callChannel = window.Echo.join(`call.${uuid}`)
                 .here((users) => {
-                    users.forEach((user) => {
-                        if (user.id !== this.userId) {
-                            this.addParticipant(user);
-                        }
-                    });
+                    const others = users.filter((user) => user.id !== this.userId);
+                    others.forEach((user) => this.addParticipant(user));
+
+                    if (this.isInitiator && others.length === 0) {
+                        this.startRingingOut();
+                    }
                 })
                 .joining((user) => {
+                    this.stopRingingOut();
                     this.addParticipant(user);
                     this.createPeerConnection(user.id, true);
                 })
@@ -180,6 +189,22 @@ document.addEventListener('alpine:init', () => {
             });
 
             return true;
+        },
+
+        startRingingOut() {
+            this.ringingOut = true;
+            connectingSound.currentTime = 0;
+            connectingSound.play().catch(() => {});
+        },
+
+        stopRingingOut() {
+            if (! this.ringingOut) {
+                return;
+            }
+
+            this.ringingOut = false;
+            connectingSound.pause();
+            connectingSound.currentTime = 0;
         },
 
         addParticipant(user) {
@@ -294,6 +319,8 @@ document.addEventListener('alpine:init', () => {
          * themselves before this.
          */
         teardown() {
+            this.stopRingingOut();
+
             if (! this.inCall && ! this.joining) {
                 return;
             }
