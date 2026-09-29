@@ -92,6 +92,9 @@
                     <flux:sidebar.item icon="code-bracket" :href="route('developers')" :current="request()->routeIs('developers')" wire:navigate>
                         {{ __('Developers') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="academic-cap" :href="route('training')" :current="request()->routeIs('training')" wire:navigate>
+                        {{ __('Training') }}
+                    </flux:sidebar.item>
                     @can('audit.view')
                         <flux:sidebar.item icon="shield-check" :href="route('audit')" :current="request()->routeIs('audit')" wire:navigate>
                             {{ __('Audit trail') }}

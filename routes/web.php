@@ -390,6 +390,9 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('webhook-endpoints/{webhookEndpoint}/ping', [WebhookEndpointController::class, 'ping'])->name('webhook-endpoints.ping');
     Route::get('webhook-endpoints/{webhookEndpoint}/deliveries', [WebhookEndpointController::class, 'deliveries'])->name('webhook-endpoints.deliveries');
 
+    // Staff training / help centre
+    Route::view('training', 'training.index')->name('training');
+
     // Reporting & exports
     Route::view('reports', 'reports.index')->name('reports');
     Route::get('reports/catalogue', [ReportController::class, 'index'])->name('reports.catalogue');
