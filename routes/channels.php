@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Models\Call;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -25,6 +26,37 @@ Broadcast::channel('tenant.{tenantId}.recruitment', function (User $user, int $t
 */
 Broadcast::channel('tenant.{tenantId}.attendance', function (User $user, int $tenantId): bool {
     return $user->tenant_id === $tenantId && $user->can(Permission::AttendanceView->value);
+});
+
+/*
+| Presence: who's currently on the Calls page for this company, so a caller
+| can see who's actually available before ringing them.
+*/
+Broadcast::channel('tenant.{tenantId}.calls', function (User $user, int $tenantId) {
+    if ($user->tenant_id !== $tenantId) {
+        return false;
+    }
+
+    return ['id' => $user->id, 'name' => $user->name, 'initials' => $user->initials()];
+});
+
+/*
+| Presence: one call's room. Only its participants (invited, joined, or
+| otherwise) may join — this is also the channel WebRTC signalling is
+| whispered over between peers.
+*/
+Broadcast::channel('call.{uuid}', function (User $user, string $uuid) {
+    $call = Call::query()->where('uuid', $uuid)->first();
+
+    if ($call === null || $call->tenant_id !== $user->tenant_id) {
+        return false;
+    }
+
+    if (! $call->participants()->where('user_id', $user->id)->exists()) {
+        return false;
+    }
+
+    return ['id' => $user->id, 'name' => $user->name, 'initials' => $user->initials()];
 });
 
 /*

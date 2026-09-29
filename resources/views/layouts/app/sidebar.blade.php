@@ -74,6 +74,9 @@
                     <flux:sidebar.item icon="ticket" :href="route('hr-requests')" :current="request()->routeIs('hr-requests')" wire:navigate>
                         {{ __('HR requests') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="video-camera" :href="route('calls')" :current="request()->routeIs('calls')" wire:navigate>
+                        {{ __('Calls') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="bell" :href="route('notifications')" :current="request()->routeIs('notifications')" wire:navigate>
                         {{ __('Notifications') }}
                     </flux:sidebar.item>
@@ -88,6 +91,9 @@
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="ticket" :href="route('hr-requests')" :current="request()->routeIs('hr-requests')" wire:navigate>
                         {{ __('HR requests') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="video-camera" :href="route('calls')" :current="request()->routeIs('calls')" wire:navigate>
+                        {{ __('Calls') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar" :href="route('reports')" :current="request()->routeIs('reports')" wire:navigate>
                         {{ __('Reports') }}
@@ -179,6 +185,10 @@
             @endif
 
             <flux:spacer />
+
+            @unless (auth()->user()->isPlatformAdmin())
+                <livewire:calls.incoming-call-listener />
+            @endunless
 
             <livewire:notifications.bell />
 
