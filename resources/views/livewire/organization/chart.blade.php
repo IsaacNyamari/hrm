@@ -50,11 +50,28 @@
                 <div class="orgchart mx-auto w-max origin-top transition-transform" :style="`transform: scale(${zoom})`" data-test="organogram">
                     <ul>
                         @foreach ($tree as $node)
-                            @include('livewire.organization.node', ['node' => $node, 'childKey' => $childKey, 'depth' => 0])
+                            @include('livewire.organization.node', ['node' => $node, 'childKey' => $childKey, 'depth' => 0, 'canManage' => $canManage])
                         @endforeach
                     </ul>
                 </div>
             </div>
         </div>
     @endif
+
+    <flux:modal name="reassign-manager" class="max-w-sm">
+        <form wire:submit="saveManager" class="flex flex-col gap-4">
+            <flux:heading size="lg">{{ __('Change manager') }}</flux:heading>
+            <flux:text size="sm">{{ __('Who does :name report to?', ['name' => $reassigningName]) }}</flux:text>
+            <flux:select wire:model="newManagerId" :label="__('Manager')">
+                <flux:select.option value="">{{ __('No manager (top level)') }}</flux:select.option>
+                @foreach ($employees as $emp)
+                    <flux:select.option value="{{ $emp->id }}">{{ $emp->first_name }} {{ $emp->last_name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            <div class="flex justify-end gap-2">
+                <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
+                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>

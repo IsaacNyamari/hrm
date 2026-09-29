@@ -230,6 +230,8 @@
 
         {{ $slot }}
 
+        @stack('scripts')
+
         @persist('toast')
             <flux:toast.group>
                 <flux:toast />

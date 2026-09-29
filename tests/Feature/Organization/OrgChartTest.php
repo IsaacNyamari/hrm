@@ -95,6 +95,86 @@ it('counts whole teams and department headcount', function () {
         ->and($departments[0]['headcount'])->toBe(2);
 });
 
+it('lets an authorized user reassign a manager from the organogram', function () {
+    app(TenantContext::class)->set($this->tenant);
+    $ceo = Employee::factory()->forTenant($this->tenant)->create(['first_name' => 'Chart', 'last_name' => 'Root']);
+    $otherLead = Employee::factory()->forTenant($this->tenant)->create(['first_name' => 'Other', 'last_name' => 'Lead']);
+    $report = Employee::factory()->forTenant($this->tenant)->create(['manager_id' => $ceo->id]);
+
+    $this->actingAs($this->hr);
+
+    Livewire::test(Chart::class)
+        ->call('startReassign', $report->uuid)
+        ->assertSet('newManagerId', (string) $ceo->id)
+        ->set('newManagerId', (string) $otherLead->id)
+        ->call('saveManager')
+        ->assertDispatched('toast-show');
+
+    expect($report->fresh()->manager_id)->toBe($otherLead->id);
+});
+
+it('lets a manager be cleared to top level from the organogram', function () {
+    app(TenantContext::class)->set($this->tenant);
+    $ceo = Employee::factory()->forTenant($this->tenant)->create();
+    $report = Employee::factory()->forTenant($this->tenant)->create(['manager_id' => $ceo->id]);
+
+    $this->actingAs($this->hr);
+
+    Livewire::test(Chart::class)
+        ->call('startReassign', $report->uuid)
+        ->set('newManagerId', '')
+        ->call('saveManager');
+
+    expect($report->fresh()->manager_id)->toBeNull();
+});
+
+it('refuses to let an employee manage themselves', function () {
+    app(TenantContext::class)->set($this->tenant);
+    $employee = Employee::factory()->forTenant($this->tenant)->create();
+
+    $this->actingAs($this->hr);
+
+    Livewire::test(Chart::class)
+        ->call('startReassign', $employee->uuid)
+        ->set('newManagerId', (string) $employee->id)
+        ->call('saveManager')
+        ->assertDispatched('toast-show');
+
+    expect($employee->fresh()->manager_id)->toBeNull();
+});
+
+it('refuses a reassignment that would create a reporting loop', function () {
+    app(TenantContext::class)->set($this->tenant);
+    $ceo = Employee::factory()->forTenant($this->tenant)->create();
+    $lead = Employee::factory()->forTenant($this->tenant)->create(['manager_id' => $ceo->id]);
+    $report = Employee::factory()->forTenant($this->tenant)->create(['manager_id' => $lead->id]);
+
+    $this->actingAs($this->hr);
+
+    // Making the CEO report to their own report's report would loop.
+    Livewire::test(Chart::class)
+        ->call('startReassign', $ceo->uuid)
+        ->set('newManagerId', (string) $report->id)
+        ->call('saveManager')
+        ->assertDispatched('toast-show');
+
+    expect($ceo->fresh()->manager_id)->toBeNull();
+});
+
+it('hides manager reassignment from a user without employees.update', function () {
+    app(TenantContext::class)->set($this->tenant);
+    $employee = Employee::factory()->forTenant($this->tenant)->create();
+    // Supervisor holds employees.view (can see the chart) but not employees.update.
+    $plain = userForTenant($this->tenant, Role::Supervisor);
+
+    $this->actingAs($plain);
+
+    Livewire::test(Chart::class)
+        ->assertDontSeeHtml('wire:click="startReassign');
+
+    Livewire::test(Chart::class)->call('startReassign', $employee->uuid)->assertForbidden();
+});
+
 it('draws the organogram with reporting counts and summary stats', function () {
     app(TenantContext::class)->set($this->tenant);
     $ceo = Employee::factory()->forTenant($this->tenant)->create(['first_name' => 'Chart', 'last_name' => 'Root']);

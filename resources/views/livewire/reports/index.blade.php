@@ -1,11 +1,33 @@
 <div class="flex flex-col gap-5">
-    <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Reports') }}</h1>
+    <div>
+        <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Reports') }}</h1>
+        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{{ __('A live overview of the business, plus filterable, exportable reports for every module.') }}</p>
+    </div>
+
+    @if (count($charts) > 0)
+        <div>
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ __('Overview') }}</h2>
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach ($charts as $chart)
+                    <div wire:ignore wire:key="chart-{{ $chart['key'] }}" x-data="reportChart(@js($chart))" x-init="renderChart($el)"
+                         class="flex flex-col gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
+                        <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-200">{{ $chart['title'] }}</p>
+                        <div class="relative h-56">
+                            <canvas></canvas>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     @if (count($reports) === 0)
         <p class="rounded-xl border border-dashed border-neutral-300 p-8 text-center text-neutral-500 dark:border-neutral-700">
             {{ __('You do not have access to any reports.') }}
         </p>
     @else
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ __('Detailed reports') }}</h2>
+
         <div class="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
             <label class="text-sm">
                 <span class="text-neutral-600 dark:text-neutral-400">{{ __('Report') }}</span>

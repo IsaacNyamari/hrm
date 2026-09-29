@@ -7,6 +7,7 @@ namespace App\Livewire\Reports;
 use App\Livewire\Concerns\BindsTenant;
 use App\Reports\Report;
 use App\Reports\ReportRegistry;
+use App\Services\Reporting\ReportCharts;
 use App\Services\Reporting\ReportService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
@@ -31,7 +32,7 @@ class Index extends Component
         $this->error = null;
     }
 
-    public function render(ReportRegistry $registry, ReportService $service): View
+    public function render(ReportRegistry $registry, ReportService $service, ReportCharts $charts): View
     {
         $user = auth()->user();
         $available = $user !== null ? $registry->availableFor($user) : [];
@@ -51,6 +52,7 @@ class Index extends Component
             'reports' => $available,
             'selected' => $selected,
             'result' => $result,
+            'charts' => $user !== null ? $charts->for($user) : [],
         ]);
     }
 }

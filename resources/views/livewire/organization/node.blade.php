@@ -37,12 +37,19 @@
                 @endif
             </button>
         @endif
+
+        @if (! $isDepartment && ($canManage ?? false))
+            <button type="button" wire:click="startReassign('{{ $node['uuid'] }}')"
+                class="mt-1 flex w-full items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium text-zinc-400 hover:text-brand">
+                {{ __('Change manager') }}
+            </button>
+        @endif
     </div>
 
     @if (count($children) > 0)
         <ul x-show="open || q !== ''" x-cloak>
             @foreach ($children as $child)
-                @include('livewire.organization.node', ['node' => $child, 'childKey' => $childKey, 'depth' => $depth + 1])
+                @include('livewire.organization.node', ['node' => $child, 'childKey' => $childKey, 'depth' => $depth + 1, 'canManage' => $canManage ?? false])
             @endforeach
         </ul>
     @endif
