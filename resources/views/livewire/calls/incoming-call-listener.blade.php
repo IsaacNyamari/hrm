@@ -12,13 +12,17 @@
                     this.ringtone.currentTime = 0;
                     this.ringtone.play().catch(() => {});
 
-                    // Ring for a bounded time, like a real phone — the caller
-                    // isn't on this channel yet, so there's no other signal
-                    // that would tell us to stop on our own.
+                    // Ring for a bounded time, like a real phone — this is a
+                    // fallback in case the call.ended notification below is
+                    // ever missed, not the normal way ringing stops.
                     clearTimeout(this.ringTimeout);
                     this.ringTimeout = setTimeout(() => this.stopRinging(), 30000);
-                },
-            );
+                })
+                .listen('.call.ended', (e) => {
+                    if (this.ringing?.call_uuid === e.call_uuid) {
+                        this.stopRinging();
+                    }
+                });
         },
         stopRinging() {
             clearTimeout(this.ringTimeout);

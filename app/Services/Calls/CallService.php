@@ -184,10 +184,12 @@ class CallService
 
         $call->participants()->where('status', CallParticipantStatus::Joined)
             ->update(['status' => CallParticipantStatus::Left->value, 'left_at' => CarbonImmutable::now()]);
+
+        $missedUserIds = $call->participants()->where('status', CallParticipantStatus::Invited)->pluck('user_id')->all();
         $call->participants()->where('status', CallParticipantStatus::Invited)
             ->update(['status' => CallParticipantStatus::Missed->value]);
 
-        CallEnded::dispatch($call);
+        CallEnded::dispatch($call, $missedUserIds);
     }
 
     private function participantOrFail(Call $call, User $user): CallParticipant

@@ -77,22 +77,30 @@
             </template>
         </div>
 
-        <div class="relative flex flex-wrap items-center justify-center gap-2 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+        <div class="relative flex flex-wrap items-center justify-center gap-2 rounded-full border border-neutral-200 bg-white/80 px-3 py-2 shadow-sm backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/80">
             <button type="button" @click="toggleMic()"
-                class="inline-flex h-8 items-center rounded-lg px-3 text-sm font-medium transition"
-                :class="micMuted ? 'bg-danger text-white' : 'bg-transparent text-zinc-800 hover:bg-zinc-800/5 dark:text-white dark:hover:bg-white/15'">
-                <span x-text="micMuted ? '{{ __('Unmute') }}' : '{{ __('Mute') }}'"></span>
+                class="relative grid size-11 shrink-0 place-items-center rounded-full transition"
+                :class="micMuted ? 'bg-danger text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'"
+                x-bind:aria-label="micMuted ? '{{ __('Unmute') }}' : '{{ __('Mute') }}'"
+                x-bind:title="micMuted ? '{{ __('Unmute') }}' : '{{ __('Mute') }}'">
+                <flux:icon.microphone class="size-5" />
+                <span x-show="micMuted" x-cloak class="absolute h-6 w-0.5 rotate-45 rounded-full bg-current"></span>
             </button>
             <button type="button" @click="toggleCamera()"
-                class="inline-flex h-8 items-center rounded-lg px-3 text-sm font-medium transition"
-                :class="cameraOff ? 'bg-danger text-white' : 'bg-transparent text-zinc-800 hover:bg-zinc-800/5 dark:text-white dark:hover:bg-white/15'">
-                <span x-text="cameraOff ? '{{ __('Turn camera on') }}' : '{{ __('Turn camera off') }}'"></span>
+                class="relative grid size-11 shrink-0 place-items-center rounded-full transition"
+                :class="cameraOff ? 'bg-danger text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'"
+                x-bind:aria-label="cameraOff ? '{{ __('Turn camera on') }}' : '{{ __('Turn camera off') }}'"
+                x-bind:title="cameraOff ? '{{ __('Turn camera on') }}' : '{{ __('Turn camera off') }}'">
+                <flux:icon.video-camera class="size-5" x-show="! cameraOff" />
+                <flux:icon.video-camera-slash class="size-5" x-show="cameraOff" x-cloak />
             </button>
 
-            <flux:button size="sm" variant="ghost" @click="showInvite = ! showInvite">{{ __('Add people') }}</flux:button>
+            <div class="mx-1 h-8 w-px bg-neutral-200 dark:bg-neutral-700"></div>
 
-            <flux:button size="sm" variant="danger" @click="leaveCall()">{{ __('Leave') }}</flux:button>
-            <flux:button size="sm" variant="danger" x-show="isInitiator" @click="endForEveryone()">{{ __('End for everyone') }}</flux:button>
+            <flux:button size="sm" variant="ghost" icon="user-plus" @click="showInvite = ! showInvite">{{ __('Add people') }}</flux:button>
+
+            <flux:button size="sm" variant="danger" icon="phone-x-mark" @click="leaveCall()">{{ __('Leave') }}</flux:button>
+            <flux:button size="sm" variant="danger" icon="phone-x-mark" x-show="isInitiator" @click="endForEveryone()">{{ __('End for everyone') }}</flux:button>
 
             <div x-show="showInvite" x-cloak @click.outside="showInvite = false"
                  class="absolute bottom-full mb-2 w-72 rounded-xl border border-neutral-200 bg-white p-3 shadow-lg dark:border-neutral-700 dark:bg-neutral-900">

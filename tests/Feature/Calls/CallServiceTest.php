@@ -92,6 +92,25 @@ it('marks invitees who never answered as missed when the call ends', function ()
     expect($participant->status)->toBe(CallParticipantStatus::Missed);
 });
 
+it('tells a still-ringing invitee\'s own channel the call ended, so their ringtone can stop', function () {
+    Event::fake([CallEnded::class]);
+    $call = app(CallService::class)->start($this->caller, [$this->callee->id]);
+
+    app(CallService::class)->endForEveryone($call);
+
+    Event::assertDispatched(CallEnded::class, fn (CallEnded $e): bool => $e->call->is($call) && $e->missedUserIds === [$this->callee->id]);
+});
+
+it('does not list an already-joined participant as missed when the call ends', function () {
+    Event::fake([CallEnded::class]);
+    $call = app(CallService::class)->start($this->caller, [$this->callee->id]);
+    app(CallService::class)->accept($call, $this->callee);
+
+    app(CallService::class)->endForEveryone($call);
+
+    Event::assertDispatched(CallEnded::class, fn (CallEnded $e): bool => $e->missedUserIds === []);
+});
+
 it('lets more people be invited into an in-progress call', function () {
     Event::fake([IncomingCall::class]);
     $call = app(CallService::class)->start($this->caller, [$this->callee->id]);
