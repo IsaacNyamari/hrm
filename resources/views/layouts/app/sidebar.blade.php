@@ -71,6 +71,9 @@
                     <flux:sidebar.item icon="clipboard-document-check" :href="route('tasks')" :current="request()->routeIs('tasks')" wire:navigate>
                         {{ __('My tasks') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="ticket" :href="route('hr-requests')" :current="request()->routeIs('hr-requests')" wire:navigate>
+                        {{ __('HR requests') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="bell" :href="route('notifications')" :current="request()->routeIs('notifications')" wire:navigate>
                         {{ __('Notifications') }}
                     </flux:sidebar.item>
@@ -82,6 +85,9 @@
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="user-circle" :href="route('portal')" :current="request()->routeIs('portal')" wire:navigate>
                         {{ __('My HR') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="ticket" :href="route('hr-requests')" :current="request()->routeIs('hr-requests')" wire:navigate>
+                        {{ __('HR requests') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar" :href="route('reports')" :current="request()->routeIs('reports')" wire:navigate>
                         {{ __('Reports') }}

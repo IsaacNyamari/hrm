@@ -247,6 +247,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::delete('employee-documents/{document}', [EmployeeDocumentController::class, 'destroy'])->name('employee-documents.destroy');
 
     // HR requests / tickets
+    Route::view('hr-requests-board', 'hr-requests.index')->name('hr-requests');
     Route::get('hr-requests', [HrRequestController::class, 'index'])->name('hr-requests.index');
     Route::post('hr-requests', [HrRequestController::class, 'store'])->name('hr-requests.store');
     Route::get('hr-requests/{hrRequest}', [HrRequestController::class, 'show'])->name('hr-requests.show');
