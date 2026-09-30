@@ -19,6 +19,7 @@ class ProvisionTenant
         private readonly ProvisionTenantLeaveTypes $leaveTypes,
         private readonly ProvisionTenantPayroll $payroll,
         private readonly ProvisionTenantDocuments $documents,
+        private readonly ProvisionTenantHolidays $holidays,
     ) {}
 
     public function handle(Tenant $tenant): void
@@ -29,6 +30,7 @@ class ProvisionTenant
             $this->leaveTypes->handle($tenant);
             $this->payroll->handle($tenant);
             $this->documents->handle($tenant);
+            $this->holidays->handle($tenant);
         });
     }
 }
