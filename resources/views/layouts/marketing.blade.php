@@ -193,7 +193,7 @@
                     <p>&copy; {{ now()->year }} {{ $appName }}. {{ __('All rights reserved.') }}</p>
                     <p class="flex items-center gap-2">
                         <flux:icon.lock-closed variant="micro" class="text-highlight" />
-                        {{ __('HTTPS everywhere · Sensitive fields encrypted · Role-based access · Full audit trail') }}
+                        {{ __('HTTPS everywhere · Sensitive fields encrypted · Kenya Data Protection Act aligned · Role-based access · Full audit trail') }}
                     </p>
                 </div>
             </div>

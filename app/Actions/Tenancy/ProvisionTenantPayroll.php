@@ -80,7 +80,6 @@ class ProvisionTenantPayroll
                 ],
                 'personal_relief_cents' => 240_000,
             ]],
-            [TaxRuleType::Nssf, 'NSSF (Kenya)', ['rate' => 0.06, 'ceiling_cents' => 7_200_000]],
             [TaxRuleType::Shif, 'SHIF (Kenya)', ['rate' => 0.0275, 'minimum_cents' => 30_000]],
             [TaxRuleType::HousingLevy, 'Housing Levy (Kenya)', ['rate' => 0.015]],
         ];
@@ -89,6 +88,14 @@ class ProvisionTenantPayroll
             TaxRule::query()->updateOrCreate(
                 ['tenant_id' => $tenant->getKey(), 'type' => $type->value, 'effective_from' => $effectiveFrom],
                 ['name' => $name, 'country' => 'KE', 'effective_to' => null, 'config' => $config, 'is_active' => true],
+            );
+        }
+
+        // NSSF Act 2013 phased upper earnings limit: KES 72,000 from Feb 2025, KES 108,000 from Feb 2026.
+        foreach ([['2024-07-01', '2026-01-31', 7_200_000], ['2026-02-01', null, 10_800_000]] as [$from, $to, $ceilingCents]) {
+            TaxRule::query()->updateOrCreate(
+                ['tenant_id' => $tenant->getKey(), 'type' => TaxRuleType::Nssf->value, 'effective_from' => $from],
+                ['name' => 'NSSF (Kenya)', 'country' => 'KE', 'effective_to' => $to, 'config' => ['rate' => 0.06, 'ceiling_cents' => $ceilingCents], 'is_active' => true],
             );
         }
     }

@@ -12,7 +12,7 @@
     $faqs = [
         [__('How do we get started?'), __('Request a quote with a few details about your organization. Once approved you receive a secure, single-use link by email to create your workspace — it takes about two minutes.')],
         [__('Does payroll handle Kenyan statutory deductions?'), __('Yes. PAYE, NSSF, SHIF and the Affordable Housing Levy are built into payroll, and payslips are generated for every employee.')],
-        [__('Can we connect our biometric devices?'), __('Yes. ZKTeco devices that support the ADMS push protocol send attendance straight into the system, alongside web and mobile clock-ins.')],
+        [__('Can we connect our biometric devices?'), __('Yes. ZKTeco devices that support the ADMS push protocol connect directly over the internet to your workspace (no on-site agent or server needed) and send attendance straight into the system, alongside web and mobile clock-ins.')],
         [__('Is our data kept separate from other organizations?'), __('Every organization has its own isolated workspace. Access is role-based, sensitive fields are encrypted, and every important change is recorded in an audit trail.')],
         [__('How do we pay?'), __('Subscriptions are billed monthly in KES and can be paid securely online by card, M-Pesa or bank through our payment provider.')],
     ];
@@ -164,7 +164,7 @@
                     <h2 class="mt-5 text-3xl font-extrabold tracking-tight text-night">{{ __('Payroll you can trust, every month') }}</h2>
                     <p class="mt-4 text-lg text-zinc-500">{{ __('Set up salary components once. Each run pulls attendance, leave, loans and expenses, applies statutory deductions and produces payslips your team can open from their own portal.') }}</p>
                     <ul class="mt-6 space-y-3 text-sm">
-                        @foreach ([__('PAYE, NSSF, SHIF and Housing Levy calculated automatically'), __('Approval step before a run is finalised'), __('Payslips delivered to every employee\'s self-service portal'), __('Payroll reports exported to Excel, CSV or print')] as $point)
+                        @foreach ([__('PAYE, NSSF, SHIF and Housing Levy calculated automatically'), __('Approval step before a run is finalised'), __('Payslips delivered to every employee\'s self-service portal'), __('Ready-to-upload KRA iTax, SHA and NSSF return files, plus Excel, CSV and print reports')] as $point)
                             <li class="flex gap-3"><flux:icon.check-circle variant="mini" class="shrink-0 text-success" /> {{ $point }}</li>
                         @endforeach
                     </ul>
@@ -175,12 +175,12 @@
                         <span class="rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-bold text-success">{{ __('Approved') }}</span>
                     </div>
                     <dl class="mt-5 divide-y divide-zinc-100 text-sm">
-                        @foreach ([[__('Basic salary'), '85,000.00', ''], [__('House allowance'), '15,000.00', ''], [__('PAYE'), '− 22,137.50', 'text-danger'], [__('NSSF'), '− 2,160.00', 'text-danger'], [__('SHIF'), '− 2,750.00', 'text-danger'], [__('Housing Levy'), '− 1,500.00', 'text-danger']] as [$label, $amount, $tone])
+                        @foreach ([[__('Basic salary'), '85,000.00', ''], [__('House allowance'), '15,000.00', ''], [__('PAYE'), '− 19,308.35', 'text-danger'], [__('NSSF'), '− 6,000.00', 'text-danger'], [__('SHIF'), '− 2,750.00', 'text-danger'], [__('Housing Levy'), '− 1,500.00', 'text-danger']] as [$label, $amount, $tone])
                             <div class="flex justify-between py-2.5"><dt class="text-zinc-500">{{ $label }}</dt><dd class="font-semibold {{ $tone }}">KES {{ $amount }}</dd></div>
                         @endforeach
-                        <div class="flex justify-between py-3 text-base"><dt class="font-bold text-night">{{ __('Net pay') }}</dt><dd class="font-extrabold text-brand">KES 71,452.50</dd></div>
+                        <div class="flex justify-between py-3 text-base"><dt class="font-bold text-night">{{ __('Net pay') }}</dt><dd class="font-extrabold text-brand">KES 70,441.65</dd></div>
                     </dl>
-                    <p class="mt-3 text-[11px] text-zinc-400">{{ __('Illustrative figures only.') }}</p>
+                    <p class="mt-3 text-[11px] text-zinc-400">{{ __('Illustrative: KES 100,000 gross, 2026 statutory rates. NSSF, SHIF and Housing Levy are deducted before PAYE, less KES 2,400 personal relief.') }}</p>
                 </div>
             </div>
 

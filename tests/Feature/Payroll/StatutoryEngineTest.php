@@ -15,10 +15,12 @@ beforeEach(function () {
     $this->payDate = CarbonImmutable::create(2026, 9, 30);
 });
 
-it('computes NSSF at 6% capped at the ceiling', function () {
-    $lines = collect($this->engine->compute(10_000_000, 10_000_000, 10_000_000, $this->payDate));
+it('computes NSSF at 6% capped at the ceiling in force on the pay date', function () {
+    $lines = collect($this->engine->compute(15_000_000, 15_000_000, 15_000_000, $this->payDate));
+    $before = collect($this->engine->compute(15_000_000, 15_000_000, 15_000_000, CarbonImmutable::create(2025, 6, 30)));
 
-    expect($lines->firstWhere('code', 'NSSF')['amount_cents'])->toBe(432_000); // 6% of 7,200,000
+    expect($lines->firstWhere('code', 'NSSF')['amount_cents'])->toBe(648_000) // 6% of 10,800,000 from Feb 2026
+        ->and($before->firstWhere('code', 'NSSF')['amount_cents'])->toBe(432_000); // 6% of 7,200,000 in 2025
 });
 
 it('computes SHIF at 2.75% of gross with a floor', function () {
@@ -38,9 +40,9 @@ it('computes the Housing Levy at 1.5% of gross', function () {
 it('computes PAYE on income net of the pre-tax statutory reliefs, minus personal relief', function () {
     $lines = collect($this->engine->compute(10_000_000, 10_000_000, 10_000_000, $this->payDate));
 
-    // taxable for PAYE = 10,000,000 - (432,000 + 275,000 + 150,000) = 9,143,000
-    // bands: 240,000 + 208,325 + 1,772,910 = 2,221,235 ; less relief 240,000
-    expect($lines->firstWhere('code', 'PAYE')['amount_cents'])->toBe(1_981_235);
+    // taxable for PAYE = 10,000,000 - (600,000 + 275,000 + 150,000) = 8,975,000
+    // bands: 240,000 + 208,325 + 1,722,510 = 2,170,835 ; less relief 240,000
+    expect($lines->firstWhere('code', 'PAYE')['amount_cents'])->toBe(1_930_835);
 });
 
 it('returns zero PAYE for a low earner after relief', function () {

@@ -54,7 +54,7 @@ it('computes a payslip: basic + percentage allowance, statutory deductions and n
     $lines = $payslip->lines->keyBy('code');
     expect($lines['BASIC']->amount_cents)->toBe(10_000_000)
         ->and($lines['HOUSE_ALLOWANCE']->amount_cents)->toBe(1_500_000)
-        ->and($lines['NSSF']->amount_cents)->toBe(432_000)
+        ->and($lines['NSSF']->amount_cents)->toBe(600_000)
         ->and($lines['SHIF']->amount_cents)->toBe((int) round(11_500_000 * 0.0275))
         ->and($lines['HOUSING_LEVY']->amount_cents)->toBe((int) round(11_500_000 * 0.015));
 
