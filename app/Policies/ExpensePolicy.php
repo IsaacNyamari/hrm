@@ -54,6 +54,11 @@ class ExpensePolicy
             return false;
         }
 
+        // Nobody decides their own claim, however senior.
+        if ($expense->employee->user_id === $user->getKey()) {
+            return false;
+        }
+
         return $this->permits($user, $expense->tenant_id, Permission::ExpensesApprove, Permission::ExpensesManage)
             || $expense->employee->manager?->user_id === $user->getKey();
     }

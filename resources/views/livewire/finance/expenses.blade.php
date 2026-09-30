@@ -50,13 +50,65 @@
                                 @endif
                             </td>
                         </tr>
+                        @if ($claim->items->isNotEmpty() || $claim->status->isEditable())
+                            <tr wire:key="claim-items-{{ $claim->uuid }}">
+                                <td></td>
+                                <td colspan="5" class="pb-3">
+                                    <ul class="space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
+                                        @foreach ($claim->items as $lineItem)
+                                            <li wire:key="item-{{ $lineItem->uuid }}" class="flex items-center justify-between gap-2">
+                                                <span>{{ $lineItem->spent_on->format('d M') }} · {{ $lineItem->description }} ({{ $lineItem->category->value }}) — {{ number_format($lineItem->amount_cents / 100, 2) }}
+                                                    @if ($lineItem->receipt_path) · <a class="underline" href="{{ route('expense-items.receipt', $lineItem) }}">{{ __('Receipt') }}</a> @endif
+                                                </span>
+                                                @if ($claim->status->isEditable())
+                                                    <button type="button" class="text-red-600" wire:click="removeItem('{{ $lineItem->uuid }}')" wire:confirm="{{ __('Remove this line item?') }}">{{ __('Remove') }}</button>
+                                                @endif
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                    @if ($claim->status->isEditable())
+                                        <flux:button size="xs" class="mt-2" wire:click="startAddItem('{{ $claim->uuid }}')">{{ __('Add line item') }}</flux:button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endif
                     @empty
                         <tr><td colspan="6" class="py-2 text-neutral-500">{{ __('No claims yet.') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
-            <flux:text size="sm" class="mt-2 text-neutral-400">{{ __('Add line items (with receipts) to a draft claim through the expense-claims API, then submit here.') }}</flux:text>
+            <flux:text size="sm" class="mt-2 text-neutral-400">{{ __('Add a line item (with its receipt) for each expense, then submit the claim.') }}</flux:text>
         </div>
+
+        <flux:modal name="expense-item" class="max-w-md">
+            <form wire:submit="saveItem" class="flex flex-col gap-4">
+                <flux:heading size="lg">{{ __('Add line item') }}</flux:heading>
+                <flux:input wire:model="item.description" :label="__('Description')" required />
+                <flux:select wire:model.live="item.category" :label="__('Category')">
+                    @foreach ($categories as $category)
+                        <flux:select.option value="{{ $category->value }}">{{ ucwords(str_replace('_', ' ', $category->value)) }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:input type="date" wire:model="item.spent_on" :label="__('Date spent')" required />
+                @if ($item['category'] === 'mileage')
+                    <flux:input type="number" step="0.1" min="0" wire:model="item.quantity" :label="__('Distance (km)')" required />
+                @else
+                    <flux:input type="number" step="0.01" min="0" wire:model="item.amount" :label="__('Amount')" required />
+                @endif
+                <flux:textarea wire:model="item.notes" :label="__('Notes')" rows="2" />
+                <div>
+                    <flux:input type="file" wire:model="receipt" :label="__('Receipt (PDF, JPG or PNG)')" accept=".pdf,.jpg,.jpeg,.png" />
+                    @error('receipt')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                @foreach (['item.description', 'item.spent_on', 'item.amount', 'item.quantity'] as $field)
+                    @error($field)<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+                @endforeach
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
+                    <flux:button type="submit" variant="primary">{{ __('Add') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
 
         @if ($toReview->isNotEmpty())
             <div class="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">

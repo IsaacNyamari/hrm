@@ -7,7 +7,9 @@ use App\Livewire\Finance\Expenses;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Support\TenantContext;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -180,4 +182,52 @@ it('keeps claims scoped to their tenant', function () {
     $this->actingAs($this->finance)
         ->getJson("http://exp-co.hrm.test/expense-claims/{$claim->uuid}")
         ->assertNotFound();
+});
+
+it('lets an employee build a claim in the dashboard, adding a line item with a receipt', function () {
+    Storage::fake('local');
+    $this->actingAs($this->staffUser);
+
+    Livewire::test(Expenses::class)
+        ->set('title', 'Kisumu trip')
+        ->call('createClaim');
+
+    $claim = Expense::query()->where('title', 'Kisumu trip')->firstOrFail();
+
+    Livewire::test(Expenses::class)
+        ->call('startAddItem', $claim->uuid)
+        ->set('item.description', 'Bus fare')
+        ->set('item.category', 'travel')
+        ->set('item.spent_on', now()->toDateString())
+        ->set('item.amount', '1250.50')
+        ->set('receipt', UploadedFile::fake()->create('ticket.pdf', 100, 'application/pdf'))
+        ->call('saveItem')
+        ->assertHasNoErrors();
+
+    $claim->refresh();
+    $item = $claim->items()->firstOrFail();
+
+    expect($claim->total_cents)->toBe(125050)
+        ->and($item->receipt_path)->not->toBeNull();
+    Storage::disk('local')->assertExists($item->receipt_path);
+
+    Livewire::test(Expenses::class)->call('removeItem', $item->uuid);
+    expect($claim->fresh()->total_cents)->toBe(0)->and($claim->items()->count())->toBe(0);
+});
+
+it('does not let anyone add items to a claim that is not theirs', function () {
+    $claim = Expense::query()->where('uuid', ($this->draft)())->firstOrFail();
+
+    $this->actingAs($this->managerUser);
+
+    Livewire::test(Expenses::class)->call('startAddItem', $claim->uuid)->assertForbidden();
+});
+
+it('never lets a finance manager approve their own claim', function () {
+    $ownClaim = Expense::factory()->forEmployee($this->finance->employee)->create(['status' => 'submitted']);
+
+    $this->actingAs($this->finance);
+    Livewire::test(Expenses::class)->call('approveClaim', $ownClaim->uuid);
+
+    expect($ownClaim->fresh()->status->value)->toBe('submitted');
 });
