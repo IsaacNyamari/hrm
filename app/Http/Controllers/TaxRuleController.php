@@ -58,7 +58,10 @@ class TaxRuleController extends Controller
     {
         $required = $rule === null ? 'required' : 'sometimes';
 
+        $type = $request->filled('type') ? TaxRuleType::tryFrom($request->string('type')->toString()) : $rule?->type;
+
         return $request->validate([
+            ...($type?->configRules() ?? []),
             'name' => [$required, 'string', 'max:120'],
             'type' => [$required, new Enum(TaxRuleType::class)],
             'country' => ['nullable', 'string', 'size:2'],

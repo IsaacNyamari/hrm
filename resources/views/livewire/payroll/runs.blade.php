@@ -1,6 +1,10 @@
 <div class="flex flex-col gap-4">
     <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Payroll') }}</h1>
 
+    @foreach ($ruleAlerts as $alert)
+        <p class="rounded-lg px-3 py-2 text-sm {{ $alert['level'] === 'danger' ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300' : 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200' }}">{{ $alert['message'] }} {{ __('Update it under Statutory rates below.') }}</p>
+    @endforeach
+
     @if ($error)
         <p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">{{ $error }}</p>
     @endif

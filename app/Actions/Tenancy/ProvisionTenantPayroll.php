@@ -93,7 +93,9 @@ class ProvisionTenantPayroll
         }
 
         // NSSF Act 2013 phased upper earnings limit: KES 72,000 from Feb 2025, KES 108,000 from Feb 2026.
-        foreach ([['2024-07-01', '2026-01-31', 7_200_000], ['2026-02-01', null, 10_800_000]] as [$from, $to, $ceilingCents]) {
+        // The Feb 2027 limit (4x national average earnings) and lower limit are not yet gazetted, so the
+        // rule is deliberately closed: payroll past that date is blocked until the new rates are entered.
+        foreach ([['2024-07-01', '2026-01-31', 7_200_000], ['2026-02-01', '2027-01-31', 10_800_000]] as [$from, $to, $ceilingCents]) {
             TaxRule::query()->updateOrCreate(
                 ['tenant_id' => $tenant->getKey(), 'type' => TaxRuleType::Nssf->value, 'effective_from' => $from],
                 ['name' => 'NSSF (Kenya)', 'country' => 'KE', 'effective_to' => $to, 'config' => ['rate' => 0.06, 'employer_rate' => 0.06, 'ceiling_cents' => $ceilingCents], 'is_active' => true],

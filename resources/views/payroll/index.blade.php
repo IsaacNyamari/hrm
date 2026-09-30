@@ -4,5 +4,6 @@
         <livewire:payroll.earnings-to-date />
         <livewire:payroll.final-settlements />
         <livewire:payroll.pay-rules-settings />
+        <livewire:payroll.tax-rules />
     </div>
 </x-layouts::app>

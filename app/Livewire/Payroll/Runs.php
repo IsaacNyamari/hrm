@@ -11,6 +11,7 @@ use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\Payslip;
 use App\Services\Payroll\PayrollService;
+use App\Services\Payroll\StatutoryRuleWatch;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
@@ -88,6 +89,7 @@ class Runs extends Component
         return view('livewire.payroll.runs', [
             'periods' => $periods,
             'unpaidByRun' => $this->unpaidEmployees($periods),
+            'ruleAlerts' => app(StatutoryRuleWatch::class)->alerts(),
         ]);
     }
 

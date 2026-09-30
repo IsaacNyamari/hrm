@@ -11,9 +11,9 @@
     ];
     $faqs = [
         [__('How do we get started?'), __('Request a quote with a few details about your organization. Once approved you receive a secure, single-use link by email to create your workspace — it takes about two minutes.')],
-        [__('Does payroll handle Kenyan statutory deductions?'), __('Yes. PAYE, NSSF, SHIF and the Affordable Housing Levy are built into payroll, and payslips are generated for every employee.')],
+        [__('Does payroll handle Kenyan statutory deductions?'), __('Yes. PAYE, NSSF, SHIF and the Affordable Housing Levy are built into payroll, with NSSF, Housing Levy and NITA employer contributions tracked per employee. Rates and ceilings are dated rules, so legislative changes such as the phased NSSF limits do not need a software update. For KRA, we produce the Section B file you import into the official P10 template; the template then generates the zip you upload to iTax.')],
         [__('Can we connect our biometric devices?'), __('Yes. ZKTeco devices that support the ADMS push protocol connect directly over the internet to your workspace (no on-site agent or server needed) and send attendance straight into the system, alongside web and mobile clock-ins.')],
-        [__('Is our data kept separate from other organizations?'), __('Every organization has its own isolated workspace. Access is role-based, sensitive fields are encrypted, and every important change is recorded in an audit trail.')],
+        [__('Is our data kept separate from other organizations?'), __('Every organization has its own isolated workspace. Access is role-based, sensitive fields are encrypted, and every important change is recorded in an audit trail. We process employee personal data in line with the Kenya Data Protection Act, 2019.')],
         [__('How do we pay?'), __('Subscriptions are billed monthly in KES and can be paid securely online by card, M-Pesa or bank through our payment provider.')],
     ];
 @endphp
@@ -164,7 +164,7 @@
                     <h2 class="mt-5 text-3xl font-extrabold tracking-tight text-night">{{ __('Payroll you can trust, every month') }}</h2>
                     <p class="mt-4 text-lg text-zinc-500">{{ __('Set up salary components once. Each run pulls attendance, leave, loans and expenses, applies statutory deductions and produces payslips your team can open from their own portal.') }}</p>
                     <ul class="mt-6 space-y-3 text-sm">
-                        @foreach ([__('PAYE, NSSF, SHIF and Housing Levy calculated automatically'), __('Approval step before a run is finalised'), __('Payslips delivered to every employee\'s self-service portal'), __('Ready-to-upload KRA iTax, SHA and NSSF return files, plus Excel, CSV and print reports')] as $point)
+                        @foreach ([__('PAYE, NSSF, SHIF and Housing Levy calculated automatically, plus employer NSSF, matching Housing Levy and NITA costs'), __('Approval step before a run is finalised'), __('Payslips delivered to every employee\'s self-service portal'), __('Ready-to-upload KRA iTax, SHA and NSSF return files, plus Excel, CSV and print reports')] as $point)
                             <li class="flex gap-3"><flux:icon.check-circle variant="mini" class="shrink-0 text-success" /> {{ $point }}</li>
                         @endforeach
                     </ul>
