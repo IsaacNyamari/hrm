@@ -4,6 +4,34 @@
         <flux:button variant="primary" wire:click="startCreate">{{ __('Add record') }}</flux:button>
     </div>
 
+    <div class="flex items-center gap-3 rounded-xl border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+        <flux:switch :checked="$requireApproval" wire:click="toggleApproval" :label="__('Require a second person to approve manual attendance changes')" />
+    </div>
+
+    @if ($pending->isNotEmpty())
+        <div class="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+            <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">{{ __('Changes waiting for approval') }}</p>
+            <ul class="mt-2 divide-y divide-amber-200 text-sm dark:divide-amber-900">
+                @foreach ($pending as $correction)
+                    <li class="flex flex-wrap items-center justify-between gap-2 py-2" wire:key="corr-{{ $correction->uuid }}">
+                        <span>
+                            <strong>{{ ucfirst($correction->action) }}</strong> · {{ $correction->employee?->fullName() }} · {{ $correction->work_date->format('d M Y') }}
+                            <span class="block text-xs text-neutral-600 dark:text-neutral-400">{{ $correction->reason }} — {{ __('requested by :name', ['name' => $correction->requester?->name ?? '—']) }}</span>
+                        </span>
+                        @if ($correction->requested_by !== auth()->id())
+                            <span class="flex gap-2">
+                                <flux:button size="sm" variant="primary" wire:click="approveCorrection('{{ $correction->uuid }}')">{{ __('Approve') }}</flux:button>
+                                <flux:button size="sm" variant="ghost" wire:click="rejectCorrection('{{ $correction->uuid }}')">{{ __('Reject') }}</flux:button>
+                            </span>
+                        @else
+                            <span class="text-xs text-neutral-500">{{ __('Waiting for someone else to approve') }}</span>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
         <table class="w-full text-left text-sm">
             <thead class="bg-neutral-50 text-xs uppercase text-neutral-500 dark:bg-neutral-900">

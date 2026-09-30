@@ -11,6 +11,10 @@ return [
     // Allow more than one clock-in per employee per day.
     'allow_multiple_clock_ins' => false,
 
+    // Manual attendance changes need a second person to approve them. Each
+    // organization can switch this on or off under Attendance records.
+    'require_edit_approval' => (bool) env('ATTENDANCE_REQUIRE_EDIT_APPROVAL', false),
+
     // Hours without any contact from a biometric device before attendance
     // managers are alerted that it is offline.
     'device_offline_hours' => (int) env('ATTENDANCE_DEVICE_OFFLINE_HOURS', 6),
