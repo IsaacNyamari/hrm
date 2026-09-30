@@ -29,7 +29,7 @@ Route::post('webhooks/attendance/{device}', AttendanceDeviceWebhookController::c
 | read vs write. 120 req/min per token.
 */
 Route::prefix('v1')
-    ->middleware(['auth:sanctum', 'api.tenant', 'subscription', 'plan.feature:api_access', 'throttle:api'])
+    ->middleware(['auth:sanctum', 'api.tenant', 'token.ip', 'subscription', 'plan.feature:api_access', 'throttle:api'])
     ->name('api.v1.')
     ->group(function (): void {
         Route::get('me', MeController::class)->name('me');

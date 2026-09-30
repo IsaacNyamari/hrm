@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Models\Asset;
 use App\Models\PayrollPeriod;
 use App\Models\User;
 use App\Services\Payroll\PayrollService;
@@ -60,4 +61,39 @@ it('sends browsers that open a payroll run to the payroll screen but still serve
 
 it('sends a report-only content security policy', function () {
     $this->get('/')->assertHeader('Content-Security-Policy-Report-Only');
+});
+
+it('restricts an API token to its allowed IP addresses', function () {
+    $created = $this->actingAs($this->owner)
+        ->postJson('http://hard-co.hrm.test/api-tokens', ['name' => 'Locked', 'abilities' => ['employees:read'], 'allowed_ips' => ['203.0.113.0/24']])
+        ->assertCreated();
+
+    expect($created->json('data.allowed_ips'))->toBe(['203.0.113.0/24']);
+
+    $this->app['auth']->forgetGuards();
+    $token = $created->json('data.plain_text_token');
+
+    $this->withToken($token)->withServerVariables(['REMOTE_ADDR' => '198.51.100.7'])
+        ->getJson('http://hard-co.hrm.test/api/v1/employees')
+        ->assertForbidden();
+
+    $this->app['auth']->forgetGuards();
+
+    $this->withToken($token)->withServerVariables(['REMOTE_ADDR' => '203.0.113.50'])
+        ->getJson('http://hard-co.hrm.test/api/v1/employees')
+        ->assertOk();
+});
+
+it('rejects a malformed IP allowlist entry', function () {
+    $this->actingAs($this->owner)
+        ->postJson('http://hard-co.hrm.test/api-tokens', ['name' => 'Bad', 'allowed_ips' => ['not-an-ip']])
+        ->assertUnprocessable();
+});
+
+it('keeps an asset that is deleted instead of erasing it', function () {
+    $asset = Asset::factory()->forTenant($this->tenant)->create();
+    $asset->delete();
+
+    expect(Asset::query()->find($asset->id))->toBeNull()
+        ->and(Asset::withTrashed()->find($asset->id))->not->toBeNull();
 });

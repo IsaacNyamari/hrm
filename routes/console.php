@@ -13,6 +13,7 @@ Schedule::command('subscriptions:expire')->dailyAt('00:10')->onOneServer();
 Schedule::command('subscriptions:send-reminders')->dailyAt('08:00')->onOneServer();
 Schedule::command('leave:accrue')->monthlyOn(1, '01:00')->onOneServer();
 Schedule::command('documents:check-expiry')->dailyAt('07:00')->onOneServer();
+Schedule::command('attendance:check-devices')->hourly()->onOneServer();
 
 // Delete acknowledged/failed ZKTeco device commands past their retention
 // window, so the command log doesn't grow unbounded.

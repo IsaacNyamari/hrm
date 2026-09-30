@@ -20,11 +20,20 @@ class AssetFactory extends Factory
      */
     public function definition(): array
     {
+        // A name always comes with the category it really belongs to.
+        [$name, $category] = fake()->randomElement([
+            ['MacBook Pro 14"', AssetCategory::Laptop],
+            ['Dell Latitude', AssetCategory::Laptop],
+            ['iPhone 15', AssetCategory::Phone],
+            ['Dell 27" Monitor', AssetCategory::Monitor],
+            ['Herman Miller Chair', AssetCategory::Furniture],
+        ]);
+
         return [
             'tenant_id' => Tenant::factory(),
             'asset_tag' => 'AST-'.fake()->unique()->numerify('#####'),
-            'name' => fake()->randomElement(['MacBook Pro 14"', 'Dell Latitude', 'iPhone 15', 'Dell 27" Monitor', 'Herman Miller Chair']),
-            'category' => fake()->randomElement(AssetCategory::cases()),
+            'name' => $name,
+            'category' => $category,
             'serial_number' => strtoupper(fake()->bothify('SN-####-????')),
             'status' => AssetStatus::Available,
             'currency' => 'KES',

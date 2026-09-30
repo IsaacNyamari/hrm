@@ -9,6 +9,7 @@ use App\Exceptions\PerformanceException;
 use App\Exceptions\PlanLimitExceededException;
 use App\Exceptions\RecruitmentException;
 use App\Http\Middleware\BindTenantContext;
+use App\Http\Middleware\EnforceTokenIpAllowlist;
 use App\Http\Middleware\EnsurePlanFeature;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureTenantSubscribed;
@@ -46,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'two-factor' => EnsureTwoFactorEnabled::class,
             'subscription' => EnsureTenantSubscribed::class,
             'plan.feature' => EnsurePlanFeature::class,
+            'token.ip' => EnforceTokenIpAllowlist::class,
             'api.tenant' => ResolveApiTenant::class,
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,

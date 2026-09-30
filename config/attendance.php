@@ -11,6 +11,10 @@ return [
     // Allow more than one clock-in per employee per day.
     'allow_multiple_clock_ins' => false,
 
+    // Hours without any contact from a biometric device before attendance
+    // managers are alerted that it is offline.
+    'device_offline_hours' => (int) env('ATTENDANCE_DEVICE_OFFLINE_HOURS', 6),
+
     // Safety cap: an open attendance older than this is auto-closed by the
     // scheduler at the clock-in + this many hours.
     'auto_clock_out_hours' => (int) env('ATTENDANCE_AUTO_CLOCKOUT_HOURS', 16),
