@@ -13,8 +13,10 @@ use App\Livewire\Platform\Concerns\WithPlatformGuard;
 use App\Models\Deployment;
 use App\Services\Deployment\DeploymentRunner;
 use App\Support\Auditor;
+use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Throwable;
 
 /**
  * Lets the platform admin pull the latest git commit or roll back to a
@@ -38,11 +40,17 @@ class Deployments extends Component
         $this->authorizePlatform(PlatformPermission::DeploymentsManage);
         $this->guardNoneRunning();
 
+        $gitInfo = $this->readGitInfo($runner);
+
+        if ($gitInfo === null) {
+            return;
+        }
+
         $deployment = Deployment::query()->create([
             'type' => DeploymentType::Pull,
             'status' => DeploymentStatus::Running,
-            'branch' => $runner->currentBranch(),
-            'from_commit' => $runner->currentCommit(),
+            'branch' => $gitInfo['branch'],
+            'from_commit' => $gitInfo['commit'],
             'triggered_by' => auth()->id(),
             'started_at' => now(),
         ]);
@@ -59,11 +67,17 @@ class Deployments extends Component
 
         abort_unless((bool) preg_match('/^[0-9a-f]{7,40}$/i', $sha), 422);
 
+        $gitInfo = $this->readGitInfo($runner);
+
+        if ($gitInfo === null) {
+            return;
+        }
+
         $deployment = Deployment::query()->create([
             'type' => DeploymentType::Rollback,
             'status' => DeploymentStatus::Running,
-            'branch' => $runner->currentBranch(),
-            'from_commit' => $runner->currentCommit(),
+            'branch' => $gitInfo['branch'],
+            'from_commit' => $gitInfo['commit'],
             'to_commit' => $sha,
             'triggered_by' => auth()->id(),
             'started_at' => now(),
@@ -72,6 +86,26 @@ class Deployments extends Component
         $auditor->log('platform.deployment.rollback_started', $deployment, ['from_commit' => $deployment->from_commit, 'to_commit' => $sha]);
 
         RunDeployment::dispatch($deployment);
+    }
+
+    /**
+     * Read the current branch/commit before creating a deployment record. A
+     * failure here (most commonly git refusing to run at all — e.g. "detected
+     * dubious ownership in repository" when the web/queue user doesn't own
+     * the working copy) would otherwise surface as a raw 500 instead of a
+     * readable message telling the operator what to fix on the server.
+     *
+     * @return array{branch: string, commit: string}|null
+     */
+    private function readGitInfo(DeploymentRunner $runner): ?array
+    {
+        try {
+            return ['branch' => $runner->currentBranch(), 'commit' => $runner->currentCommit()];
+        } catch (Throwable $e) {
+            Flux::toast(variant: 'danger', text: __('Could not read the git repository: :message', ['message' => $e->getMessage()]));
+
+            return null;
+        }
     }
 
     private function guardNoneRunning(): void

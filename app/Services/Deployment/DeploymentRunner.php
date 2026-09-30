@@ -136,7 +136,9 @@ class DeploymentRunner
         $this->append($result->output().$result->errorOutput());
 
         if (! $result->successful()) {
-            throw new RuntimeException('Command failed (exit '.$result->exitCode().'): '.implode(' ', $command));
+            $reason = trim($result->errorOutput()) !== '' ? trim($result->errorOutput()) : trim($result->output());
+
+            throw new RuntimeException('Command failed (exit '.$result->exitCode().'): '.implode(' ', $command).($reason !== '' ? ' — '.$reason : ''));
         }
 
         return $result;

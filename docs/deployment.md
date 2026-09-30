@@ -119,6 +119,18 @@ frontend build on a server with no Node toolchain. Rolling back reverts code
 only — it does not run down-migrations — so check schema compatibility before
 rolling back past a migration.
 
+If the page reports `Command failed (exit 128): git rev-parse ...`, git is
+refusing to operate on the repository at all — almost always because the
+PHP-FPM/queue-worker user (e.g. `www-data`) doesn't own the working copy that
+was checked out as a different user (e.g. `root` or a deploy user). Fix it
+once, as that PHP-FPM/queue user, with:
+
+```bash
+git config --global --add safe.directory /var/www/hrm
+```
+
+(adjust the path to wherever the app actually lives on that server).
+
 ## 4. Environment (`.env`)
 
 Start from `.env.example`; the block at the bottom lists every app-specific key.

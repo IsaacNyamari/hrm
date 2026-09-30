@@ -82,6 +82,18 @@ it('rolls back to a chosen commit', function () {
         ->and($deployment->to_commit)->toBe('bbbbbbb2222222222222222222222222222222');
 });
 
+it('shows a readable error instead of crashing when git itself refuses to run', function () {
+    fakeGitCommands([
+        'git rev-parse' => Process::result(errorOutput: "fatal: detected dubious ownership in repository at '/var/www/hrm'", exitCode: 128),
+    ]);
+
+    $this->actingAs(User::factory()->platformAdmin(Role::SuperAdmin)->create());
+
+    Livewire::test(Deployments::class)->call('pullLatest');
+
+    expect(Deployment::query()->count())->toBe(0);
+});
+
 it('records a failed deployment when a pipeline step fails', function () {
     fakeGitCommands([
         'composer install' => Process::result(errorOutput: 'composer exploded', exitCode: 1),

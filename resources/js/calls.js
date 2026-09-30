@@ -26,7 +26,12 @@ const ICE_SERVERS = [{urls: 'stun:stun.l.google.com:19302'}];
 const connectingSound = new Audio('/sounds/call-connecting.wav');
 connectingSound.loop = true;
 
-document.addEventListener('alpine:init', () => {
+// Registering directly when Alpine is already on the page (true for every
+// `wire:navigate` transition after the first) instead of only via
+// `alpine:init` — that event fires once per browser session, so a page
+// visited after the first would never register this component and
+// `x-data="callRoom(...)"` would throw "callRoom is not defined".
+function registerCallRoom() {
     Alpine.data('callRoom', (config) => ({
         userId: config.userId,
         userName: config.userName,
@@ -344,4 +349,10 @@ document.addEventListener('alpine:init', () => {
             this.cameraOff = false;
         },
     }));
-});
+}
+
+if (window.Alpine) {
+    registerCallRoom();
+} else {
+    document.addEventListener('alpine:init', registerCallRoom);
+}
