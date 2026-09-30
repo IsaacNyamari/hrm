@@ -36,6 +36,7 @@ class ApiTokenController extends Controller
                 'name' => $token->name,
                 'abilities' => $token->abilities,
                 'last_used_at' => $token->last_used_at?->toIso8601String(),
+                'expires_at' => $token->expires_at?->toIso8601String(),
                 'created_at' => $token->created_at?->toIso8601String(),
             ]),
             'meta' => ['available_abilities' => self::ABILITIES],
@@ -51,17 +52,21 @@ class ApiTokenController extends Controller
             'name' => ['required', 'string', 'max:80'],
             'abilities' => ['sometimes', 'array'],
             'abilities.*' => [Rule::in(self::ABILITIES)],
+            'expires_in_days' => ['sometimes', 'integer', 'min:1', 'max:'.(int) config('security.api_token_max_days')],
         ]);
 
         $abilities = $data['abilities'] ?? ['employees:read'];
 
-        $token = $user->createToken($data['name'], $abilities);
+        $expiresAt = now()->addDays((int) ($data['expires_in_days'] ?? config('security.api_token_default_days')));
+
+        $token = $user->createToken($data['name'], $abilities, $expiresAt);
 
         return response()->json([
             'data' => [
                 'id' => $token->accessToken->id,
                 'name' => $token->accessToken->name,
                 'abilities' => $token->accessToken->abilities,
+                'expires_at' => $expiresAt->toIso8601String(),
                 'plain_text_token' => $token->plainTextToken,
             ],
         ], 201);

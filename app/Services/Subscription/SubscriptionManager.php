@@ -20,6 +20,7 @@ use App\Models\Scopes\TenantScope;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\Billing\InvoiceService;
+use App\Services\Payment\PaymentManager;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,7 @@ class SubscriptionManager
         private readonly TenantContext $context,
         private readonly InvoiceService $invoices,
         private readonly ProvisionTenant $provisionTenant,
+        private readonly PaymentManager $gateways,
     ) {}
 
     public function startTrial(Tenant $tenant, Plan $plan): Subscription
@@ -98,6 +100,7 @@ class SubscriptionManager
                 'invoice_id' => $invoice->getKey(),
                 'provider' => $provider,
                 'status' => PaymentStatus::Pending,
+                'is_live' => $this->gateways->isLive($provider),
                 'amount_cents' => $invoice->total_cents,
                 'currency' => $invoice->currency,
                 'reference' => 'PAY-'.Str::upper(Str::random(20)),

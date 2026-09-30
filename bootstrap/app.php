@@ -12,6 +12,7 @@ use App\Http\Middleware\BindTenantContext;
 use App\Http\Middleware\EnsurePlanFeature;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureTenantSubscribed;
+use App\Http\Middleware\EnsureTwoFactorEnabled;
 use App\Http\Middleware\EnsureUserBelongsToTenant;
 use App\Http\Middleware\ResolveApiTenant;
 use App\Http\Middleware\ResolveTenant;
@@ -42,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => ResolveTenant::class,
             'tenant.user' => EnsureUserBelongsToTenant::class,
             'platform' => EnsurePlatformAdmin::class,
+            'two-factor' => EnsureTwoFactorEnabled::class,
             'subscription' => EnsureTenantSubscribed::class,
             'plan.feature' => EnsurePlanFeature::class,
             'api.tenant' => ResolveApiTenant::class,

@@ -107,7 +107,7 @@ class Billing extends Component
             'rows' => (clone $base)->with(['tenant:id,name,slug', 'invoice:id,number'])->latest('id')->paginate(30),
             'statuses' => PaymentStatus::cases(),
             'providers' => PaymentProvider::cases(),
-            'collectedCents' => (int) (clone $base)->where('status', PaymentStatus::Succeeded)->sum('amount_cents'),
+            'collectedCents' => (int) (clone $base)->where('status', PaymentStatus::Succeeded)->where('is_live', true)->sum('amount_cents'),
         ];
     }
 

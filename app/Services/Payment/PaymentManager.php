@@ -28,6 +28,23 @@ class PaymentManager
         };
     }
 
+    /**
+     * Whether payments made through this provider now are real money. Paystack
+     * test keys (sk_test_...) and the M-Pesa sandbox move no funds, so those
+     * payments must never count as collected revenue.
+     */
+    public function isLive(PaymentProvider|string $provider): bool
+    {
+        $provider = $provider instanceof PaymentProvider ? $provider : PaymentProvider::from($provider);
+        $config = $this->credentials->for($provider);
+
+        return match ($provider) {
+            PaymentProvider::Paystack => str_starts_with((string) ($config['secret_key'] ?? ''), 'sk_live_'),
+            PaymentProvider::Mpesa => ($config['environment'] ?? 'sandbox') === 'production',
+            default => true,
+        };
+    }
+
     public const ACTIVE_PROVIDER_SETTING = 'billing.payment_provider';
 
     public function default(): PaymentGateway

@@ -110,7 +110,7 @@ class TenantDetail extends Component
                 ? Invoice::query()->where('tenant_id', $tenantId)->latest('id')->limit(15)->get()
                 : collect(),
             'paidToDateCents' => $canViewPayments
-                ? (int) Payment::query()->where('tenant_id', $tenantId)->where('status', PaymentStatus::Succeeded)->sum('amount_cents')
+                ? (int) Payment::query()->where('tenant_id', $tenantId)->where('status', PaymentStatus::Succeeded)->where('is_live', true)->sum('amount_cents')
                 : 0,
         ]);
     }

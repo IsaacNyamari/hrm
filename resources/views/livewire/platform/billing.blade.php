@@ -69,7 +69,7 @@
                             </td>
                             <td class="px-4 py-3">{{ $payment->provider->label() }}</td>
                             <td class="px-4 py-3"><x-money :cents="$payment->amount_cents" :currency="$payment->currency" /></td>
-                            <td class="px-4 py-3"><flux:badge size="sm" :color="$payment->status === \App\Enums\PaymentStatus::Succeeded ? 'green' : ($payment->status === \App\Enums\PaymentStatus::Failed ? 'red' : 'zinc')">{{ $payment->status->label() }}</flux:badge></td>
+                            <td class="px-4 py-3"><flux:badge size="sm" :color="$payment->status === \App\Enums\PaymentStatus::Succeeded ? 'green' : ($payment->status === \App\Enums\PaymentStatus::Failed ? 'red' : 'zinc')">{{ $payment->status->label() }}</flux:badge>@unless ($payment->is_live)<flux:badge size="sm" color="amber" class="ms-1">{{ __('Test') }}</flux:badge>@endunless</td>
                             <td class="px-4 py-3 text-neutral-500">{{ $payment->paid_at?->format('Y-m-d H:i') ?? '—' }}</td>
                         </tr>
                     @empty

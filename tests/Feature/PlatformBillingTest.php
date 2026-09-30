@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Enums\Role;
 use App\Models\Invoice;
@@ -10,6 +11,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Payment\PaymentManager;
 
 beforeEach(function () {
     $this->superAdmin = User::factory()->platformAdmin(Role::SuperAdmin)->create();
@@ -113,4 +115,31 @@ it('shows payment history on the organization detail page', function () {
         ->get(route('platform.tenants.show', $tenant))
         ->assertOk()
         ->assertSee('PAY-ONTENANT');
+});
+
+it('counts only live payments as collected revenue and labels test payments', function () {
+    $tenant = Tenant::factory()->create();
+    Payment::factory()->forTenant($tenant)->succeeded()->create(['reference' => 'PAY-LIVE', 'amount_cents' => 700000, 'is_live' => true]);
+    Payment::factory()->forTenant($tenant)->succeeded()->create(['reference' => 'PAY-SANDBOX', 'amount_cents' => 1250000, 'is_live' => false]);
+
+    $this->actingAs($this->superAdmin)
+        ->get(route('platform.billing', ['tab' => 'payments']))
+        ->assertOk()
+        ->assertSeeText('7,000')
+        ->assertDontSeeText('19,500')
+        ->assertSee('PAY-SANDBOX')
+        ->assertSee('Test');
+});
+
+it('treats Paystack test keys and the M-Pesa sandbox as not live', function () {
+    $gateways = app(PaymentManager::class);
+
+    config(['paystack.secret_key' => 'sk_test_abc']);
+    expect($gateways->isLive(PaymentProvider::Paystack))->toBeFalse();
+
+    config(['paystack.secret_key' => 'sk_live_abc']);
+    expect($gateways->isLive(PaymentProvider::Paystack))->toBeTrue();
+
+    config(['services.mpesa.environment' => 'sandbox']);
+    expect($gateways->isLive(PaymentProvider::Mpesa))->toBeFalse();
 });

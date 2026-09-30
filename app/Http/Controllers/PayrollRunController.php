@@ -8,6 +8,7 @@ use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Services\Payroll\PayrollService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class PayrollRunController extends Controller
@@ -28,9 +29,13 @@ class PayrollRunController extends Controller
         return response()->json(['data' => $this->transform($run->fresh())], 201);
     }
 
-    public function show(PayrollRun $payrollRun): JsonResponse
+    public function show(Request $request, PayrollRun $payrollRun): JsonResponse|RedirectResponse
     {
         $this->authorize('view', $payrollRun);
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('payroll');
+        }
 
         return response()->json(['data' => $this->transform($payrollRun->load('payslips.employee:id,first_name,last_name'))]);
     }

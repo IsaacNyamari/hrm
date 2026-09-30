@@ -52,6 +52,7 @@ class Payment extends Model
         return [
             'provider' => PaymentProvider::class,
             'status' => PaymentStatus::class,
+            'is_live' => 'boolean',
             'amount_cents' => 'integer',
             'paid_at' => 'immutable_datetime',
             'metadata' => 'array',

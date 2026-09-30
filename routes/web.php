@@ -129,7 +129,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | every request (Livewire's update endpoint is not behind this group) and each
 | mutating action re-checks its specific PlatformPermission.
 */
-Route::middleware(['auth', 'verified', 'platform'])->prefix('platform')->name('platform.')->group(function () {
+Route::middleware(['auth', 'verified', 'platform', 'two-factor'])->prefix('platform')->name('platform.')->group(function () {
     Route::view('/', 'platform.dashboard')->name('dashboard');
     Route::view('tenants', 'platform.tenants')->name('tenants.index');
     Route::get('tenants/{tenant}', [PlatformTenantController::class, 'show'])->name('tenants.show');
