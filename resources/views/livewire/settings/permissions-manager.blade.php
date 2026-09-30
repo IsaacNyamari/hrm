@@ -35,6 +35,9 @@
                                             {{ $roleCase->value }}
                                         </flux:select.option>
                                     @endforeach
+                                    @foreach ($customRoleNames as $customRole)
+                                        <flux:select.option value="{{ $customRole }}" :selected="$user->roles->pluck('name')->contains($customRole)">{{ $customRole }} ({{ __('custom') }})</flux:select.option>
+                                    @endforeach
                                 </flux:select>
                             @endif
                         </td>
