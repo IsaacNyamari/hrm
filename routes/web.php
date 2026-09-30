@@ -61,6 +61,7 @@ use App\Http\Controllers\PricingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxRuleController;
@@ -88,6 +89,8 @@ Route::view('request-a-quote', 'marketing.quote')->name('quote');
 Route::get('jobs', [JobsController::class, 'index'])->name('jobs.index');
 Route::get('jobs/{organization}/{vacancy}', [JobsController::class, 'show'])->name('jobs.show');
 Route::view('track-application', 'marketing.track')->name('applications.track');
+
+Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
 /*
 | First sign-in for a new hire: signed, single-use link from the welcome email.
@@ -130,6 +133,7 @@ Route::middleware(['auth', 'verified', 'platform'])->prefix('platform')->name('p
     Route::view('leads', 'platform.leads')->name('leads');
     Route::view('settings', 'platform.settings')->name('settings');
     Route::view('deployments', 'platform.deployments')->name('deployments');
+    Route::view('sitemap', 'platform.sitemap')->name('sitemap');
 });
 
 /*

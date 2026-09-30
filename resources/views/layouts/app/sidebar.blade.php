@@ -3,9 +3,9 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-canvas font-sans text-ink antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <body class="min-h-screen bg-canvas font-sans text-ink antialiased dark:bg-zinc-950 dark:text-zinc-100 {{ session()->has('impersonator_id') ? 'pt-9' : '' }}">
         @if (session()->has('impersonator_id'))
-            <div class="flex items-center justify-center gap-3 bg-amber-500 px-4 py-1.5 text-sm font-medium text-amber-950">
+            <div class="fixed inset-x-0 top-0 z-50 flex h-9 items-center justify-center gap-3 bg-amber-500 px-4 text-sm font-medium text-amber-950 shadow-md">
                 <span>{{ __('You are impersonating') }} {{ auth()->user()?->name }}.</span>
                 <form method="POST" action="{{ route('impersonate.stop') }}">
                     @csrf
@@ -59,6 +59,11 @@
                         @if (auth()->user()->canOnPlatform(\App\Enums\PlatformPermission::DeploymentsManage))
                             <flux:sidebar.item icon="rocket-launch" :href="route('platform.deployments')" :current="request()->routeIs('platform.deployments')" wire:navigate>
                                 {{ __('Deployments') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()->canOnPlatform(\App\Enums\PlatformPermission::SitemapManage))
+                            <flux:sidebar.item icon="map" :href="route('platform.sitemap')" :current="request()->routeIs('platform.sitemap')" wire:navigate>
+                                {{ __('Sitemap') }}
                             </flux:sidebar.item>
                         @endif
                     </flux:sidebar.group>

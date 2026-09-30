@@ -11,6 +11,7 @@ use App\Livewire\Concerns\BindsTenant;
 use App\Livewire\Platform\Concerns\WithPlatformGuard;
 use App\Models\Tenant;
 use App\Support\Auditor;
+use App\Support\TenantCache;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -59,6 +60,11 @@ class Tenants extends Component
         $tenant = Tenant::query()->findOrFail($tenantId);
         $from = $tenant->status;
         $tenant->update(['status' => $status]);
+
+        // The platform dashboard's org counts are cached (see PlatformMetrics)
+        // — without this, suspending/activating here wouldn't show up there
+        // for up to a minute.
+        TenantCache::forget('platform.metrics');
 
         // Attribute the entry to the target organization even though the
         // operator has no tenant of their own.

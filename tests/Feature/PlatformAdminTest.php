@@ -8,6 +8,7 @@ use App\Enums\SubscriptionStatus;
 use App\Enums\TenantStatus;
 use App\Livewire\Platform\Dashboard as PlatformDashboard;
 use App\Livewire\Platform\Plans;
+use App\Livewire\Platform\TenantDetail;
 use App\Livewire\Platform\Tenants;
 use App\Models\AuditLog;
 use App\Models\Employee;
@@ -121,6 +122,37 @@ it('suspends and reactivates an organization and audits both', function () {
     expect($tenant->refresh()->status)->toBe(TenantStatus::Active)
         ->and(AuditLog::query()->where('event', 'platform.tenant.suspended')->where('tenant_id', $tenant->getKey())->exists())->toBeTrue()
         ->and(AuditLog::query()->where('event', 'platform.tenant.activated')->where('tenant_id', $tenant->getKey())->exists())->toBeTrue();
+});
+
+it('reflects a suspended organization on the dashboard immediately, not after the metrics cache expires', function () {
+    $tenant = Tenant::factory()->create(['status' => TenantStatus::Active]);
+
+    $this->actingAs($this->superAdmin);
+
+    // Warm the metrics cache with the pre-suspension figures.
+    Livewire::test(PlatformDashboard::class)
+        ->assertViewHas('minor_cards', fn (array $cards): bool => collect($cards)->firstWhere('key', 'active')['value'] === 1
+            && collect($cards)->firstWhere('key', 'suspended')['value'] === 0);
+
+    Livewire::test(Tenants::class)->call('suspend', $tenant->id);
+
+    Livewire::test(PlatformDashboard::class)
+        ->assertViewHas('minor_cards', fn (array $cards): bool => collect($cards)->firstWhere('key', 'active')['value'] === 0
+            && collect($cards)->firstWhere('key', 'suspended')['value'] === 1);
+});
+
+it('reflects a status change made from the organization detail page on the dashboard immediately', function () {
+    $tenant = Tenant::factory()->create(['status' => TenantStatus::Active]);
+
+    $this->actingAs($this->superAdmin);
+
+    Livewire::test(PlatformDashboard::class)
+        ->assertViewHas('minor_cards', fn (array $cards): bool => collect($cards)->firstWhere('key', 'suspended')['value'] === 0);
+
+    Livewire::test(TenantDetail::class, ['tenant' => $tenant])->call('suspend');
+
+    Livewire::test(PlatformDashboard::class)
+        ->assertViewHas('minor_cards', fn (array $cards): bool => collect($cards)->firstWhere('key', 'suspended')['value'] === 1);
 });
 
 it('creates a plan from the platform area', function () {

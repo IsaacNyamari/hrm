@@ -23,6 +23,7 @@ enum PlatformPermission: string
     case AuditView = 'platform.audit.view';
     case LeadsManage = 'platform.leads.manage';
     case DeploymentsManage = 'platform.deployments.manage';
+    case SitemapManage = 'platform.sitemap.manage';
 
     /**
      * @return array<int, string>

@@ -18,6 +18,7 @@ use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Auditor;
+use App\Support\TenantCache;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -83,6 +84,11 @@ class TenantDetail extends Component
 
         $from = $this->tenant->status;
         $this->tenant->update(['status' => $status]);
+
+        // The platform dashboard's org counts are cached (see PlatformMetrics)
+        // — without this, suspending/activating here wouldn't show up there
+        // for up to a minute.
+        TenantCache::forget('platform.metrics');
 
         Tenancy::run($this->tenant, fn () => $auditor->log($event, $this->tenant, [
             'tenant_id' => $this->tenant->getKey(),

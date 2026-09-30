@@ -94,6 +94,45 @@ it('shows a readable error instead of crashing when git itself refuses to run', 
     expect(Deployment::query()->count())->toBe(0);
 });
 
+it('self-heals a dubious-ownership git error and completes the deployment', function () {
+    $safeDirectoryAdded = false;
+
+    Process::fake(function (PendingProcess $process) use (&$safeDirectoryAdded) {
+        $command = (array) $process->command;
+        $line = implode(' ', $command);
+
+        if (str_starts_with($line, 'git config --global --add safe.directory')) {
+            $safeDirectoryAdded = true;
+
+            return Process::result(output: '');
+        }
+
+        if (! $safeDirectoryAdded && ($command[0] ?? null) === 'git') {
+            return Process::result(errorOutput: "fatal: detected dubious ownership in repository at '/var/www/hrm'", exitCode: 128);
+        }
+
+        return match (true) {
+            str_starts_with($line, 'git rev-parse HEAD') => Process::result(output: "aaaaaaa1111111111111111111111111111111\n"),
+            str_starts_with($line, 'git rev-parse --abbrev-ref HEAD') => Process::result(output: "master\n"),
+            default => Process::result(output: "ok\n"),
+        };
+    });
+
+    $this->actingAs(User::factory()->platformAdmin(Role::SuperAdmin)->create());
+
+    Livewire::test(Deployments::class)->call('pullLatest');
+
+    $deployment = Deployment::query()->latest('id')->first();
+
+    // The safe.directory fix-and-retry happens inside a throwaway git-info
+    // check before the deployment record even exists (see Deployments::readGitInfo()),
+    // so what matters here is that the deployment goes on to succeed anyway,
+    // not that this specific record's log mentions it.
+    expect($deployment)->not->toBeNull()
+        ->and($deployment->status)->toBe(DeploymentStatus::Succeeded)
+        ->and($safeDirectoryAdded)->toBeTrue();
+});
+
 it('records a failed deployment when a pipeline step fails', function () {
     fakeGitCommands([
         'composer install' => Process::result(errorOutput: 'composer exploded', exitCode: 1),

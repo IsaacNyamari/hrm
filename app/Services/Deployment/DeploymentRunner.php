@@ -129,17 +129,35 @@ class DeploymentRunner
 
     private function step(array $command): ProcessResult
     {
-        $this->append("\n$ ".implode(' ', $command)."\n");
+        $result = $this->runCommand($command);
 
-        $result = Process::path(base_path())->timeout((int) config('deployment.command_timeout', 300))->run($command);
-
-        $this->append($result->output().$result->errorOutput());
+        // Git refuses to run at all when the repository isn't owned by the
+        // user invoking it (e.g. checked out as root, run by www-data) —
+        // "detected dubious ownership". Rather than make every operator SSH
+        // in once to run `git config --global --add safe.directory ...`,
+        // add the exception ourselves the first time we hit it and retry.
+        if (! $result->successful() && $command[0] === 'git' && str_contains($result->errorOutput(), 'detected dubious ownership')) {
+            $this->append("\nGit refused to run here (dubious ownership) — adding a safe.directory exception for ".base_path()." and retrying.\n");
+            $this->runCommand(['git', 'config', '--global', '--add', 'safe.directory', base_path()]);
+            $result = $this->runCommand($command);
+        }
 
         if (! $result->successful()) {
             $reason = trim($result->errorOutput()) !== '' ? trim($result->errorOutput()) : trim($result->output());
 
             throw new RuntimeException('Command failed (exit '.$result->exitCode().'): '.implode(' ', $command).($reason !== '' ? ' — '.$reason : ''));
         }
+
+        return $result;
+    }
+
+    private function runCommand(array $command): ProcessResult
+    {
+        $this->append("\n$ ".implode(' ', $command)."\n");
+
+        $result = Process::path(base_path())->timeout((int) config('deployment.command_timeout', 300))->run($command);
+
+        $this->append($result->output().$result->errorOutput());
 
         return $result;
     }
