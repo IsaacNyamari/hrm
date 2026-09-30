@@ -6,22 +6,64 @@ namespace App\Http\Controllers;
 
 use App\Facades\Tenancy;
 use App\Models\AuditLog;
+use App\Support\Auditor;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditLogController extends Controller
 {
+    /**
+     * @return Builder<AuditLog>
+     */
+    private function filtered(Request $request): Builder
+    {
+        return AuditLog::query()
+            ->where('tenant_id', Tenancy::id())
+            ->when($request->filled('event'), fn ($q) => $q->where('event', 'like', $request->string('event')->toString().'%'))
+            ->when($request->filled('actor_id'), fn ($q) => $q->where('actor_id', $request->integer('actor_id')))
+            ->when($request->filled('actor'), fn ($q) => $q->where('actor_label', 'like', '%'.$request->string('actor')->toString().'%'))
+            ->when($request->filled('auditable_type'), fn ($q) => $q->where('auditable_type', $request->string('auditable_type')->toString()))
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->string('from')->toString()))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->string('to')->toString()));
+    }
+
+    /**
+     * The whole filtered trail as CSV, for auditors. Exporting is itself recorded.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        abort_unless($request->user()?->can('audit.view') && $request->user()->can('reports.export'), 403);
+
+        $query = $this->filtered($request)->latest('id');
+
+        app(Auditor::class)->log('audit.exported', null, ['filters' => $request->only(['event', 'actor', 'from', 'to'])]);
+
+        return response()->streamDownload(function () use ($query): void {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['When', 'Event', 'Actor', 'Subject type', 'Subject id', 'Description', 'IP address', 'Impersonated', 'Details']);
+
+            $query->chunkById(500, function ($logs) use ($out): void {
+                foreach ($logs as $log) {
+                    fputcsv($out, [
+                        $log->created_at?->toIso8601String(), $log->event, $log->actor_label,
+                        $log->auditable_type !== null ? class_basename($log->auditable_type) : '', $log->auditable_id,
+                        $log->description, $log->ip_address, $log->via_impersonation ? 'yes' : 'no',
+                        $log->properties === null ? '' : json_encode($log->properties),
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, 'audit-trail-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
+    }
+
     public function index(Request $request): JsonResponse
     {
         abort_unless($request->user()?->can('audit.view'), 403);
 
-        $logs = AuditLog::query()
-            ->where('tenant_id', Tenancy::id())
-            ->when($request->filled('event'), fn ($q) => $q->where('event', 'like', $request->string('event')->toString().'%'))
-            ->when($request->filled('actor_id'), fn ($q) => $q->where('actor_id', $request->integer('actor_id')))
-            ->when($request->filled('auditable_type'), fn ($q) => $q->where('auditable_type', $request->string('auditable_type')->toString()))
-            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->string('from')->toString()))
-            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->string('to')->toString()))
+        $logs = $this->filtered($request)
             ->latest('id')
             ->paginate(min($request->integer('per_page', 50), 200));
 

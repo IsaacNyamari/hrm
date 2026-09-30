@@ -11,6 +11,7 @@ use App\Enums\PayrollRunStatus;
 use App\Enums\PayslipStatus;
 use App\Enums\SalaryComponentType;
 use App\Events\PayrollApproved;
+use App\Events\PayrollPaid;
 use App\Events\PayrollProcessed;
 use App\Exceptions\PayrollException;
 use App\Models\Employee;
@@ -160,6 +161,8 @@ class PayrollService
             ])->save();
             $run->payslips()->update(['status' => PayslipStatus::Paid]);
             $run->period->forceFill(['status' => PayrollPeriodStatus::Paid])->save();
+
+            PayrollPaid::dispatch($run);
 
             return $run;
         });

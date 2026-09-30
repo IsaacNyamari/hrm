@@ -1,8 +1,18 @@
 <div class="flex flex-col gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Audit trail') }}</h1>
-        <input type="text" wire:model.live.debounce.400ms="event" placeholder="{{ __('Filter by event, e.g. employee.') }}"
-            class="w-64 rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900" />
+        @if ($canExport)
+            <a href="{{ $exportUrl }}" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700">{{ __('Export CSV') }}</a>
+        @endif
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+        <input type="text" wire:model.live.debounce.400ms="event" placeholder="{{ __('Event, e.g. payroll.') }}"
+            class="w-56 rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900" />
+        <input type="text" wire:model.live.debounce.400ms="actor" placeholder="{{ __('Who (name or email)') }}"
+            class="w-56 rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900" />
+        <input type="date" wire:model.live="from" aria-label="{{ __('From') }}" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900" />
+        <input type="date" wire:model.live="to" aria-label="{{ __('To') }}" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900" />
     </div>
 
     <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
@@ -33,6 +43,16 @@
                         </td>
                         <td class="px-3 py-1.5 text-neutral-400">{{ $log->ip_address }}</td>
                     </tr>
+                    @if ($log->properties)
+                        <tr class="border-t border-neutral-50 dark:border-neutral-900">
+                            <td colspan="5" class="px-3 pb-2">
+                                <details>
+                                    <summary class="cursor-pointer text-xs text-neutral-500">{{ __('Details') }}</summary>
+                                    <pre class="mt-1 overflow-x-auto rounded bg-neutral-50 p-2 text-xs dark:bg-neutral-900">{{ json_encode($log->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                </details>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr><td colspan="5" class="px-3 py-4 text-neutral-500">{{ __('No audit entries.') }}</td></tr>
                 @endforelse

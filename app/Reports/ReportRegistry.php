@@ -16,6 +16,10 @@ class ReportRegistry
         LeaveLedgerReport::class,
         PayrollSummaryReport::class,
         PayrollRegisterReport::class,
+        PayrollVarianceReport::class,
+        P9Report::class,
+        LeaveLiabilityReport::class,
+        HeadcountMovementReport::class,
         ExpenseClaimsReport::class,
         RecruitmentFunnelReport::class,
     ];

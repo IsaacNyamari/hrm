@@ -10,6 +10,7 @@ use App\Concerns\HasUuid;
 use App\Enums\EmploymentStatus;
 use App\Enums\Gender;
 use App\Enums\MaritalStatus;
+use App\Events\EmployeeTerminated;
 use Carbon\CarbonImmutable;
 use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -84,6 +85,22 @@ class Employee extends Model
      * @var array<int, string>
      */
     protected $hidden = ['device_password'];
+
+    protected static function booted(): void
+    {
+        static::updated(function (self $employee): void {
+            if (! $employee->wasChanged('status')) {
+                return;
+            }
+
+            $original = $employee->getOriginal('status');
+            $was = $original instanceof EmploymentStatus ? $original : EmploymentStatus::tryFrom((string) $original);
+
+            if ($was?->isCurrentlyEmployed() === true && ! $employee->status->isCurrentlyEmployed()) {
+                EmployeeTerminated::dispatch($employee);
+            }
+        });
+    }
 
     /**
      * @return array<string, string>

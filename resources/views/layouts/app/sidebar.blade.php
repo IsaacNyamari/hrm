@@ -56,6 +56,11 @@
                                 {{ __('Settings') }}
                             </flux:sidebar.item>
                         @endif
+                        @if (auth()->user()->canOnPlatform(\App\Enums\PlatformPermission::AuditView))
+                            <flux:sidebar.item icon="clipboard-document-list" :href="route('platform.audit')" :current="request()->routeIs('platform.audit')" wire:navigate>
+                                {{ __('Audit trail') }}
+                            </flux:sidebar.item>
+                        @endif
                         @if (auth()->user()->canOnPlatform(\App\Enums\PlatformPermission::DeploymentsManage))
                             <flux:sidebar.item icon="rocket-launch" :href="route('platform.deployments')" :current="request()->routeIs('platform.deployments')" wire:navigate>
                                 {{ __('Deployments') }}

@@ -12,6 +12,8 @@ enum WebhookEvent: string
     case LeaveRejected = 'leave.rejected';
     case ExpenseApproved = 'expense.approved';
     case ExpenseRejected = 'expense.rejected';
+    case EmployeeTerminated = 'employee.terminated';
+    case PayrollApproved = 'payroll.approved';
     case PayrollPaid = 'payroll.paid';
     case ApplicationReceived = 'application.received';
     case OfferAccepted = 'offer.accepted';

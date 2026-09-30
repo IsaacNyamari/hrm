@@ -140,6 +140,7 @@ Route::middleware(['auth', 'verified', 'platform', 'two-factor'])->prefix('platf
     Route::view('leads', 'platform.leads')->name('leads');
     Route::view('settings', 'platform.settings')->name('settings');
     Route::view('deployments', 'platform.deployments')->name('deployments');
+    Route::view('audit', 'platform.audit')->name('audit');
     Route::view('sitemap', 'platform.sitemap')->name('sitemap');
 });
 
@@ -393,6 +394,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription', 
 
     // Audit trail
     Route::view('audit', 'audit.index')->name('audit');
+    Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
 
