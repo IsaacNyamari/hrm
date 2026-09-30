@@ -81,6 +81,7 @@ class StoreEmployeeRequest extends FormRequest
             'bank_accounts.*.is_primary' => ['boolean'],
 
             'statutory' => ['sometimes', 'array'],
+            'statutory.national_id' => ['nullable', 'string', 'max:30'],
             'statutory.tax_pin' => ['nullable', 'string', 'max:60'],
             'statutory.nssf_number' => ['nullable', 'string', 'max:60'],
             'statutory.shif_number' => ['nullable', 'string', 'max:60'],

@@ -127,6 +127,7 @@ class EmployeeController extends Controller
                 'is_primary' => $b->is_primary,
             ])->all(),
             'statutory' => $employee->statutoryDetail === null ? null : [
+                'national_id' => $employee->statutoryDetail->national_id,
                 'tax_pin' => $employee->statutoryDetail->tax_pin,
                 'nssf_number' => $employee->statutoryDetail->nssf_number,
                 'shif_number' => $employee->statutoryDetail->shif_number,

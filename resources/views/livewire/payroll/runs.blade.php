@@ -42,6 +42,17 @@
                                 @if ($run && $run->status->value === 'approved')
                                     <button wire:click="pay('{{ $run->uuid }}')" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Mark paid') }}</button>
                                 @endif
+                                @if ($run && ! $run->status->isMutable())
+                                    <flux:dropdown>
+                                        <button type="button" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Returns') }}</button>
+                                        <flux:menu>
+                                            <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'kra']) }}">{{ __('KRA iTax (PAYE + Housing Levy)') }}</flux:menu.item>
+                                            <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'sha']) }}">{{ __('SHA (SHIF)') }}</flux:menu.item>
+                                            <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'nssf']) }}">{{ __('NSSF') }}</flux:menu.item>
+                                            <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'all']) }}">{{ __('All (zip)') }}</flux:menu.item>
+                                        </flux:menu>
+                                    </flux:dropdown>
+                                @endif
                                 @if ($run && in_array($run->status->value, ['approved', 'paid'], true))
                                     <button wire:click="lock('{{ $run->uuid }}')" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Lock') }}</button>
                                 @endif

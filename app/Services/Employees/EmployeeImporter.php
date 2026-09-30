@@ -165,6 +165,7 @@ class EmployeeImporter
             'branch' => $get('branch'),
             'salary_amount' => $get('salary_amount'),
             'pay_frequency' => $get('pay_frequency'),
+            'national_id' => $get('national_id'),
             'tax_pin' => $get('tax_pin'),
             'nssf_number' => $get('nssf_number'),
             'shif_number' => $get('shif_number'),
@@ -235,6 +236,7 @@ class EmployeeImporter
         }
 
         $statutory = array_filter([
+            'national_id' => $row['national_id'],
             'tax_pin' => $row['tax_pin'],
             'nssf_number' => $row['nssf_number'],
             'shif_number' => $row['shif_number'],

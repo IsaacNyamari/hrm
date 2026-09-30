@@ -62,6 +62,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryComponentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\StatutoryReturnController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxRuleController;
@@ -232,6 +233,8 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('payroll-runs/{payrollRun}/approve', [PayrollRunController::class, 'approve'])->name('payroll-runs.approve');
     Route::post('payroll-runs/{payrollRun}/pay', [PayrollRunController::class, 'pay'])->name('payroll-runs.pay');
     Route::post('payroll-runs/{payrollRun}/lock', [PayrollRunController::class, 'lock'])->name('payroll-runs.lock');
+    Route::get('payroll-runs/{payrollRun}/statutory-returns', [StatutoryReturnController::class, 'show'])->name('payroll-runs.statutory-returns');
+    Route::get('payroll-runs/{payrollRun}/statutory-returns/{type}', [StatutoryReturnController::class, 'download'])->name('payroll-runs.statutory-returns.download');
 
     Route::get('payslips', [PayslipController::class, 'index'])->name('payslips.index');
     Route::get('payslips/{payslip}', [PayslipController::class, 'show'])->name('payslips.show');

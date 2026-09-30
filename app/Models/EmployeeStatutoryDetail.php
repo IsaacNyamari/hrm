@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $tenant_id
  * @property int $employee_id
+ * @property string|null $national_id
  * @property string|null $tax_pin
  * @property string|null $nssf_number
  * @property string|null $shif_number
@@ -33,6 +34,7 @@ class EmployeeStatutoryDetail extends Model
     protected function casts(): array
     {
         return [
+            'national_id' => 'encrypted',
             'tax_pin' => 'encrypted',
             'nssf_number' => 'encrypted',
             'shif_number' => 'encrypted',
