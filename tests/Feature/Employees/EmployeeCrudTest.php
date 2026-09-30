@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Enums\Role;
 use App\Events\EmployeeCreated;
+use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
@@ -123,4 +125,32 @@ it('shows pay only to people who hold the salary permission', function () {
         ->getJson("http://crud-co.hrm.test/employees/{$employee->uuid}")
         ->assertOk()
         ->assertJsonPath('data.salary_amount_cents', 4_500_000);
+});
+
+it('masks identity numbers for people without document access', function () {
+    app(TenantContext::class)->set($this->tenant);
+    $employee = Employee::factory()->forTenant($this->tenant)->create();
+    $employee->statutoryDetail()->create(['national_id' => '12345678', 'tax_pin' => 'A123456789Z']);
+    $supervisor = userForTenant($this->tenant, Role::Supervisor);
+
+    $masked = $this->actingAs($supervisor)->getJson("http://crud-co.hrm.test/employees/{$employee->uuid}")->assertOk()->json('data.statutory');
+    $full = $this->actingAs($this->hr)->getJson("http://crud-co.hrm.test/employees/{$employee->uuid}")->assertOk()->json('data.statutory');
+
+    expect($masked['national_id'])->toBe('•••••678')->and($masked['tax_pin'])->toBe('••••••••89Z')
+        ->and($full['national_id'])->toBe('12345678')->and($full['tax_pin'])->toBe('A123456789Z');
+});
+
+it('lets an employee and HR export the personal data held about the employee, and records it', function () {
+    $employee = Employee::factory()->forTenant($this->tenant)->create(['first_name' => 'Amina']);
+    $own = userForTenant($this->tenant, Role::Employee);
+    $employee->update(['user_id' => $own->id]);
+    $stranger = userForTenant($this->tenant, Role::Employee);
+
+    $json = $this->actingAs($own)->get("http://crud-co.hrm.test/employees/{$employee->uuid}/data-export")->assertOk()->streamedContent();
+    expect(json_decode($json, true)['profile']['first_name'])->toBe('Amina');
+
+    $this->actingAs($this->hr)->get("http://crud-co.hrm.test/employees/{$employee->uuid}/data-export")->assertOk();
+    $this->actingAs($stranger)->get("http://crud-co.hrm.test/employees/{$employee->uuid}/data-export")->assertForbidden();
+
+    expect(AuditLog::query()->where('event', 'employee.data_exported')->count())->toBe(2);
 });

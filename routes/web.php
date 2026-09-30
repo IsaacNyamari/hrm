@@ -21,6 +21,7 @@ use App\Http\Controllers\DocumentExpiryController;
 use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeDataExportController;
 use App\Http\Controllers\EmployeeDocumentController;
 use App\Http\Controllers\EmployeeExportController;
 use App\Http\Controllers\EmployeeImportController;
@@ -178,6 +179,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription', 
     Route::post('employees/import/preview', [EmployeeImportController::class, 'preview'])->name('employees.import.preview');
     Route::post('employees/import/{import}/confirm', [EmployeeImportController::class, 'confirm'])->name('employees.import.confirm');
     Route::get('employees/import/{import}', [EmployeeImportController::class, 'show'])->name('employees.import.show');
+    Route::get('employees/{employee}/data-export', EmployeeDataExportController::class)->name('employees.data-export');
     Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
     Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
     Route::delete('employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');

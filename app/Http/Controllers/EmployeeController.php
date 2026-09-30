@@ -102,6 +102,7 @@ class EmployeeController extends Controller
         // Pay is shown to people who hold the salary permission, and to the employee themselves.
         $user = request()->user();
         $canSeeSalary = $user !== null && ($user->can(Permission::EmployeesSalaryView->value) || $user->employee?->getKey() === $employee->getKey());
+        $canSeeIdentifiers = $user !== null && ($user->can(Permission::EmployeesDocumentsView->value) || $user->employee?->getKey() === $employee->getKey());
         $salary = $canSeeSalary
             ? ['salary_amount_cents' => $employee->salary_amount_cents, 'salary_currency' => $employee->salary_currency]
             : [];
@@ -133,11 +134,24 @@ class EmployeeController extends Controller
                 'is_primary' => $b->is_primary,
             ])->all(),
             'statutory' => $employee->statutoryDetail === null ? null : [
-                'national_id' => $employee->statutoryDetail->national_id,
-                'tax_pin' => $employee->statutoryDetail->tax_pin,
-                'nssf_number' => $employee->statutoryDetail->nssf_number,
-                'shif_number' => $employee->statutoryDetail->shif_number,
+                'national_id' => $this->identifier($employee->statutoryDetail->national_id, $canSeeIdentifiers),
+                'tax_pin' => $this->identifier($employee->statutoryDetail->tax_pin, $canSeeIdentifiers),
+                'nssf_number' => $this->identifier($employee->statutoryDetail->nssf_number, $canSeeIdentifiers),
+                'shif_number' => $this->identifier($employee->statutoryDetail->shif_number, $canSeeIdentifiers),
             ],
         ];
+    }
+
+    /**
+     * Identity numbers are personal data: people without document access see
+     * only the last three characters.
+     */
+    private function identifier(?string $value, bool $full): ?string
+    {
+        if ($value === null || $value === '' || $full) {
+            return $value;
+        }
+
+        return str_repeat('•', max(0, mb_strlen($value) - 3)).mb_substr($value, -3);
     }
 }
