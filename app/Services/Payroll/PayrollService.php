@@ -329,15 +329,23 @@ class PayrollService
             $lines[] = ['type' => SalaryComponentType::Deduction, 'code' => $component->code, 'name' => $component->name, 'amount_cents' => $cents, 'is_taxable' => false, 'is_statutory' => false, 'sort_order' => $sort++];
         }
 
-        // 5. Loans / advances — a final settlement recovers the whole balance, as far as the pay covers it
+        // 5. Loans / advances — never deduct more than what's actually left of
+        // pay once statutory and other deductions are accounted for. Without
+        // this cap, a normal run could record a full installment as repaid
+        // (reducing outstanding_cents) while net pay is floored to 0 below —
+        // the loan books would show money recovered that was never actually
+        // paid out. A final settlement recovers as much of the remaining
+        // balance as the pay covers; multiple loans share what's left in the
+        // order they're processed.
         $loanRepayments = [];
         foreach ($employee->loans as $loan) {
             if (! $loan->isRepaying() || $loan->start_date->greaterThan($ctx->payDate)) {
                 continue;
             }
+            $available = max(0, $gross - $statutoryTotal - $otherDeductions);
             $due = $isFinal
-                ? min((int) $loan->outstanding_cents, max(0, $gross - $statutoryTotal - $otherDeductions))
-                : $loan->dueThisRun();
+                ? min((int) $loan->outstanding_cents, $available)
+                : min($loan->dueThisRun(), $available);
             if ($due <= 0) {
                 continue;
             }

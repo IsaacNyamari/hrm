@@ -117,6 +117,27 @@ it('deducts a loan installment and reduces the outstanding balance', function ()
         ->and($loan->repayments()->count())->toBe(1);
 });
 
+it('caps a loan installment to what is actually left of pay, so the books never show more repaid than was paid out', function () {
+    // An installment far bigger than one paycheck can cover after statutory
+    // deductions — without capping, this would still fully reduce
+    // outstanding_cents while net pay is silently floored to 0 below.
+    $loan = Loan::factory()->forEmployee($this->employee)->create([
+        'principal_cents' => 20_000_000, 'installments' => 2, 'installment_cents' => 15_000_000,
+        'outstanding_cents' => 20_000_000, 'status' => LoanStatus::Active, 'start_date' => '2026-08-01',
+    ]);
+
+    $run = $this->service->run($this->period);
+    $payslip = Payslip::query()->where('payroll_run_id', $run->id)->firstOrFail();
+
+    $availableForLoan = $payslip->gross_earnings_cents - $payslip->statutory_deductions_cents;
+    $loanLine = $payslip->lines->firstWhere('code', 'LOAN-'.$loan->id);
+
+    expect($loanLine->amount_cents)->toBe($availableForLoan)
+        ->and($loanLine->amount_cents)->toBeLessThan(15_000_000)
+        ->and($payslip->net_pay_cents)->toBe(0)
+        ->and($loan->fresh()->outstanding_cents)->toBe(20_000_000 - $availableForLoan);
+});
+
 it('settles a loan on the final installment', function () {
     $loan = Loan::factory()->forEmployee($this->employee)->create([
         'principal_cents' => 800_000, 'installments' => 1, 'installment_cents' => 800_000,
