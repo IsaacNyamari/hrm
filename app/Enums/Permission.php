@@ -16,6 +16,7 @@ enum Permission: string
     case EmployeesCreate = 'employees.create';
     case EmployeesUpdate = 'employees.update';
     case EmployeesDelete = 'employees.delete';
+    case EmployeesSalaryView = 'employees.salary.view';
     case EmployeesDocumentsView = 'employees.documents.view';
     case EmployeesDocumentsUpload = 'employees.documents.upload';
 

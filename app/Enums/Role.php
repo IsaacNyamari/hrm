@@ -91,7 +91,7 @@ enum Role: string
             self::TenantOwner, self::HrAdministrator => P::values(),
 
             self::HrManager => [
-                P::EmployeesView->value, P::EmployeesCreate->value, P::EmployeesUpdate->value,
+                P::EmployeesView->value, P::EmployeesCreate->value, P::EmployeesUpdate->value, P::EmployeesSalaryView->value,
                 P::EmployeesDocumentsView->value, P::EmployeesDocumentsUpload->value,
                 P::DepartmentsManage->value, P::DesignationsManage->value, P::BranchesManage->value,
                 P::AttendanceView->value, P::AttendanceManage->value, P::ShiftsManage->value,
@@ -105,13 +105,14 @@ enum Role: string
             ],
 
             self::PayrollManager => [
-                P::EmployeesView->value,
+                P::EmployeesView->value, P::EmployeesSalaryView->value,
                 P::PayrollView->value, P::PayrollManage->value, P::PayrollProcess->value,
                 P::ExpensesView->value, P::ExpensesApprove->value, P::ExpensesManage->value,
                 P::ReportsView->value, P::ReportsExport->value,
             ],
 
             self::FinanceManager => [
+                P::EmployeesSalaryView->value,
                 P::PayrollView->value, P::PayrollApprove->value,
                 P::ExpensesView->value, P::ExpensesApprove->value, P::ExpensesManage->value,
                 P::AssetsView->value, P::AssetsManage->value,

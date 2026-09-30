@@ -108,3 +108,19 @@ it('rejects a duplicate work email within the tenant', function () {
         ])
         ->assertStatus(422);
 });
+
+it('shows pay only to people who hold the salary permission', function () {
+    $employee = Employee::factory()->forTenant($this->tenant)->create(['salary_amount_cents' => 4_500_000, 'salary_currency' => 'KES']);
+    $supervisor = userForTenant($this->tenant, Role::Supervisor); // can view employees, not pay
+    $payroll = userForTenant($this->tenant, Role::PayrollManager);
+
+    $this->actingAs($supervisor)
+        ->getJson("http://crud-co.hrm.test/employees/{$employee->uuid}")
+        ->assertOk()
+        ->assertJsonMissingPath('data.salary_amount_cents');
+
+    $this->actingAs($payroll)
+        ->getJson("http://crud-co.hrm.test/employees/{$employee->uuid}")
+        ->assertOk()
+        ->assertJsonPath('data.salary_amount_cents', 4_500_000);
+});

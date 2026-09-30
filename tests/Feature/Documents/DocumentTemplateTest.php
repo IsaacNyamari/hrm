@@ -55,3 +55,12 @@ it('cannot preview another tenant\'s template', function () {
         ->postJson("http://tpl-co.hrm.test/document-templates/{$template->uuid}/preview", ['employee_id' => $this->employee->id])
         ->assertNotFound();
 });
+
+it('ships the full set of HR letters, including offer, warning, termination and certificates', function () {
+    $tenant = tenantWithRoles(['slug' => 'letters-co']);
+    app(TenantContext::class)->set($tenant);
+
+    $types = DocumentTemplate::query()->pluck('type')->map(fn ($type) => $type->value)->all();
+
+    expect($types)->toContain('offer_letter', 'warning_letter', 'termination_letter', 'experience_certificate', 'salary_certificate', 'employment_letter', 'confirmation_letter');
+});

@@ -51,9 +51,13 @@ class LoanPolicy
             && $this->permits($user, $loan->tenant_id, Permission::PayrollManage);
     }
 
+    /**
+     * Nobody approves a loan or advance taken out by themselves, however senior.
+     */
     public function approve(User $user, Loan $loan): bool
     {
         return $user->tenant_id === $loan->tenant_id
+            && $user->employee?->getKey() !== $loan->employee_id
             && $this->permits($user, $loan->tenant_id, Permission::PayrollApprove, Permission::PayrollManage);
     }
 

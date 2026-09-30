@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Employees\CreateEmployee;
 use App\Actions\Employees\UpdateEmployee;
+use App\Enums\Permission;
 use App\Facades\Tenancy;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
@@ -98,7 +99,14 @@ class EmployeeController extends Controller
             return $base;
         }
 
-        return $base + [
+        // Pay is shown to people who hold the salary permission, and to the employee themselves.
+        $user = request()->user();
+        $canSeeSalary = $user !== null && ($user->can(Permission::EmployeesSalaryView->value) || $user->employee?->getKey() === $employee->getKey());
+        $salary = $canSeeSalary
+            ? ['salary_amount_cents' => $employee->salary_amount_cents, 'salary_currency' => $employee->salary_currency]
+            : [];
+
+        return $base + $salary + [
             'middle_name' => $employee->middle_name,
             'preferred_name' => $employee->preferred_name,
             'personal_email' => $employee->personal_email,
@@ -111,8 +119,6 @@ class EmployeeController extends Controller
             'manager' => $employee->manager?->fullName(),
             'employment_type' => $employee->employmentType?->name,
             'probation_ends_at' => $employee->probation_ends_at?->toDateString(),
-            'salary_amount_cents' => $employee->salary_amount_cents,
-            'salary_currency' => $employee->salary_currency,
             'pay_frequency' => $employee->pay_frequency,
             'emergency_contacts' => $employee->emergencyContacts->map(fn ($c): array => [
                 'name' => $c->name,

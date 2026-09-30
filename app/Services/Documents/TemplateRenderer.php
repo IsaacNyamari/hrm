@@ -60,6 +60,7 @@ class TemplateRenderer
             'employee.designation' => (string) $employee->designation?->name,
             'employee.branch' => (string) $employee->branch?->name,
             'employee.hire_date' => $employee->hire_date?->toFormattedDateString() ?? '',
+            'employee.exit_date' => $employee->exit_date?->toFormattedDateString() ?? '',
             'employee.salary' => $salary,
             'company.name' => $tenant->name,
             'company.legal_name' => (string) ($tenant->legal_name ?? $tenant->name),

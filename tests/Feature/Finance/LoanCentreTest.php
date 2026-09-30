@@ -148,3 +148,18 @@ it('lets a payroll manager raise a loan on behalf of an employee from the dashbo
 
     expect(Loan::query()->where('employee_id', $this->staff->id)->count())->toBe(1);
 });
+
+it('never lets someone approve their own loan, even with payroll approval rights', function () {
+    $managerEmployee = Employee::factory()->forTenant($this->tenant)->create(['user_id' => $this->payroll->id]);
+    $loan = Loan::factory()->create([
+        'tenant_id' => $this->tenant->id, 'employee_id' => $managerEmployee->id, 'status' => 'pending',
+    ]);
+
+    $this->actingAs($this->payroll)
+        ->postJson("http://loan-co.hrm.test/loans/{$loan->uuid}/approve")
+        ->assertForbidden();
+
+    Livewire::test(Loans::class)->call('approve', $loan->uuid)->assertForbidden();
+
+    expect($loan->fresh()->status)->toBe(LoanStatus::Pending);
+});

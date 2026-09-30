@@ -13,6 +13,9 @@ enum DocumentTemplateType: string
     case WarningLetter = 'warning_letter';
     case TerminationLetter = 'termination_letter';
     case RecommendationLetter = 'recommendation_letter';
+    case OfferLetter = 'offer_letter';
+    case ExperienceCertificate = 'experience_certificate';
+    case SalaryCertificate = 'salary_certificate';
     case Custom = 'custom';
 
     public function label(): string
