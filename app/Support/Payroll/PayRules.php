@@ -28,6 +28,7 @@ final readonly class PayRules
         public float $overtimeMultiplier = 1.5,
         public float $restDayMultiplier = 2.0,
         public float $standardDailyHours = 8.0,
+        public bool $requireSeparateApprover = true,
     ) {}
 
     public static function for(Tenant $tenant): self
@@ -43,6 +44,7 @@ final readonly class PayRules
             overtimeMultiplier: self::positive($settings['overtime_multiplier'] ?? null, $defaults->overtimeMultiplier),
             restDayMultiplier: self::positive($settings['rest_day_multiplier'] ?? null, $defaults->restDayMultiplier),
             standardDailyHours: self::positive($settings['standard_daily_hours'] ?? null, $defaults->standardDailyHours),
+            requireSeparateApprover: (bool) ($settings['require_separate_approver'] ?? $defaults->requireSeparateApprover),
         );
     }
 
@@ -52,7 +54,7 @@ final readonly class PayRules
     }
 
     /**
-     * @return array{salary_basis: string, overtime_enabled: bool, overtime_multiplier: float, rest_day_multiplier: float, standard_daily_hours: float}
+     * @return array{salary_basis: string, overtime_enabled: bool, overtime_multiplier: float, rest_day_multiplier: float, standard_daily_hours: float, require_separate_approver: bool}
      */
     public function toArray(): array
     {
@@ -62,6 +64,7 @@ final readonly class PayRules
             'overtime_multiplier' => $this->overtimeMultiplier,
             'rest_day_multiplier' => $this->restDayMultiplier,
             'standard_daily_hours' => $this->standardDailyHours,
+            'require_separate_approver' => $this->requireSeparateApprover,
         ];
     }
 

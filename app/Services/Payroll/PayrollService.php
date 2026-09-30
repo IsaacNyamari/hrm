@@ -110,6 +110,18 @@ class PayrollService
                 throw PayrollException::notProcessed();
             }
 
+            if (CarbonImmutable::today()->lessThan($run->period->end_date)) {
+                throw PayrollException::periodNotEnded($run->period->end_date->format('d M Y'));
+            }
+
+            if ($run->processed_by !== null && $run->processed_by === $approver->getKey() && PayRules::for($run->tenant)->requireSeparateApprover) {
+                throw PayrollException::sameUserCannotApprove();
+            }
+
+            if (($issues = $this->reconcile($run)) !== []) {
+                throw PayrollException::reconciliationFailed($issues);
+            }
+
             $run->forceFill([
                 'status' => PayrollRunStatus::Approved,
                 'approved_by' => $approver->getKey(),
@@ -125,18 +137,70 @@ class PayrollService
         });
     }
 
-    public function markPaid(PayrollRun $run): PayrollRun
+    /**
+     * Record that the money has left: a bank batch or M-Pesa reference is
+     * required so every paid run can be traced to a payment.
+     */
+    public function markPaid(PayrollRun $run, string $paymentReference, ?User $by = null): PayrollRun
     {
-        return $this->context->run($run->tenant, function () use ($run): PayrollRun {
+        return $this->context->run($run->tenant, function () use ($run, $paymentReference, $by): PayrollRun {
             if ($run->status !== PayrollRunStatus::Approved) {
                 throw new PayrollException('Approve the payroll run before marking it paid.');
             }
 
-            $run->forceFill(['status' => PayrollRunStatus::Paid, 'paid_at' => CarbonImmutable::now()])->save();
+            if (trim($paymentReference) === '') {
+                throw new PayrollException('Enter the payment reference (bank batch or M-Pesa transaction) to mark the run as paid.');
+            }
+
+            $run->forceFill([
+                'status' => PayrollRunStatus::Paid,
+                'paid_at' => CarbonImmutable::now(),
+                'paid_by' => $by?->getKey(),
+                'payment_reference' => trim($paymentReference),
+            ])->save();
             $run->payslips()->update(['status' => PayslipStatus::Paid]);
             $run->period->forceFill(['status' => PayrollPeriodStatus::Paid])->save();
 
             return $run;
+        });
+    }
+
+    /**
+     * Arithmetic a run must always satisfy. Anything returned blocks approval:
+     * net pay above gross, payslips that do not add up, or run totals that
+     * differ from the payslips they summarise.
+     *
+     * @return list<string>
+     */
+    public function reconcile(PayrollRun $run): array
+    {
+        return $this->context->run($run->tenant, function () use ($run): array {
+            $issues = [];
+            $payslips = Payslip::query()->where('payroll_run_id', $run->getKey())->with('employee:id,first_name,last_name')->get();
+
+            foreach ($payslips as $slip) {
+                $name = $slip->employee?->fullName() ?? '#'.$slip->employee_id;
+
+                if ($slip->net_pay_cents > $slip->gross_earnings_cents) {
+                    $issues[] = "{$name}: net pay is higher than gross pay.";
+                }
+
+                if ($slip->net_pay_cents !== max(0, $slip->gross_earnings_cents - $slip->total_deductions_cents)) {
+                    $issues[] = "{$name}: net pay does not equal gross minus deductions.";
+                }
+
+                if ($slip->total_deductions_cents !== $slip->statutory_deductions_cents + $slip->other_deductions_cents) {
+                    $issues[] = "{$name}: total deductions do not equal statutory plus other deductions.";
+                }
+            }
+
+            foreach (['gross_cents' => 'gross_earnings_cents', 'net_cents' => 'net_pay_cents', 'deductions_cents' => 'total_deductions_cents', 'statutory_cents' => 'statutory_deductions_cents'] as $runField => $slipField) {
+                if ((int) $run->{$runField} !== (int) $payslips->sum($slipField)) {
+                    $issues[] = "Run {$runField} does not match the sum of its payslips; process the run again.";
+                }
+            }
+
+            return $issues;
         });
     }
 

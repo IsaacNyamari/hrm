@@ -44,7 +44,7 @@
                                     <button wire:click="approve('{{ $run->uuid }}')" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Approve') }}</button>
                                 @endif
                                 @if ($run && $run->status->value === 'approved')
-                                    <button wire:click="pay('{{ $run->uuid }}')" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Mark paid') }}</button>
+                                    <button type="button" x-on:click="const ref = prompt('{{ __('Payment reference (bank batch or M-Pesa transaction)') }}'); if (ref && ref.trim()) { $wire.pay('{{ $run->uuid }}', ref.trim()) }" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Mark paid') }}</button>
                                 @endif
                                 @if ($run && ! $run->status->isMutable())
                                     <flux:dropdown>

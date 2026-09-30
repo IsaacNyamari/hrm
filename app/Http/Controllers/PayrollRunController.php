@@ -42,11 +42,13 @@ class PayrollRunController extends Controller
         return response()->json(['data' => $this->transform($this->service->approve($payrollRun, $request->user()))]);
     }
 
-    public function pay(PayrollRun $payrollRun): JsonResponse
+    public function pay(PayrollRun $payrollRun, Request $request): JsonResponse
     {
         $this->authorize('approve', $payrollRun);
 
-        return response()->json(['data' => $this->transform($this->service->markPaid($payrollRun))]);
+        $validated = $request->validate(['payment_reference' => ['required', 'string', 'max:120']]);
+
+        return response()->json(['data' => $this->transform($this->service->markPaid($payrollRun, $validated['payment_reference'], $request->user()))]);
     }
 
     public function lock(PayrollRun $payrollRun): JsonResponse

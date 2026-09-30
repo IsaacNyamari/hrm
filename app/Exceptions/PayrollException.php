@@ -17,6 +17,24 @@ class PayrollException extends RuntimeException
         return new self('This payroll run is finalised and can no longer be changed.');
     }
 
+    public static function periodNotEnded(string $endDate): self
+    {
+        return new self("This payroll cannot be approved before the period ends on {$endDate}. Approving early freezes pay before leavers, joiners and attendance are known.");
+    }
+
+    public static function sameUserCannotApprove(): self
+    {
+        return new self('A payroll run must be approved by someone other than the person who processed it.');
+    }
+
+    /**
+     * @param  list<string>  $issues
+     */
+    public static function reconciliationFailed(array $issues): self
+    {
+        return new self('The payroll run does not reconcile: '.implode(' ', $issues));
+    }
+
     public static function notProcessed(): self
     {
         return new self('Process the payroll run before this action.');

@@ -47,12 +47,12 @@ class Runs extends Component
         });
     }
 
-    public function pay(string $runUuid, PayrollService $service): void
+    public function pay(string $runUuid, string $paymentReference, PayrollService $service): void
     {
-        $this->guarded(function () use ($runUuid, $service): void {
+        $this->guarded(function () use ($runUuid, $paymentReference, $service): void {
             $run = PayrollRun::query()->where('uuid', $runUuid)->firstOrFail();
             Gate::authorize('approve', $run);
-            $service->markPaid($run);
+            $service->markPaid($run, $paymentReference, auth()->user());
         });
     }
 

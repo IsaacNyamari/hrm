@@ -43,6 +43,11 @@
             <p class="mt-3 text-xs text-zinc-500">{{ __('Overtime on working days comes from each attendance record (time beyond the shift, after the shift\'s overtime threshold). Every hour worked on a weekend or public holiday is paid at the rest-day rate.') }}</p>
         </div>
 
+        <div>
+            <flux:switch wire:model="require_separate_approver" :label="__('Require a different person to approve payroll')" :disabled="! $canManage" />
+            <p class="mt-2 text-xs text-zinc-500">{{ __('Recommended. The person who processes a payroll run cannot also approve it. Turn off only for single-administrator organizations.') }}</p>
+        </div>
+
         @if ($canManage)
             <div class="flex items-center justify-end gap-3">
                 @if ($saved)

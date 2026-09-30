@@ -62,7 +62,7 @@ it('fails clearly when no rule is in force for the pay date', function () {
 it('computes employer NSSF, matching Housing Levy and the flat NITA levy', function () {
     $lines = collect($this->engine->employerContributions(15_000_000, 10_000_000, $this->payDate))->pluck('amount_cents', 'code');
 
-    expect($lines['NSSF'])->toBe(600_000) // 6% of pensionable 100,000
+    expect($lines['NSSF'])->toBe(648_000) // 6% of gross 150,000, capped at 108,000
         ->and($lines['HOUSING_LEVY'])->toBe(225_000) // 1.5% of gross 150,000
         ->and($lines['NITA'])->toBe(5_000);
 });

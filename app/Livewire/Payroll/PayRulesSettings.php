@@ -31,6 +31,8 @@ class PayRulesSettings extends Component
 
     public float $standard_daily_hours = 8.0;
 
+    public bool $require_separate_approver = true;
+
     public bool $saved = false;
 
     public function mount(): void
@@ -52,6 +54,7 @@ class PayRulesSettings extends Component
             'overtime_multiplier' => ['required', 'numeric', 'min:1', 'max:5'],
             'rest_day_multiplier' => ['required', 'numeric', 'min:1', 'max:5'],
             'standard_daily_hours' => ['required', 'numeric', 'min:1', 'max:24'],
+            'require_separate_approver' => ['boolean'],
         ]);
 
         $tenant = Tenancy::getOrFail();

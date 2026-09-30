@@ -46,6 +46,7 @@ enum TaxRuleType: string
                 'config.rate' => ['required', 'numeric', 'min:0', 'max:0.5'],
                 'config.employer_rate' => ['nullable', 'numeric', 'min:0', 'max:0.5'],
                 'config.ceiling_cents' => ['required', 'integer', 'min:1'],
+                'config.base' => ['nullable', 'in:gross,pensionable'],
             ],
             self::Shif => [
                 'config.rate' => ['required', 'numeric', 'min:0', 'max:0.5'],

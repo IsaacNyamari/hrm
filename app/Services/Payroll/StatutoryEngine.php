@@ -23,7 +23,7 @@ class StatutoryEngine
     public function compute(int $grossCents, int $pensionableCents, int $taxablePayCents, CarbonImmutable $payDate): array
     {
         $lines = [
-            $this->nssf($pensionableCents, $payDate),
+            $this->nssf($grossCents, $pensionableCents, $payDate),
             $this->flatRate(TaxRuleType::Shif, 'SHIF', $grossCents, $payDate),
             $this->flatRate(TaxRuleType::HousingLevy, 'Housing Levy', $grossCents, $payDate),
         ];
@@ -48,8 +48,9 @@ class StatutoryEngine
 
         if (($nssf = TaxRule::inForce(TaxRuleType::Nssf, $payDate)) !== null) {
             $rate = (float) ($nssf->config['employer_rate'] ?? $nssf->config['rate'] ?? 0.06);
-            $ceiling = (int) ($nssf->config['ceiling_cents'] ?? 7_200_000);
-            $lines[] = ['code' => 'NSSF', 'name' => 'NSSF (employer)', 'amount_cents' => (int) round(min($pensionableCents, $ceiling) * $rate)];
+            $ceiling = (int) ($nssf->config['ceiling_cents'] ?? 10_800_000);
+            $base = ($nssf->config['base'] ?? 'gross') === 'pensionable' ? $pensionableCents : $grossCents;
+            $lines[] = ['code' => 'NSSF', 'name' => 'NSSF (employer)', 'amount_cents' => (int) round(min($base, $ceiling) * $rate)];
         }
 
         if (($levy = TaxRule::inForce(TaxRuleType::HousingLevy, $payDate)) !== null) {
@@ -67,15 +68,16 @@ class StatutoryEngine
     /**
      * @return array{code: string, name: string, amount_cents: int, base: string}
      */
-    private function nssf(int $pensionableCents, CarbonImmutable $payDate): array
+    private function nssf(int $grossCents, int $pensionableCents, CarbonImmutable $payDate): array
     {
         $rule = $this->rule(TaxRuleType::Nssf, $payDate);
         $rate = (float) ($rule->config['rate'] ?? 0.06);
-        $ceiling = (int) ($rule->config['ceiling_cents'] ?? 7_200_000);
+        $ceiling = (int) ($rule->config['ceiling_cents'] ?? 10_800_000);
+        $base = ($rule->config['base'] ?? 'gross') === 'pensionable' ? 'pensionable' : 'gross';
 
-        $amount = (int) round(min($pensionableCents, $ceiling) * $rate);
+        $amount = (int) round(min($base === 'gross' ? $grossCents : $pensionableCents, $ceiling) * $rate);
 
-        return ['code' => 'NSSF', 'name' => 'NSSF', 'amount_cents' => $amount, 'base' => 'pensionable'];
+        return ['code' => 'NSSF', 'name' => 'NSSF', 'amount_cents' => $amount, 'base' => $base];
     }
 
     /**
