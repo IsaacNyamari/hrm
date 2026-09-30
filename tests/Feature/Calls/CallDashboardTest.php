@@ -46,7 +46,7 @@ it('accepts an incoming call and redirects into the room', function () {
 
     Livewire::test(IncomingCallListener::class)
         ->call('accept', $call->uuid)
-        ->assertRedirect(route('calls', ['call' => $call->uuid]));
+        ->assertRedirect(route('meetings', ['call' => $call->uuid]));
 
     expect($call->fresh()->status)->toBe(CallStatus::Active);
 });

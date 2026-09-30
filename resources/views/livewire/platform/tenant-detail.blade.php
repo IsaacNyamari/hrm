@@ -106,6 +106,20 @@
                             <span class="font-medium">{{ $member->name }}</span>
                             <span class="text-neutral-500">&lt;{{ $member->email }}&gt;</span>
                         </td>
+                        <td class="px-4 py-2">
+                            @if ($canManageUsers && ! $member->is_platform_admin)
+                                <flux:select size="sm" class="max-w-[12rem]" wire:change="updateUserRole({{ $member->id }}, $event.target.value)">
+                                    <flux:select.option value="" disabled :selected="$member->roles->isEmpty()">{{ __('No role') }}</flux:select.option>
+                                    @foreach ($assignableRoles as $roleCase)
+                                        <flux:select.option value="{{ $roleCase->value }}" :selected="$member->roles->pluck('name')->contains($roleCase->value)">
+                                            {{ $roleCase->value }}
+                                        </flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            @else
+                                <flux:badge size="sm">{{ $member->roles->pluck('name')->join(', ') ?: __('No role') }}</flux:badge>
+                            @endif
+                        </td>
                         <td class="px-4 py-2 text-right">
                             @if ($canImpersonate && ! $member->is_platform_admin)
                                 <form method="POST" action="{{ route('impersonate.start', $member) }}"
@@ -117,7 +131,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td class="px-4 py-4 text-neutral-500">{{ __('No users.') }}</td></tr>
+                    <tr><td colspan="3" class="px-4 py-4 text-neutral-500">{{ __('No users.') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

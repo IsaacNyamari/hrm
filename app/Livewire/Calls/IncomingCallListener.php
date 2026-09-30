@@ -27,7 +27,7 @@ class IncomingCallListener extends Component
 
         try {
             $service->accept($call, auth()->user());
-            $this->redirect(route('calls', ['call' => $uuid]), navigate: true);
+            $this->redirect(route('meetings', ['call' => $uuid]), navigate: true);
         } catch (CallException $e) {
             Flux::toast(variant: 'danger', text: $e->getMessage());
         }

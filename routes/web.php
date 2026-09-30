@@ -129,6 +129,7 @@ Route::middleware(['auth', 'verified', 'platform'])->prefix('platform')->name('p
     Route::get('billing/invoices/{invoice:uuid}/pdf', [PlatformBillingController::class, 'downloadInvoice'])->name('billing.invoices.pdf');
     Route::view('leads', 'platform.leads')->name('leads');
     Route::view('settings', 'platform.settings')->name('settings');
+    Route::view('deployments', 'platform.deployments')->name('deployments');
 });
 
 /*
@@ -373,6 +374,10 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::get('branding', [BrandingController::class, 'show'])->name('branding.show');
     Route::put('branding', [BrandingController::class, 'update'])->name('branding.update');
 
+    // Tenant roles & permissions
+    Route::view('settings/permissions', 'settings.permissions')->name('settings.permissions');
+    Route::view('my-permissions', 'settings.my-permissions')->name('permissions.mine');
+
     // Audit trail
     Route::view('audit', 'audit.index')->name('audit');
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
@@ -391,8 +396,8 @@ Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])
     Route::post('webhook-endpoints/{webhookEndpoint}/ping', [WebhookEndpointController::class, 'ping'])->name('webhook-endpoints.ping');
     Route::get('webhook-endpoints/{webhookEndpoint}/deliveries', [WebhookEndpointController::class, 'deliveries'])->name('webhook-endpoints.deliveries');
 
-    // Calls
-    Route::view('calls', 'calls.index')->name('calls');
+    // Meetings
+    Route::view('meetings', 'calls.index')->name('meetings');
 
     // Staff training / help centre
     Route::view('training', 'training.index')->name('training');

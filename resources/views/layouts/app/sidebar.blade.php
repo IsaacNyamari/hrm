@@ -56,6 +56,11 @@
                                 {{ __('Settings') }}
                             </flux:sidebar.item>
                         @endif
+                        @if (auth()->user()->canOnPlatform(\App\Enums\PlatformPermission::DeploymentsManage))
+                            <flux:sidebar.item icon="rocket-launch" :href="route('platform.deployments')" :current="request()->routeIs('platform.deployments')" wire:navigate>
+                                {{ __('Deployments') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
                 @elseif (auth()->user()->isSelfServiceOnly())
                 <flux:sidebar.group :heading="__('Me')" class="grid">
@@ -74,8 +79,11 @@
                     <flux:sidebar.item icon="ticket" :href="route('hr-requests')" :current="request()->routeIs('hr-requests')" wire:navigate>
                         {{ __('HR requests') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="video-camera" :href="route('calls')" :current="request()->routeIs('calls')" wire:navigate>
-                        {{ __('Calls') }}
+                    <flux:sidebar.item icon="video-camera" :href="route('meetings')" :current="request()->routeIs('meetings')" wire:navigate>
+                        {{ __('Meetings') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="key" :href="route('permissions.mine')" :current="request()->routeIs('permissions.mine')" wire:navigate>
+                        {{ __('My permissions') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="bell" :href="route('notifications')" :current="request()->routeIs('notifications')" wire:navigate>
                         {{ __('Notifications') }}
@@ -92,8 +100,8 @@
                     <flux:sidebar.item icon="ticket" :href="route('hr-requests')" :current="request()->routeIs('hr-requests')" wire:navigate>
                         {{ __('HR requests') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="video-camera" :href="route('calls')" :current="request()->routeIs('calls')" wire:navigate>
-                        {{ __('Calls') }}
+                    <flux:sidebar.item icon="video-camera" :href="route('meetings')" :current="request()->routeIs('meetings')" wire:navigate>
+                        {{ __('Meetings') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar" :href="route('reports')" :current="request()->routeIs('reports')" wire:navigate>
                         {{ __('Reports') }}
@@ -126,6 +134,11 @@
                     <flux:sidebar.item icon="rectangle-group" :href="route('org-chart')" :current="request()->routeIs('org-chart')" wire:navigate>
                         {{ __('Organogram') }}
                     </flux:sidebar.item>
+                    @can('roles.manage')
+                        <flux:sidebar.item icon="key" :href="route('settings.permissions')" :current="request()->routeIs('settings.permissions')" wire:navigate>
+                            {{ __('Permissions') }}
+                        </flux:sidebar.item>
+                    @endcan
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('Time & leave')" class="grid">

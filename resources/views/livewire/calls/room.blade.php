@@ -7,7 +7,7 @@
     ]))" x-init="boot()" class="flex flex-col gap-6">
 
     <div>
-        <flux:heading size="xl">{{ __('Calls') }}</flux:heading>
+        <flux:heading size="xl">{{ __('Meetings') }}</flux:heading>
         <flux:text class="mt-1">{{ __('See who\'s online and start a call — pick one person for a 1:1, or a few for a quick meeting.') }}</flux:text>
     </div>
 

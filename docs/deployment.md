@@ -95,6 +95,30 @@ php artisan up
 `php artisan down --render="errors::503"` around the migrate step if a migration
 is not backwards compatible. All migrations to date are additive.
 
+### From the app itself
+
+The platform admin's **Deployments** page (`/platform/deployments`, gated by
+`PlatformPermission::DeploymentsManage` — Super Admin / Platform Admin only)
+runs the "subsequent deploys" pipeline above for you: fetch, hard-reset to the
+tracked branch (or a chosen previous commit, to roll back), composer install,
+optional `npm run build`, `migrate --force`, cache rebuild, `queue:restart`,
+wrapped in maintenance mode. It runs in the background via the queue worker
+(`App\Jobs\RunDeployment`) so the request isn't held to an HTTP timeout, and
+every run is recorded with its full output in the `deployments` table.
+
+This app has no fixed convention for restarting Reverb or reloading PHP-FPM —
+set `DEPLOY_POST_COMMANDS` in `.env` (semicolon-separated shell commands) to
+run them after every deploy, e.g.:
+
+```dotenv
+DEPLOY_POST_COMMANDS="sudo systemctl restart hrm-reverb;sudo systemctl reload php8.3-fpm"
+```
+
+Left unset, that step is skipped. `DEPLOY_RUN_NPM_BUILD=false` skips the
+frontend build on a server with no Node toolchain. Rolling back reverts code
+only — it does not run down-migrations — so check schema compatibility before
+rolling back past a migration.
+
 ## 4. Environment (`.env`)
 
 Start from `.env.example`; the block at the bottom lists every app-specific key.

@@ -6,6 +6,7 @@ namespace App\Livewire\Platform;
 
 use App\Enums\PaymentStatus;
 use App\Enums\PlatformPermission;
+use App\Enums\Role;
 use App\Enums\TenantStatus;
 use App\Facades\Tenancy;
 use App\Livewire\Concerns\BindsTenant;
@@ -47,6 +48,35 @@ class TenantDetail extends Component
         $this->changeStatus(TenantStatus::Active, 'platform.tenant.activated', $auditor);
     }
 
+    /**
+     * Set a tenant user's role — most notably, who the "company head" (Tenant
+     * Owner) is. Tenant admins cannot grant or revoke that role themselves
+     * (see App\Livewire\Settings\PermissionsManager); only the platform admin
+     * can.
+     */
+    public function updateUserRole(int $userId, string $role, Auditor $auditor): void
+    {
+        $this->authorizePlatform(PlatformPermission::UsersManage);
+
+        $roleEnum = Role::tryFrom($role);
+        abort_if($roleEnum === null || $roleEnum->isPlatform(), 422);
+
+        $target = User::query()->where('tenant_id', $this->tenant->getKey())->findOrFail($userId);
+
+        $previous = Tenancy::run($this->tenant, fn () => $target->getRoleNames()->all());
+
+        Tenancy::run($this->tenant, function () use ($target, $roleEnum): void {
+            $target->syncRoles([$roleEnum->value]);
+        });
+
+        Tenancy::run($this->tenant, fn () => $auditor->log('platform.tenant.user_role_changed', $target, [
+            'from' => $previous,
+            'to' => $roleEnum->value,
+        ]));
+
+        $this->notice = __(':name is now :role at :tenant.', ['name' => $target->name, 'role' => $roleEnum->value, 'tenant' => $this->tenant->name]);
+    }
+
     private function changeStatus(TenantStatus $status, string $event, Auditor $auditor): void
     {
         $this->authorizePlatform(PlatformPermission::TenantsManage);
@@ -74,7 +104,9 @@ class TenantDetail extends Component
 
         return view('livewire.platform.tenant-detail', [
             'employeeCount' => Employee::query()->where('tenant_id', $tenantId)->count(),
-            'users' => User::query()->where('tenant_id', $tenantId)->orderBy('name')->limit(50)->get(),
+            'users' => Tenancy::run($this->tenant, fn () => User::query()->where('tenant_id', $tenantId)->with('roles:id,name')->orderBy('name')->limit(50)->get()),
+            'assignableRoles' => Role::tenantRoles(),
+            'canManageUsers' => $user !== null && $user->canOnPlatform(PlatformPermission::UsersManage),
             'recentAudit' => AuditLog::query()->where('tenant_id', $tenantId)->latest('id')->limit(20)->get(),
             'canImpersonate' => $user !== null && $user->canOnPlatform(PlatformPermission::TenantsImpersonate),
             'canManage' => $user !== null && $user->canOnPlatform(PlatformPermission::TenantsManage),

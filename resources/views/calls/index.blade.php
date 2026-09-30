@@ -1,4 +1,4 @@
-<x-layouts::app :title="__('Calls')">
+<x-layouts::app :title="__('Meetings')">
     <div class="flex h-full w-full flex-1 flex-col gap-6">
         <livewire:calls.room />
     </div>
