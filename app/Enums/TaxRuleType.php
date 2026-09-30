@@ -15,6 +15,7 @@ enum TaxRuleType: string
     case Shif = 'shif';
     case HousingLevy = 'housing_levy';
     case Pension = 'pension';
+    case Nita = 'nita';
 
     public function label(): string
     {
@@ -24,6 +25,7 @@ enum TaxRuleType: string
             self::Shif => 'SHIF',
             self::HousingLevy => 'Housing Levy',
             self::Pension => 'Pension',
+            self::Nita => 'NITA Levy',
         };
     }
 }

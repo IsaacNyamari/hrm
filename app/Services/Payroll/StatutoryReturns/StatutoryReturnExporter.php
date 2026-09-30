@@ -17,6 +17,8 @@ use ZipArchive;
  */
 class StatutoryReturnExporter
 {
+    private const PERSONAL_RELIEF_CENTS = 240_000;
+
     public function __construct(private readonly StatutoryReturnBuilder $builder) {}
 
     /**
@@ -63,26 +65,28 @@ class StatutoryReturnExporter
     }
 
     /**
-     * Unified KRA iTax PAYE + Affordable Housing Levy schedule. The employer
-     * match on the levy equals the employee's 1.5%.
+     * Section B of KRA's P10 return template, in the layout its "Import CSV"
+     * button reads: 25 columns (A-Y) and no header row. The template recomputes
+     * gross, taxable pay and PAYE itself once imported, so those columns are a
+     * cross-check rather than the source of truth. Commas are dropped from names
+     * because the template's own importer treats them as delimiters.
      *
      * @param  list<array<string, mixed>>  $rows
      * @return array{0: list<string>, 1: list<list<string>>}
      */
     private function kra(array $rows): array
     {
-        $headings = [
-            'PIN of Employee', 'Name of Employee', 'Payroll Number', 'Residential Status', 'Type of Employee',
-            'Basic Salary', 'Total Gross Pay', 'Defined Pension Contribution (NSSF)', 'SHIF Deduction',
-            'Taxable Pay', 'PAYE Tax', 'Housing Levy (Employee)', 'Housing Levy (Employer)', 'Housing Levy (Total)',
-        ];
+        return [[], array_map(function (array $r): array {
+            $preTax = $r['shif_cents'] + $r['nssf_cents'] + $r['housing_levy_cents'];
 
-        return [$headings, array_map(fn (array $r): array => [
-            $r['kra_pin'], $r['employee'], $r['employee_number'], 'Resident', 'Primary Employee',
-            $this->money($r['basic_cents']), $this->money($r['gross_cents']), $this->money($r['nssf_cents']), $this->money($r['shif_cents']),
-            $this->money($r['taxable_cents']), $this->money($r['paye_cents']),
-            $this->money($r['housing_levy_cents']), $this->money($r['housing_levy_cents']), $this->money($r['housing_levy_cents'] * 2),
-        ], $rows)];
+            return [
+                $r['kra_pin'], str_replace(',', ' ', (string) $r['employee']), 'Resident', 'Primary Employee', 'No', '',
+                $this->money($r['gross_cents']), '', '', '', 'Benefit not given', '', '', $this->money($r['gross_cents']),
+                $this->money($r['shif_cents']), $this->money($r['nssf_cents']), '', '', '', $this->money($r['housing_levy_cents']),
+                $this->money(max(0, $r['taxable_cents'] - $preTax)), $this->money(self::PERSONAL_RELIEF_CENTS), '',
+                $this->money($r['paye_cents']), $this->money($r['paye_cents']),
+            ];
+        }, $rows)];
     }
 
     /**

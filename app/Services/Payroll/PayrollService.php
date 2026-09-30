@@ -205,6 +205,7 @@ class PayrollService
                     ?? $employee->bankAccounts->first()?->maskedAccountNumber(),
                 'salary_basis' => $calculation['basis'],
                 'attendance' => $calculation['attendance'],
+                'employer_contributions' => $calculation['employer_contributions'],
                 'final_settlement' => $period->isFinalSettlement() ? [
                     'exit_date' => $period->end_date->toDateString(),
                     'reason' => $employee->status->label(),
@@ -355,6 +356,8 @@ class PayrollService
             $lines[] = ['type' => SalaryComponentType::Deduction, 'code' => 'LOAN-'.$loan->getKey(), 'name' => $name, 'amount_cents' => $due, 'is_taxable' => false, 'is_statutory' => false, 'sort_order' => $sort++];
         }
 
+        $employerContributions = $this->statutory->employerContributions($gross, $pensionable, $ctx->payDate);
+
         $totalDeductions = $statutoryTotal + $otherDeductions;
 
         return [
@@ -370,6 +373,7 @@ class PayrollService
             'full_basic' => $ctx->basicSalaryCents,
             'leave_days_encashed' => $leaveDays,
             'loan_repayments' => $loanRepayments,
+            'employer_contributions' => $employerContributions,
         ];
     }
 

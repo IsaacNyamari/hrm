@@ -81,7 +81,8 @@ class ProvisionTenantPayroll
                 'personal_relief_cents' => 240_000,
             ]],
             [TaxRuleType::Shif, 'SHIF (Kenya)', ['rate' => 0.0275, 'minimum_cents' => 30_000]],
-            [TaxRuleType::HousingLevy, 'Housing Levy (Kenya)', ['rate' => 0.015]],
+            [TaxRuleType::HousingLevy, 'Housing Levy (Kenya)', ['rate' => 0.015, 'employer_rate' => 0.015]],
+            [TaxRuleType::Nita, 'NITA Levy (Kenya)', ['amount_cents' => 5_000]],
         ];
 
         foreach ($rules as [$type, $name, $config]) {
@@ -95,7 +96,7 @@ class ProvisionTenantPayroll
         foreach ([['2024-07-01', '2026-01-31', 7_200_000], ['2026-02-01', null, 10_800_000]] as [$from, $to, $ceilingCents]) {
             TaxRule::query()->updateOrCreate(
                 ['tenant_id' => $tenant->getKey(), 'type' => TaxRuleType::Nssf->value, 'effective_from' => $from],
-                ['name' => 'NSSF (Kenya)', 'country' => 'KE', 'effective_to' => $to, 'config' => ['rate' => 0.06, 'ceiling_cents' => $ceilingCents], 'is_active' => true],
+                ['name' => 'NSSF (Kenya)', 'country' => 'KE', 'effective_to' => $to, 'config' => ['rate' => 0.06, 'employer_rate' => 0.06, 'ceiling_cents' => $ceilingCents], 'is_active' => true],
             );
         }
     }

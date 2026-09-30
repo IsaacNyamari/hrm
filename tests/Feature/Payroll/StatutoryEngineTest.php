@@ -58,3 +58,20 @@ it('fails clearly when no rule is in force for the pay date', function () {
 
     $this->engine->compute(10_000_000, 10_000_000, 10_000_000, $this->payDate);
 })->throws(PayrollException::class);
+
+it('computes employer NSSF, matching Housing Levy and the flat NITA levy', function () {
+    $lines = collect($this->engine->employerContributions(15_000_000, 10_000_000, $this->payDate))->pluck('amount_cents', 'code');
+
+    expect($lines['NSSF'])->toBe(600_000) // 6% of pensionable 100,000
+        ->and($lines['HOUSING_LEVY'])->toBe(225_000) // 1.5% of gross 150,000
+        ->and($lines['NITA'])->toBe(5_000);
+});
+
+it('caps employer NSSF at the ceiling and skips a missing NITA rule', function () {
+    TaxRule::query()->where('type', 'nita')->delete();
+
+    $lines = collect($this->engine->employerContributions(20_000_000, 20_000_000, $this->payDate));
+
+    expect($lines->firstWhere('code', 'NSSF')['amount_cents'])->toBe(648_000)
+        ->and($lines->pluck('code')->all())->not->toContain('NITA');
+});

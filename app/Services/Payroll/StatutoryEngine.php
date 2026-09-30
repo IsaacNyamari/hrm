@@ -35,6 +35,36 @@ class StatutoryEngine
     }
 
     /**
+     * Employer-side statutory costs, which never reduce the employee's pay:
+     * matching NSSF, the matching Housing Levy and the flat NITA levy. A missing
+     * rule is skipped rather than fatal, so payroll never blocks on a cost that
+     * the employee does not bear.
+     *
+     * @return list<array{code: string, name: string, amount_cents: int}>
+     */
+    public function employerContributions(int $grossCents, int $pensionableCents, CarbonImmutable $payDate): array
+    {
+        $lines = [];
+
+        if (($nssf = TaxRule::inForce(TaxRuleType::Nssf, $payDate)) !== null) {
+            $rate = (float) ($nssf->config['employer_rate'] ?? $nssf->config['rate'] ?? 0.06);
+            $ceiling = (int) ($nssf->config['ceiling_cents'] ?? 7_200_000);
+            $lines[] = ['code' => 'NSSF', 'name' => 'NSSF (employer)', 'amount_cents' => (int) round(min($pensionableCents, $ceiling) * $rate)];
+        }
+
+        if (($levy = TaxRule::inForce(TaxRuleType::HousingLevy, $payDate)) !== null) {
+            $rate = (float) ($levy->config['employer_rate'] ?? $levy->config['rate'] ?? 0);
+            $lines[] = ['code' => 'HOUSING_LEVY', 'name' => 'Housing Levy (employer)', 'amount_cents' => (int) round($grossCents * $rate)];
+        }
+
+        if (($nita = TaxRule::inForce(TaxRuleType::Nita, $payDate)) !== null) {
+            $lines[] = ['code' => 'NITA', 'name' => 'NITA Levy', 'amount_cents' => (int) ($nita->config['amount_cents'] ?? 0)];
+        }
+
+        return $lines;
+    }
+
+    /**
      * @return array{code: string, name: string, amount_cents: int, base: string}
      */
     private function nssf(int $pensionableCents, CarbonImmutable $payDate): array

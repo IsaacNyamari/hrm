@@ -46,10 +46,12 @@
                                     <flux:dropdown>
                                         <button type="button" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Returns') }}</button>
                                         <flux:menu>
-                                            <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'kra']) }}">{{ __('KRA iTax (PAYE + Housing Levy)') }}</flux:menu.item>
+                                            <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'kra']) }}">{{ __('KRA P10 Section B (CSV import)') }}</flux:menu.item>
                                             <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'sha']) }}">{{ __('SHA (SHIF)') }}</flux:menu.item>
                                             <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'nssf']) }}">{{ __('NSSF') }}</flux:menu.item>
                                             <flux:menu.item href="{{ route('payroll-runs.statutory-returns.download', [$run, 'all']) }}">{{ __('All (zip)') }}</flux:menu.item>
+                                            <flux:menu.separator />
+                                            <p class="max-w-64 px-2 py-1.5 text-xs text-neutral-500">{{ __('KRA P10: download the template from iTax, enable macros, enter Section A (Original, :from to :to), click Import CSV on Section B and choose the KRA file, then Generate upload and upload the zip it creates.', ['from' => $period->start_date->format('d/m/Y'), 'to' => $period->end_date->format('d/m/Y')]) }}</p>
                                         </flux:menu>
                                     </flux:dropdown>
                                 @endif

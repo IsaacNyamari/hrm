@@ -58,6 +58,13 @@ it('computes a payslip: basic + percentage allowance, statutory deductions and n
         ->and($lines['SHIF']->amount_cents)->toBe((int) round(11_500_000 * 0.0275))
         ->and($lines['HOUSING_LEVY']->amount_cents)->toBe((int) round(11_500_000 * 0.015));
 
+    // employer costs are recorded on the payslip but never deducted from pay
+    $employer = collect($payslip->snapshot['employer_contributions'])->pluck('amount_cents', 'code');
+    expect($employer['NSSF'])->toBe(600_000)
+        ->and($employer['HOUSING_LEVY'])->toBe((int) round(11_500_000 * 0.015))
+        ->and($employer['NITA'])->toBe(5_000)
+        ->and($lines->has('NITA'))->toBeFalse();
+
     // net = gross - all deductions
     $expectedNet = $payslip->gross_earnings_cents - $payslip->total_deductions_cents;
     expect($payslip->net_pay_cents)->toBe($expectedNet)

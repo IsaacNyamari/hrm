@@ -20,7 +20,7 @@ enum StatutoryReturnType: string
     public function label(): string
     {
         return match ($this) {
-            self::Kra => 'KRA iTax (PAYE + Housing Levy)',
+            self::Kra => 'KRA P10 Section B (CSV import)',
             self::Sha => 'SHA employer portal (SHIF)',
             self::Nssf => 'NSSF employer portal',
         };

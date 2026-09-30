@@ -47,7 +47,7 @@ class PayrollRegisterReport extends BaseReport
      */
     public function columns(): array
     {
-        return ['Employee', 'Number', 'Gross', 'PAYE', 'NSSF', 'SHIF', 'Housing levy', 'Other deductions', 'Net'];
+        return ['Employee', 'Number', 'Gross', 'PAYE', 'NSSF', 'SHIF', 'Housing levy', 'Other deductions', 'Net', 'Employer NSSF', 'Employer housing levy', 'NITA levy', 'Total employer cost'];
     }
 
     /**
@@ -79,6 +79,7 @@ class PayrollRegisterReport extends BaseReport
                     ->where('is_statutory', true)
                     ->whereNotIn('code', $namedStatutory)
                     ->sum('amount_cents');
+                $employer = collect(data_get($slip->snapshot, 'employer_contributions', []))->pluck('amount_cents', 'code');
                 $name = data_get($slip, 'employee') !== null ? $slip->employee->fullName() : '#'.$slip->employee_id;
 
                 return [
@@ -91,6 +92,10 @@ class PayrollRegisterReport extends BaseReport
                     $this->money($line('HOUSING_LEVY')),
                     $this->money($slip->other_deductions_cents + $otherStatutory),
                     $this->money($slip->net_pay_cents),
+                    $this->money((int) $employer->get('NSSF')),
+                    $this->money((int) $employer->get('HOUSING_LEVY')),
+                    $this->money((int) $employer->get('NITA')),
+                    $this->money((int) $employer->sum()),
                 ];
             })
             ->all();

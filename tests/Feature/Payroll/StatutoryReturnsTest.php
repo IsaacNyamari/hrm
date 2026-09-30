@@ -54,7 +54,7 @@ it('exports the KRA, NSSF and SHA files once details are complete', function () 
 
     $kra = $this->actingAs($this->manager)->get("{$this->url}/kra")->assertOk();
     expect($kra->headers->get('content-disposition'))->toContain('kra-2026-09.csv')
-        ->and($kra->getContent())->toContain('PIN of Employee', 'A123456789Z', 'Amina');
+        ->and($kra->getContent())->toContain('A123456789Z', 'Amina');
 
     $nssf = $this->actingAs($this->manager)->get("{$this->url}/nssf")->assertOk();
     expect($nssf->getContent())->toContain('NSSF0001', '12345678', 'Otieno');
@@ -70,4 +70,28 @@ it('hides returns from users without payroll access and rejects unknown types', 
 
     $this->actingAs($employeeUser)->getJson($this->url)->assertForbidden();
     $this->actingAs($this->manager)->get("{$this->url}/bogus")->assertNotFound();
+});
+
+it('writes the KRA file as a headerless 25-column Section B import for the P10 template', function () {
+    completeStatutoryDetails($this->employee);
+
+    $content = $this->actingAs($this->manager)->get("{$this->url}/kra")->assertOk()->getContent();
+    $rows = array_map('str_getcsv', array_filter(explode('
+', str_replace('', '', $content))));
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0])->toHaveCount(25)
+        ->and($rows[0][0])->toBe('A123456789Z')
+        ->and($rows[0][2])->toBe('Resident')
+        ->and($rows[0][3])->toBe('Primary Employee')
+        ->and($rows[0][4])->toBe('No')
+        ->and($rows[0][10])->toBe('Benefit not given')
+        ->and((float) $rows[0][6])->toBe(100000.0) // total cash pay
+        ->and((float) $rows[0][14])->toBe(2750.0) // SHIF
+        ->and((float) $rows[0][15])->toBe(6000.0) // NSSF
+        ->and((float) $rows[0][19])->toBe(1500.0) // Housing levy
+        ->and((float) $rows[0][20])->toBe(89750.0) // taxable pay
+        ->and((float) $rows[0][21])->toBe(2400.0) // personal relief
+        ->and((float) $rows[0][23])->toBe(19308.35) // PAYE
+        ->and($rows[0][24])->toBe($rows[0][23]);
 });
