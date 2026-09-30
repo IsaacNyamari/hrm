@@ -3,7 +3,8 @@
     $salary = collect([$job->min_salary_cents, $job->max_salary_cents])->filter()->map(fn ($c) => number_format($c / 100))->implode(' – ');
 @endphp
 
-<x-layouts::marketing :title="$job->title.' — '.$job->tenant->name" :description="\Illuminate\Support\Str::limit(strip_tags((string) $job->description), 155)">
+<x-layouts::marketing :title="$job->title.' — '.$job->tenant->name" :description="\Illuminate\Support\Str::limit(strip_tags((string) $job->description), 155)"
+    :keywords="array_filter([$job->title.' jobs', $job->title.' jobs Kenya', $job->location ? $job->title.' jobs in '.$job->location : null, $job->tenant->name.' careers', 'jobs in Kenya'])">
     <x-marketing.page-header :eyebrow="$job->tenant->name" :title="$job->title">
         <div class="mt-6 flex flex-wrap justify-center gap-2 text-sm">
             @if ($job->department)

@@ -15,7 +15,8 @@
     $featured = $plans->count() > 1 ? $plans->values()->get(1)?->id : $plans->first()?->id;
 @endphp
 
-<x-layouts::marketing :title="__('Pricing')" :description="__('Simple monthly pricing in KES for HR, payroll and attendance. Every plan starts with a free trial.')">
+<x-layouts::marketing :title="__('Pricing')" :description="__('Simple monthly pricing in KES for HR, payroll and attendance. Every plan starts with a free trial.')"
+    :keywords="['HR software pricing Kenya', 'affordable HR software Kenya', 'cheap HRM software Kenya', 'payroll software cost Kenya', 'HR software plans Kenya', 'HRMS pricing Kenya']">
     <x-marketing.page-header
         :eyebrow="__('Pricing')"
         :title="__('Simple pricing that grows with your team')"

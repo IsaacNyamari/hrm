@@ -92,6 +92,12 @@ Route::view('track-application', 'marketing.track')->name('applications.track');
 
 Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
+Route::get('robots.txt', function () {
+    $lines = ['User-agent: *', 'Disallow:', 'Sitemap: '.route('sitemap')];
+
+    return response(implode("\n", $lines)."\n")->header('Content-Type', 'text/plain; charset=UTF-8');
+})->name('robots');
+
 /*
 | First sign-in for a new hire: signed, single-use link from the welcome email.
 */

@@ -1,4 +1,5 @@
-<x-layouts::marketing :title="__('Jobs')" :description="__('Browse open positions at organizations hiring through our platform and apply online in minutes.')">
+<x-layouts::marketing :title="__('Jobs in Kenya')" :description="__('Browse open positions at organizations hiring through our platform and apply online in minutes.')"
+    :keywords="['jobs in Kenya', 'job vacancies Kenya', 'jobs in Nairobi', 'latest jobs Kenya', 'apply for jobs online Kenya', 'job board Kenya']">
     <x-marketing.page-header
         :eyebrow="__('Careers')"
         :title="__('Find your next job')"

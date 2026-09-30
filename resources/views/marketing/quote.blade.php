@@ -1,4 +1,5 @@
-<x-layouts::marketing :title="__('Request a quote')" :description="__('Tell us about your organization and receive a tailored quote and secure access to set up your HR workspace.')">
+<x-layouts::marketing :title="__('Request a quote')" :description="__('Tell us about your organization and receive a tailored quote and secure access to set up your HR workspace.')"
+    :keywords="['HR software quote Kenya', 'request HRM software demo Kenya', 'get started HR software Kenya', 'free trial HR software Kenya']">
     <x-marketing.page-header
         :eyebrow="__('Request a quote')"
         :title="__('Get access for your organization')"

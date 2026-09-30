@@ -2,7 +2,8 @@
 @php($appName = config('app.name'))
 @php($updated = '22 September 2026')
 
-<x-layouts::marketing :title="__('Privacy Policy')" :description="__('How :app collects, uses and protects personal data on the web and in the mobile app.', ['app' => $appName])">
+<x-layouts::marketing :title="__('Privacy Policy')" :description="__('How :app collects, uses and protects personal data on the web and in the mobile app.', ['app' => $appName])"
+    :keywords="['HR software privacy policy', 'data protection HR software Kenya']">
     <x-marketing.page-header
         :eyebrow="__('Legal')"
         :title="__('Privacy Policy')"

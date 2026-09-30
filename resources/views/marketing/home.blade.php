@@ -18,7 +18,16 @@
     ];
 @endphp
 
-<x-layouts::marketing>
+<x-layouts::marketing
+    :title="__('Affordable HR, Payroll & Attendance Software for Kenyan Businesses')"
+    :description="__('The complete HRM platform for growing Kenyan organizations: employees, attendance, leave, payroll with PAYE, NSSF, SHIF and Housing Levy built in, performance, recruitment and more — at a price built for SMEs. Start a free trial today.')"
+    :keywords="[
+        'HR software Kenya', 'HRM software Kenya', 'best HR software Kenya', 'cheap HRM software Kenya',
+        'affordable HR software Kenya', 'HR management system Kenya', 'payroll software Kenya',
+        'online payroll system Kenya', 'PAYE NSSF SHIF payroll software', 'Affordable Housing Levy payroll software',
+        'HR software for small business Kenya', 'cloud HR software Kenya', 'employee attendance software Kenya',
+        'leave management system Kenya', 'recruitment software Kenya', 'biometric attendance software Kenya',
+    ]">
     {{-- Hero --}}
     <section class="relative overflow-hidden bg-night pt-32 pb-24 text-white sm:pt-40 lg:pb-32">
         <div class="pointer-events-none absolute inset-0">

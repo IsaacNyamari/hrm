@@ -36,7 +36,8 @@
     $li = 'flex gap-2.5';
 @endphp
 
-<x-layouts::marketing :title="__('Documentation')" :description="__('How to set up and use the HR platform: employees, attendance, biometric devices, leave, payroll, recruitment, billing, security and the REST API.')">
+<x-layouts::marketing :title="__('Documentation')" :description="__('How to set up and use the HR platform: employees, attendance, biometric devices, leave, payroll, recruitment, billing, security and the REST API.')"
+    :keywords="['HR software documentation', 'HRMS setup guide Kenya', 'payroll software API Kenya', 'HR software help Kenya']">
     <x-marketing.page-header
         :eyebrow="__('Documentation')"
         :title="__('Everything you need to run your workspace')"

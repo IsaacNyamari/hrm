@@ -99,7 +99,8 @@
     ];
 @endphp
 
-<x-layouts::marketing :title="__('Features')" :description="__('Every HR module you need: people, attendance, leave, payroll with Kenyan statutory deductions, performance, recruitment, documents and reports.')">
+<x-layouts::marketing :title="__('Features')" :description="__('Every HR module you need: people, attendance, leave, payroll with Kenyan statutory deductions, performance, recruitment, documents and reports.')"
+    :keywords="['HR software features Kenya', 'HRMS features', 'payroll software features Kenya', 'employee attendance software Kenya', 'leave management system Kenya', 'recruitment software Kenya', 'performance management software Kenya', 'HR document management Kenya']">
     <x-marketing.page-header
         :eyebrow="__('Features')"
         :title="__('Everything your HR team does — in one system')"

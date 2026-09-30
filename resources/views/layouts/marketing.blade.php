@@ -1,12 +1,27 @@
 @props([
     'title' => null,
     'description' => null,
+    'keywords' => null,
 ])
 
 @php
     $appName = config('app.name', 'HRM');
-    $pageTitle = filled($title) ? $title.' — '.$appName : $appName.' — HR, payroll & attendance software';
-    $metaDescription = $description ?? __('HR, payroll, attendance, leave and recruitment in one secure platform built for growing organizations in Kenya and beyond.');
+    $pageTitle = filled($title) ? $title.' — '.$appName : $appName.' — HR, Payroll & Attendance Software for Kenyan Businesses';
+    $metaDescription = $description ?? __('Cloud-based HR, payroll, attendance, leave and recruitment software built for growing organizations in Kenya — with PAYE, NSSF, SHIF and Housing Levy compliance built in. Start a free trial.');
+
+    // What buyers of Kenyan HR software actually search for — drawn from
+    // competitor listings and statutory-compliance guides that rank for
+    // these terms today, not guessed. Individual pages override this with
+    // terms specific to their own content.
+    $defaultKeywords = [
+        'HR software Kenya', 'HRM software Kenya', 'HRMS Kenya', 'payroll software Kenya',
+        'cloud HR software Kenya', 'affordable HR software Kenya', 'cheap HRM software Kenya',
+        'HR management system Kenya', 'online payroll system Kenya', 'PAYE NSSF SHIF payroll software',
+        'employee attendance software Kenya', 'leave management system Kenya',
+        'HR software for small business Kenya', 'recruitment software Kenya', 'best HR software Kenya',
+    ];
+    $metaKeywords = implode(', ', filled($keywords) ? (is_array($keywords) ? $keywords : [$keywords]) : $defaultKeywords);
+    $canonicalUrl = url()->current();
     $links = [
         ['home', __('Home')],
         ['features', __('Features')],
@@ -26,15 +41,54 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{{ $pageTitle }}</title>
         <meta name="description" content="{{ $metaDescription }}" />
+        <meta name="keywords" content="{{ $metaKeywords }}" />
+        <link rel="canonical" href="{{ $canonicalUrl }}" />
+
         <meta property="og:title" content="{{ $pageTitle }}" />
         <meta property="og:description" content="{{ $metaDescription }}" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="{{ url()->current() }}" />
+        <meta property="og:url" content="{{ $canonicalUrl }}" />
+        <meta property="og:site_name" content="{{ $appName }}" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="{{ $pageTitle }}" />
+        <meta name="twitter:description" content="{{ $metaDescription }}" />
         <meta name="theme-color" content="#423a8e" />
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+        {{-- Organization schema helps Google's Knowledge Graph attribute search
+             results to us by name; SoftwareApplication (home page only) is what
+             can earn a rich result in search — price/category, not just a link. --}}
+        <script type="application/ld+json">
+            {!! json_encode([
+                '@context' => 'https://schema.org',
+                '@type' => 'Organization',
+                'name' => $appName,
+                'url' => route('home'),
+                'description' => $metaDescription,
+                'areaServed' => 'KE',
+            ], JSON_UNESCAPED_SLASHES) !!}
+        </script>
+        @if (request()->routeIs('home'))
+            <script type="application/ld+json">
+                {!! json_encode([
+                    '@context' => 'https://schema.org',
+                    '@type' => 'SoftwareApplication',
+                    'name' => $appName,
+                    'applicationCategory' => 'BusinessApplication',
+                    'operatingSystem' => 'Web',
+                    'description' => $metaDescription,
+                    'url' => route('home'),
+                    'offers' => [
+                        '@type' => 'Offer',
+                        'priceCurrency' => 'KES',
+                        'category' => 'SaaS subscription',
+                    ],
+                ], JSON_UNESCAPED_SLASHES) !!}
+            </script>
+        @endif
 
         @fonts
         @vite(['resources/css/app.css', 'resources/js/app.js'])

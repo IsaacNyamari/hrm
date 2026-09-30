@@ -1,4 +1,5 @@
-<x-layouts::marketing :title="__('About')" :description="__('We build HR software that gives growing organizations the same clarity and control as the largest enterprises — without the complexity.')">
+<x-layouts::marketing :title="__('About')" :description="__('We build HR software that gives growing organizations the same clarity and control as the largest enterprises — without the complexity.')"
+    :keywords="['HR software company Kenya', 'HRM software provider Kenya', 'Kenyan HR technology company', 'about our HR software']">
     <x-marketing.page-header
         :eyebrow="__('About us')"
         :title="__('HR software that respects people\'s time')"

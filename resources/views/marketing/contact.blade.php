@@ -1,6 +1,7 @@
 @php($contact = config('platform.contact'))
 
-<x-layouts::marketing :title="__('Contact')" :description="__('Questions about HR, payroll or attendance software for your organization? Send us a message.')">
+<x-layouts::marketing :title="__('Contact')" :description="__('Questions about HR, payroll or attendance software for your organization? Send us a message.')"
+    :keywords="['contact HR software provider Kenya', 'HR software support Kenya', 'talk to HRM software sales Kenya']">
     <x-marketing.page-header
         :eyebrow="__('Contact')"
         :title="__('Let\'s talk about your team')"
