@@ -17,6 +17,34 @@ use Illuminate\Support\Facades\Request;
  */
 class Auditor
 {
+    private static int $mutedDepth = 0;
+
+    /**
+     * Run a bulk system operation (tenant provisioning, seeding) without
+     * filling the trail with rows nobody acted on. Model-change auditing is
+     * paused for the duration; explicit log() calls are unaffected.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function muted(callable $callback): mixed
+    {
+        self::$mutedDepth++;
+
+        try {
+            return $callback();
+        } finally {
+            self::$mutedDepth--;
+        }
+    }
+
+    public static function isMuted(): bool
+    {
+        return self::$mutedDepth > 0;
+    }
+
     /**
      * @param  array<string, mixed>  $properties
      */

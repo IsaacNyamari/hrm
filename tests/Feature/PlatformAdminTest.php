@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Tenancy\ChangeTenantStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\Role;
 use App\Enums\SubscriptionStatus;
@@ -228,4 +229,27 @@ it('renders the platform dashboard from a serialising cache store', function () 
 
     $this->get(route('platform.dashboard'))->assertOk();
     $this->get(route('platform.dashboard'))->assertOk()->assertSee('Cached Org');
+});
+
+it('keeps the subscription in step when an organization is suspended and reactivated, and drops it from MRR', function () {
+    $tenant = Tenant::factory()->create(['status' => TenantStatus::Active]);
+    $subscription = Subscription::factory()->forTenant($tenant)->create(['status' => SubscriptionStatus::Active]);
+    $action = app(ChangeTenantStatus::class);
+
+    $action->handle($tenant, TenantStatus::Suspended, 'platform.tenant.suspended');
+
+    expect($subscription->fresh()->status)->toBe(SubscriptionStatus::Suspended)
+        ->and($tenant->fresh()->hasAppAccess())->toBeFalse();
+
+    $action->handle($tenant->fresh(), TenantStatus::Active, 'platform.tenant.activated');
+
+    expect($subscription->fresh()->status)->toBe(SubscriptionStatus::Active)
+        ->and($tenant->fresh()->hasAppAccess())->toBeTrue();
+});
+
+it('denies app access to a suspended organization even if its subscription is still active', function () {
+    $tenant = Tenant::factory()->create(['status' => TenantStatus::Suspended]);
+    Subscription::factory()->forTenant($tenant)->create(['status' => SubscriptionStatus::Active]);
+
+    expect($tenant->fresh()->hasAppAccess())->toBeFalse();
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasUuid;
 use App\Enums\PayrollRunStatus;
@@ -36,6 +37,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class PayrollRun extends Model
 {
+    use Auditable;
     use BelongsToTenant;
 
     /** @use HasFactory<PayrollRunFactory> */

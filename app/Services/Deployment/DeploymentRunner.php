@@ -35,14 +35,17 @@ class DeploymentRunner
         $deployment->forceFill(['status' => DeploymentStatus::Running, 'started_at' => now()])->save();
 
         $this->maintenanceMode(true);
+        $codeMoved = false;
 
         try {
             match ($deployment->type) {
                 DeploymentType::Pull => $this->pull($deployment),
                 DeploymentType::Rollback => $this->rollback($deployment),
             };
+            $codeMoved = true;
 
             $this->runPipelineTail();
+            $this->healthCheck();
 
             $deployment->forceFill([
                 'status' => DeploymentStatus::Succeeded,
@@ -52,6 +55,8 @@ class DeploymentRunner
             ])->save();
         } catch (Throwable $e) {
             $this->append("\n! ".$e->getMessage());
+
+            $restored = $codeMoved && $deployment->from_commit !== null && $this->restoreCode((string) $deployment->from_commit);
 
             $deployment->forceFill([
                 'status' => DeploymentStatus::Failed,
@@ -104,7 +109,37 @@ class DeploymentRunner
         $this->step(['git', 'reset', '--hard', (string) $deployment->to_commit]);
     }
 
-    private function runPipelineTail(): void
+    /**
+     * A deployment is only reported as succeeded if the application can still
+     * reach its database and read its migration state afterwards.
+     */
+    private function healthCheck(): void
+    {
+        $this->append("\nHealth check\n");
+        $this->step(['php', 'artisan', 'migrate:status', '--no-interaction']);
+    }
+
+    /**
+     * Put the previous code back after a failed deployment. Database migrations
+     * that already ran are NOT reversed — review them before retrying.
+     */
+    private function restoreCode(string $commit): bool
+    {
+        $this->append("\n! Deployment failed; restoring the previous code ({$commit}). Database migrations that already ran were not reversed.\n");
+
+        try {
+            $this->step(['git', 'reset', '--hard', $commit]);
+            $this->runPipelineTail(migrate: false);
+
+            return true;
+        } catch (Throwable $e) {
+            $this->append("\n! Automatic restore failed: ".$e->getMessage());
+
+            return false;
+        }
+    }
+
+    private function runPipelineTail(bool $migrate = true): void
     {
         $this->step(['composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction']);
 
@@ -113,7 +148,10 @@ class DeploymentRunner
             $this->step(['npm', 'run', 'build']);
         }
 
-        $this->step(['php', 'artisan', 'migrate', '--force']);
+        if ($migrate) {
+            $this->step(['php', 'artisan', 'migrate', '--force']);
+        }
+
         $this->step(['php', 'artisan', 'config:cache']);
         $this->step(['php', 'artisan', 'route:cache']);
         $this->step(['php', 'artisan', 'view:cache']);

@@ -70,7 +70,7 @@ it('lets a payroll manager add the next NSSF rule in KES and percent, and audits
     $rule = TaxRule::query()->where('type', 'nssf')->whereDate('effective_from', '2027-02-01')->firstOrFail();
 
     expect($rule->config)->toEqual(['rate' => 0.06, 'employer_rate' => 0.06, 'ceiling_cents' => 14_400_000])
-        ->and(AuditLog::query()->where('event', 'payroll.tax_rule_created')->exists())->toBeTrue()
+        ->and(AuditLog::query()->where('event', 'tax_rule.created')->exists())->toBeTrue()
         ->and(app(StatutoryRuleWatch::class)->alerts(CarbonImmutable::create(2027, 1, 25)))->toBe([]);
 });
 
@@ -105,7 +105,7 @@ it('lets an employee-level user see nothing and a viewer not change rates', func
     $this->actingAs(userForTenant($this->tenant, Role::PayrollManager));
     Livewire::test(TaxRules::class)->call('delete', $rule->uuid)->assertHasNoErrors();
     expect(TaxRule::query()->whereKey($rule->getKey())->exists())->toBeFalse()
-        ->and(AuditLog::query()->where('event', 'payroll.tax_rule_deleted')->exists())->toBeTrue();
+        ->and(AuditLog::query()->where('event', 'tax_rule.deleted')->exists())->toBeTrue();
 });
 
 it('validates the config on the API too', function () {

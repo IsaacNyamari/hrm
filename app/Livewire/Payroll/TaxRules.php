@@ -9,7 +9,6 @@ use App\Enums\TaxRuleType;
 use App\Livewire\Concerns\BindsTenant;
 use App\Models\TaxRule;
 use App\Services\Payroll\StatutoryRuleWatch;
-use App\Support\Auditor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -109,7 +108,7 @@ class TaxRules extends Component
         $this->bands = array_values($this->bands);
     }
 
-    public function save(Auditor $auditor): void
+    public function save(): void
     {
         $rule = $this->editingUuid !== null ? TaxRule::query()->where('uuid', $this->editingUuid)->firstOrFail() : null;
         Gate::authorize($rule === null ? 'create' : 'update', $rule ?? TaxRule::class);
@@ -135,26 +134,18 @@ class TaxRules extends Component
             'is_active' => $this->is_active,
         ];
 
-        if ($rule === null) {
-            $rule = TaxRule::query()->create($attributes);
-            $auditor->log('payroll.tax_rule_created', $rule, $attributes);
-        } else {
-            $before = $rule->only(['effective_from', 'effective_to', 'config', 'is_active']);
-            $rule->update($attributes);
-            $auditor->log('payroll.tax_rule_updated', $rule, ['before' => $before, 'after' => $attributes]);
-        }
+        $rule === null ? TaxRule::query()->create($attributes) : $rule->update($attributes);
 
         $this->resetForm();
         $this->saved = true;
         $this->dispatch('payroll-updated');
     }
 
-    public function delete(string $uuid, Auditor $auditor): void
+    public function delete(string $uuid): void
     {
         $rule = TaxRule::query()->where('uuid', $uuid)->firstOrFail();
         Gate::authorize('delete', $rule);
 
-        $auditor->log('payroll.tax_rule_deleted', $rule, $rule->only(['type', 'effective_from', 'effective_to', 'config']));
         $rule->delete();
         $this->dispatch('payroll-updated');
     }

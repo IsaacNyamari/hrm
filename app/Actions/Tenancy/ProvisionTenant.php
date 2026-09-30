@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Tenancy;
 
 use App\Models\Tenant;
+use App\Support\Auditor;
 
 /**
  * One-stop tenant bootstrap: roles/permissions + reference data. Called on
@@ -22,10 +23,12 @@ class ProvisionTenant
 
     public function handle(Tenant $tenant): void
     {
-        $this->roles->handle($tenant);
-        $this->employmentTypes->handle($tenant);
-        $this->leaveTypes->handle($tenant);
-        $this->payroll->handle($tenant);
-        $this->documents->handle($tenant);
+        Auditor::muted(function () use ($tenant): void {
+            $this->roles->handle($tenant);
+            $this->employmentTypes->handle($tenant);
+            $this->leaveTypes->handle($tenant);
+            $this->payroll->handle($tenant);
+            $this->documents->handle($tenant);
+        });
     }
 }

@@ -34,6 +34,24 @@ return [
         'logout',
     ],
 
+    // URL path patterns that need a plan feature flag (see plans.features.flags).
+    'route_features' => [
+        'payroll*' => 'payroll',
+        'tax-rules*' => 'payroll',
+        'salary-*' => 'payroll',
+        'hr-letters*' => 'documents',
+        'document-types*' => 'documents',
+        'document-templates*' => 'documents',
+        'performance*' => 'performance',
+        'recruitment*' => 'recruitment',
+        'expenses*' => 'expenses',
+        'expense-*' => 'expenses',
+        'asset-*' => 'assets',
+        'assets*' => 'assets',
+        'api-tokens*' => 'api_access',
+        'webhook-endpoints*' => 'api_access',
+    ],
+
     // Days-remaining marks at which a trial-ending reminder is sent.
     'trial_reminder_days' => [7, 3, 1],
 

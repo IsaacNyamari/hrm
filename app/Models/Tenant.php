@@ -192,6 +192,10 @@ class Tenant extends Model
      */
     public function hasAppAccess(): bool
     {
+        if ($this->status === TenantStatus::Suspended) {
+            return false;
+        }
+
         $subscription = $this->subscription;
 
         if ($subscription !== null) {

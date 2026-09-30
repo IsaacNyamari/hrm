@@ -66,6 +66,7 @@ class PlatformMetrics
         $activeSubscriptions = Subscription::query()
             ->with('plan:id,name,price_cents,billing_interval')
             ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::PastDue])
+            ->whereNotIn('tenant_id', Tenant::query()->where('status', TenantStatus::Suspended)->select('id'))
             ->get();
 
         $mrrCents = $activeSubscriptions->sum(fn (Subscription $s): int => $this->monthlyCents($s));

@@ -50,6 +50,7 @@ function fakeGitCommands(array $overrides = []): void
 
 beforeEach(function () {
     fakeGitCommands();
+    session(['auth.password_confirmed_at' => time()]);
 });
 
 it('lets a super admin pull the latest changes and records a succeeded deployment', function () {
@@ -170,4 +171,39 @@ it('forbids a platform role without deployments.manage', function () {
     $this->actingAs(User::factory()->platformAdmin(Role::SupportAdmin)->create())
         ->get(route('platform.deployments'))
         ->assertForbidden();
+});
+
+it('asks the operator to confirm their password before deploying', function () {
+    session()->forget('auth.password_confirmed_at');
+    $this->actingAs(User::factory()->platformAdmin(Role::SuperAdmin)->create());
+
+    Livewire::test(Deployments::class)
+        ->call('pullLatest')
+        ->assertRedirect(route('password.confirm'));
+
+    expect(Deployment::query()->count())->toBe(0);
+});
+
+it('restores the previous code when a deployment fails after the code moved', function () {
+    fakeGitCommands([
+        'php artisan migrate --force' => Process::result(errorOutput: 'migration exploded', exitCode: 1),
+    ]);
+
+    $this->actingAs(User::factory()->platformAdmin(Role::SuperAdmin)->create());
+
+    Livewire::test(Deployments::class)->call('pullLatest');
+
+    $deployment = Deployment::query()->latest('id')->first();
+
+    expect($deployment->status)->toBe(DeploymentStatus::Failed)
+        ->and($deployment->output)->toContain('restoring the previous code')
+        ->and($deployment->output)->toContain('git reset --hard aaaaaaa1111111111111111111111111111111');
+});
+
+it('runs a health check after a successful deployment', function () {
+    $this->actingAs(User::factory()->platformAdmin(Role::SuperAdmin)->create());
+
+    Livewire::test(Deployments::class)->call('pullLatest');
+
+    expect(Deployment::query()->latest('id')->first()->output)->toContain('Health check', 'php artisan migrate:status');
 });

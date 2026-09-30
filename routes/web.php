@@ -164,7 +164,7 @@ Route::post('invitations/{invitation}', [InvitationController::class, 'store'])-
 | subscription.* stay reachable when it has lapsed). Queries are auto-scoped by
 | App\Models\Scopes\TenantScope.
 */
-Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription'])->group(function () {
+Route::middleware(['auth', 'verified', 'tenant', 'tenant.user', 'subscription', 'plan.feature'])->group(function () {
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
     Route::get('billing/invoices/{invoice:uuid}/pdf', [BillingController::class, 'invoicePdf'])->name('billing.invoices.pdf');
     Route::get('billing/paystack/callback', PaystackCallbackController::class)->name('billing.paystack.callback');

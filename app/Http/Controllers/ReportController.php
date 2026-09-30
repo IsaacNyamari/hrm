@@ -8,6 +8,7 @@ use App\Exports\ReportExport;
 use App\Reports\Report;
 use App\Reports\ReportRegistry;
 use App\Services\Reporting\ReportService;
+use App\Support\Auditor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,6 +56,8 @@ class ReportController extends Controller
         abort_unless($user->can('reports.export'), 403);
 
         $result = $this->service->run($report, $request->query(), $user);
+
+        app(Auditor::class)->log('report.exported', null, ['report' => $report, 'rows' => count($result['rows']), 'filters' => $request->query()]);
 
         $format = $request->string('format', 'xlsx')->lower()->toString();
         $writer = $format === 'csv' ? ExcelFormat::CSV : ExcelFormat::XLSX;

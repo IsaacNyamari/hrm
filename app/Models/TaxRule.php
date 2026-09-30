@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasUuid;
 use App\Enums\TaxRuleType;
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TaxRule extends Model
 {
+    use Auditable;
     use BelongsToTenant;
 
     /** @use HasFactory<TaxRuleFactory> */

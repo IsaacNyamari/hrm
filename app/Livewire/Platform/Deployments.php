@@ -35,10 +35,32 @@ class Deployments extends Component
         $this->authorizePlatform(PlatformPermission::DeploymentsManage);
     }
 
+    /**
+     * Deploying changes the live code, so the operator must have re-entered
+     * their password recently, not just hold an open session.
+     */
+    private function requireRecentPasswordConfirmation(): bool
+    {
+        $confirmedAt = (int) session('auth.password_confirmed_at', 0);
+
+        if (time() - $confirmedAt <= (int) config('deployment.password_confirmation_window', 600)) {
+            return true;
+        }
+
+        session()->put('url.intended', route('platform.deployments'));
+        $this->redirect(route('password.confirm'));
+
+        return false;
+    }
+
     public function pullLatest(DeploymentRunner $runner, Auditor $auditor): void
     {
         $this->authorizePlatform(PlatformPermission::DeploymentsManage);
         $this->guardNoneRunning();
+
+        if (! $this->requireRecentPasswordConfirmation()) {
+            return;
+        }
 
         $gitInfo = $this->readGitInfo($runner);
 
@@ -66,6 +88,10 @@ class Deployments extends Component
         $this->guardNoneRunning();
 
         abort_unless((bool) preg_match('/^[0-9a-f]{7,40}$/i', $sha), 422);
+
+        if (! $this->requireRecentPasswordConfirmation()) {
+            return;
+        }
 
         $gitInfo = $this->readGitInfo($runner);
 

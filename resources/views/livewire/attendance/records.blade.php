@@ -28,14 +28,7 @@
                         <td class="px-4 py-3"><x-status-badge :status="$record->status" /></td>
                         <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                             <flux:button size="sm" variant="ghost" wire:click="startEdit('{{ $record->uuid }}')">{{ __('Edit') }}</flux:button>
-                            <flux:modal.trigger name="delete-attendance-{{ $record->uuid }}">
-                                <flux:button size="sm" variant="danger">{{ __('Delete') }}</flux:button>
-                            </flux:modal.trigger>
-                            <x-confirm-modal
-                                name="delete-attendance-{{ $record->uuid }}"
-                                :heading="__('Delete this attendance record?')"
-                                :confirm-label="__('Delete')"
-                                confirm-wire="remove('{{ $record->uuid }}')" />
+                            <flux:button size="sm" variant="danger" wire:click="askRemove('{{ $record->uuid }}')">{{ __('Delete') }}</flux:button>
                         </td>
                     </tr>
                 @empty
@@ -72,10 +65,22 @@
             </div>
 
             <flux:textarea wire:model="form.notes" :label="__('Notes')" rows="2" />
+            <flux:textarea wire:model="form.reason" :label="__('Reason for this manual change')" :description="__('Required. Recorded in the audit trail with the before and after values.')" rows="2" required />
 
             <div class="flex justify-end gap-2">
                 <flux:button type="button" variant="ghost" wire:click="$set('showForm', false)">{{ __('Cancel') }}</flux:button>
                 <flux:button type="submit" variant="primary">{{ $editingUuid ? __('Save changes') : __('Create record') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="delete-attendance" class="max-w-md">
+        <form wire:submit="remove" class="space-y-4">
+            <flux:heading size="lg">{{ __('Delete this attendance record?') }}</flux:heading>
+            <flux:textarea wire:model="deleteReason" :label="__('Reason')" :description="__('Required. Recorded in the audit trail.')" rows="2" required />
+            <div class="flex justify-end gap-2">
+                <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
+                <flux:button type="submit" variant="danger">{{ __('Delete') }}</flux:button>
             </div>
         </form>
     </flux:modal>

@@ -68,6 +68,10 @@ trait Auditable
      */
     private static function audit(Model $model, string $verb, array $properties): void
     {
+        if (Auditor::isMuted()) {
+            return;
+        }
+
         $name = str(class_basename($model))->snake()->value();
 
         app(Auditor::class)->log("{$name}.{$verb}", $model, $properties);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Platform;
 
+use App\Actions\Tenancy\ChangeTenantStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PlatformPermission;
 use App\Enums\Role;
@@ -18,7 +19,6 @@ use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Auditor;
-use App\Support\TenantCache;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -82,21 +82,7 @@ class TenantDetail extends Component
     {
         $this->authorizePlatform(PlatformPermission::TenantsManage);
 
-        $from = $this->tenant->status;
-        $this->tenant->update(['status' => $status]);
-
-        // The platform dashboard's org counts are cached (see PlatformMetrics)
-        // — without this, suspending/activating here wouldn't show up there
-        // for up to a minute.
-        TenantCache::forget('platform.metrics');
-
-        Tenancy::run($this->tenant, fn () => $auditor->log($event, $this->tenant, [
-            'tenant_id' => $this->tenant->getKey(),
-            'from' => $from->value,
-            'to' => $status->value,
-        ]));
-
-        $this->tenant->refresh();
+        $this->tenant = app(ChangeTenantStatus::class)->handle($this->tenant, $status, $event);
         $this->notice = __(':name is now :state.', ['name' => $this->tenant->name, 'state' => $status->label()]);
     }
 

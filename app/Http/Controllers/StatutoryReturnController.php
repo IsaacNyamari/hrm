@@ -8,6 +8,7 @@ use App\Enums\StatutoryReturnType;
 use App\Models\PayrollRun;
 use App\Services\Payroll\StatutoryReturns\StatutoryReturnBuilder;
 use App\Services\Payroll\StatutoryReturns\StatutoryReturnExporter;
+use App\Support\Auditor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -51,6 +52,8 @@ class StatutoryReturnController extends Controller
                 'issues' => $issues,
             ], 422);
         }
+
+        app(Auditor::class)->log('payroll.statutory_return_exported', $payrollRun, ['type' => $type, 'forced' => $request->boolean('force'), 'employees' => count($built['rows'])]);
 
         if ($returnType === null) {
             return response()->download($this->exporter->bundle($payrollRun), "statutory-returns-{$built['name']}.zip")

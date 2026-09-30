@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Livewire\Platform;
 
+use App\Actions\Tenancy\ChangeTenantStatus;
 use App\Enums\PlatformPermission;
 use App\Enums\TenantStatus;
-use App\Facades\Tenancy;
 use App\Livewire\Concerns\BindsTenant;
 use App\Livewire\Platform\Concerns\WithPlatformGuard;
 use App\Models\Tenant;
 use App\Support\Auditor;
-use App\Support\TenantCache;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -57,22 +56,7 @@ class Tenants extends Component
     {
         $this->authorizePlatform(PlatformPermission::TenantsManage);
 
-        $tenant = Tenant::query()->findOrFail($tenantId);
-        $from = $tenant->status;
-        $tenant->update(['status' => $status]);
-
-        // The platform dashboard's org counts are cached (see PlatformMetrics)
-        // — without this, suspending/activating here wouldn't show up there
-        // for up to a minute.
-        TenantCache::forget('platform.metrics');
-
-        // Attribute the entry to the target organization even though the
-        // operator has no tenant of their own.
-        Tenancy::run($tenant, fn () => $auditor->log($event, $tenant, [
-            'tenant_id' => $tenant->getKey(),
-            'from' => $from->value,
-            'to' => $status->value,
-        ]));
+        $tenant = app(ChangeTenantStatus::class)->handle(Tenant::query()->findOrFail($tenantId), $status, $event);
 
         $this->notice = __(':name is now :state.', ['name' => $tenant->name, 'state' => $status->label()]);
     }
