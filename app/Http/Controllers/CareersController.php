@@ -12,6 +12,7 @@ use App\Models\Vacancy;
 use App\Services\Recruitment\RecruitmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * Public per-tenant careers board. The tenant is resolved from the request host
@@ -22,13 +23,21 @@ class CareersController extends Controller
 {
     public function __construct(private readonly RecruitmentService $service) {}
 
-    public function index(Request $request): JsonResponse
+    /**
+     * Browsers (and search engines) get a server-rendered page; API clients that
+     * ask for JSON keep getting JSON.
+     */
+    public function index(Request $request): JsonResponse|View
     {
         $vacancies = Vacancy::query()
             ->where('status', VacancyStatus::Open->value)
             ->with('department:id,name')
             ->orderByDesc('published_at')
             ->get();
+
+        if (! $request->expectsJson()) {
+            return view('careers.index', ['vacancies' => $vacancies, 'company' => Tenancy::getOrFail()->name]);
+        }
 
         return response()->json(['data' => $vacancies->map(fn (Vacancy $v): array => [
             'slug' => $v->slug,
@@ -39,9 +48,13 @@ class CareersController extends Controller
         ])]);
     }
 
-    public function show(Vacancy $vacancy): JsonResponse
+    public function show(Request $request, Vacancy $vacancy): JsonResponse|View
     {
         abort_unless($vacancy->status === VacancyStatus::Open, 404);
+
+        if (! $request->expectsJson()) {
+            return view('careers.show', ['vacancy' => $vacancy->loadMissing('department:id,name'), 'company' => Tenancy::getOrFail()->name]);
+        }
 
         return response()->json(['data' => [
             'slug' => $vacancy->slug,

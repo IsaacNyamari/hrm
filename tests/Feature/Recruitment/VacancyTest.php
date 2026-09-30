@@ -57,3 +57,25 @@ it('does not expose another tenant\'s vacancy', function () {
         ->getJson("http://ats-co.hrm.test/vacancies/{$vacancy->uuid}")
         ->assertNotFound();
 });
+
+it('serves the careers board as crawlable HTML with job-posting structured data, and JSON to API clients', function () {
+    $vacancy = Vacancy::factory()->forTenant($this->tenant)->create(['title' => 'Data Analyst', 'status' => 'open', 'published_at' => now(), 'description' => 'Analyse <things>.']);
+
+    $this->get('http://ats-co.hrm.test/careers')
+        ->assertOk()
+        ->assertSee('Data Analyst')
+        ->assertSee('ATS Co');
+
+    $page = $this->get("http://ats-co.hrm.test/careers/{$vacancy->slug}")->assertOk();
+
+    expect($page->getContent())->toContain('application/ld+json', '"@type":"JobPosting"', 'Data Analyst')
+        ->not->toContain('<things>');
+
+    $this->getJson("http://ats-co.hrm.test/careers/{$vacancy->slug}")->assertOk()->assertJsonPath('data.title', 'Data Analyst');
+});
+
+it('does not show a draft vacancy on the public HTML page', function () {
+    $draft = Vacancy::factory()->forTenant($this->tenant)->create(['status' => 'draft']);
+
+    $this->get("http://ats-co.hrm.test/careers/{$draft->slug}")->assertNotFound();
+});
