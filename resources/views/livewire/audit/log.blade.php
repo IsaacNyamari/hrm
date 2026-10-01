@@ -40,7 +40,7 @@
                     <tr class="border-t border-neutral-100 dark:border-neutral-800">
                         <td class="whitespace-nowrap px-3 py-1.5 text-neutral-500">{{ $log->created_at?->diffForHumans() }}</td>
                         <td class="px-3 py-1.5">
-                            <span class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:bg-neutral-800">{{ $log->event }}</span>
+                            <span class="font-medium text-neutral-800 dark:text-neutral-200" title="{{ $log->event }}">{{ app(\App\Support\AuditSummary::class)->title($log->event) }}</span>
                             @if ($log->via_impersonation)
                                 <span class="ml-1 rounded bg-amber-100 px-1.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300">impersonated</span>
                             @endif
@@ -60,13 +60,15 @@
                             </td>
                         @endif
                     </tr>
-                    @if ($log->properties)
+                    @php($summary = app(\App\Support\AuditSummary::class)->lines($log))
+                    @if ($summary !== [])
                         <tr class="border-t border-neutral-50 dark:border-neutral-900">
                             <td colspan="{{ $canDelete ? 6 : 5 }}" class="px-3 pb-2">
-                                <details>
-                                    <summary class="cursor-pointer text-xs text-neutral-500">{{ __('Details') }}</summary>
-                                    <pre class="mt-1 overflow-x-auto rounded bg-neutral-50 p-2 text-xs dark:bg-neutral-900">{{ json_encode($log->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
-                                </details>
+                                <ul class="list-disc space-y-0.5 pl-5 text-xs text-neutral-600 dark:text-neutral-400">
+                                    @foreach ($summary as $line)
+                                        <li>{{ $line }}</li>
+                                    @endforeach
+                                </ul>
                             </td>
                         </tr>
                     @endif
