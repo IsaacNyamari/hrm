@@ -16,6 +16,7 @@ use App\Models\Employee;
 use App\Services\Assets\AssetService;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
@@ -101,13 +102,11 @@ class Assets extends Component
         $asset = Asset::query()->where('uuid', $uuid)->firstOrFail();
         Gate::authorize('delete', $asset);
 
-        if ($asset->assignments()->exists()) {
-            Flux::toast(variant: 'danger', text: __('This asset has an assignment history and cannot be deleted.'));
+        DB::transaction(function () use ($asset): void {
+            $asset->assignments()->delete();
+            $asset->delete();
+        });
 
-            return;
-        }
-
-        $asset->delete();
         Flux::modal('delete-asset-'.$uuid)->close();
         Flux::toast(variant: 'success', text: __('Asset deleted.'));
     }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use App\Livewire\Notifications\Center;
 use App\Support\TenantContext;
 use Illuminate\Notifications\Notification;
 
@@ -82,4 +83,18 @@ it('does not expose another user\'s notifications', function () {
         ->getJson('http://ntf-co.hrm.test/notifications/feed')
         ->assertOk()
         ->assertJsonCount(0, 'data');
+});
+
+it('lets the user delete one notification or clear them all from the centre', function () {
+    $this->user->notify(new FakeCenterNotification('First'));
+    $this->user->notify(new FakeCenterNotification('Second'));
+    $id = $this->user->notifications()->first()->id;
+
+    $this->actingAs($this->user);
+
+    Livewire\Livewire::test(Center::class)->call('delete', $id);
+    expect($this->user->notifications()->count())->toBe(1);
+
+    Livewire\Livewire::test(Center::class)->call('deleteAll');
+    expect($this->user->notifications()->count())->toBe(0);
 });

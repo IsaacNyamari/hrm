@@ -155,17 +155,17 @@ it('deletes an asset with no assignment history from the dashboard', function ()
     expect(Asset::query()->find($asset->id))->toBeNull();
 });
 
-it('refuses to delete an asset that has assignment history from the dashboard', function () {
+it('deletes an asset together with its assignment history from the dashboard', function () {
     $asset = Asset::factory()->forTenant($this->tenant)->create(['status' => 'available']);
     AssetAssignment::factory()->forAsset($asset)->create(['employee_id' => $this->employee->id, 'status' => 'returned']);
 
     $this->actingAs($this->admin);
 
     Livewire::test(Assets::class)
-        ->call('remove', $asset->uuid)
-        ->assertDispatched('toast-show');
+        ->call('remove', $asset->uuid);
 
-    expect(Asset::query()->find($asset->id))->not->toBeNull();
+    expect(Asset::query()->find($asset->id))->toBeNull()
+        ->and(AssetAssignment::query()->where('asset_id', $asset->id)->exists())->toBeFalse();
 });
 
 it('forbids managing assets from the dashboard without the assets permission', function () {

@@ -12,6 +12,7 @@ use App\Services\Assets\AssetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
@@ -74,8 +75,10 @@ class AssetController extends Controller
     {
         $this->authorize('delete', $asset);
 
-        abort_if($asset->assignments()->exists(), 422, 'This asset has an assignment history and cannot be deleted.');
-        $asset->delete();
+        DB::transaction(function () use ($asset): void {
+            $asset->assignments()->delete();
+            $asset->delete();
+        });
 
         return response()->noContent();
     }

@@ -11,6 +11,9 @@
                 <input type="checkbox" wire:model.live="unreadOnly"> {{ __('Unread only') }}
             </label>
             <button type="button" wire:click="markAllRead" class="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700">{{ __('Mark all read') }}</button>
+            @if ($notifications->isNotEmpty())
+                <button type="button" wire:click="deleteAll" wire:confirm="{{ __('Delete all notifications?') }}" class="rounded-lg border border-red-300 px-3 py-1.5 text-red-600 dark:border-red-900">{{ __('Delete all') }}</button>
+            @endif
         </div>
     </div>
 
@@ -24,9 +27,12 @@
                         · {{ $n->created_at?->diffForHumans() }}
                     </p>
                 </div>
-                @if ($n->read_at === null)
-                    <button type="button" wire:click="markRead('{{ $n->id }}')" class="shrink-0 text-xs text-blue-600 hover:underline">{{ __('Mark read') }}</button>
-                @endif
+                <div class="flex shrink-0 items-center gap-3 text-xs">
+                    @if ($n->read_at === null)
+                        <button type="button" wire:click="markRead('{{ $n->id }}')" class="text-blue-600 hover:underline">{{ __('Mark read') }}</button>
+                    @endif
+                    <button type="button" wire:click="delete('{{ $n->id }}')" class="text-red-600 hover:underline">{{ __('Delete') }}</button>
+                </div>
             </li>
         @empty
             <li class="px-4 py-6 text-center text-sm text-neutral-500">{{ __('Nothing here yet.') }}</li>

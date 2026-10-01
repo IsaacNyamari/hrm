@@ -51,6 +51,15 @@ class NotificationController extends Controller
         return response()->json(['data' => ['unread' => 0]]);
     }
 
+    public function destroy(Request $request, string $notification): JsonResponse
+    {
+        $user = $this->user($request);
+
+        $user->notifications()->whereKey($notification)->delete();
+
+        return response()->json(['data' => ['unread' => $user->unreadNotifications()->count()]]);
+    }
+
     private function user(Request $request): User
     {
         $user = $request->user();

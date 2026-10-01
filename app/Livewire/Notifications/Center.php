@@ -28,6 +28,16 @@ class Center extends Component
         Auth::user()?->unreadNotifications->markAsRead();
     }
 
+    public function delete(string $id): void
+    {
+        Auth::user()?->notifications()->whereKey($id)->delete();
+    }
+
+    public function deleteAll(): void
+    {
+        Auth::user()?->notifications()->delete();
+    }
+
     public function toggleMail(string $category): void
     {
         $user = Auth::user();
