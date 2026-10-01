@@ -7,6 +7,7 @@ namespace App\Livewire\Audit;
 use App\Facades\Tenancy;
 use App\Livewire\Concerns\BindsTenant;
 use App\Models\AuditLog;
+use App\Support\Auditor;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -34,6 +35,27 @@ class Log extends Component
         $this->resetPage();
     }
 
+    public function deleteEntry(string $uuid, Auditor $auditor): void
+    {
+        abort_unless(auth()->user()?->can('audit.delete'), 403);
+
+        $deleted = AuditLog::query()->where('tenant_id', Tenancy::id())->where('uuid', $uuid)->delete();
+
+        if ($deleted > 0) {
+            $auditor->log('audit.entry_deleted', null, ['entry' => $uuid]);
+        }
+    }
+
+    public function clearAll(Auditor $auditor): void
+    {
+        abort_unless(auth()->user()?->can('audit.delete'), 403);
+
+        $deleted = AuditLog::query()->where('tenant_id', Tenancy::id())->delete();
+
+        $auditor->log('audit.cleared', null, ['entries' => $deleted]);
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         $logs = AuditLog::query()
@@ -49,6 +71,7 @@ class Log extends Component
             'logs' => $logs,
             'exportUrl' => route('audit-logs.export', array_filter(['event' => $this->event, 'actor' => $this->actor, 'from' => $this->from, 'to' => $this->to])),
             'canExport' => (bool) auth()->user()?->can('reports.export'),
+            'canDelete' => (bool) auth()->user()?->can('audit.delete'),
         ]);
     }
 }

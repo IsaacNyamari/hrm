@@ -1,9 +1,17 @@
 <div class="flex flex-col gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">{{ __('Audit trail') }}</h1>
-        @if ($canExport)
-            <a href="{{ $exportUrl }}" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700">{{ __('Export CSV') }}</a>
-        @endif
+        <div class="flex items-center gap-2">
+            @if ($canExport)
+                <a href="{{ $exportUrl }}" class="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700">{{ __('Export CSV') }}</a>
+            @endif
+            @if ($canDelete && $logs->total() > 0)
+                <flux:modal.trigger name="clear-audit-trail">
+                    <flux:button size="sm" variant="danger" icon="trash">{{ __('Clear all') }}</flux:button>
+                </flux:modal.trigger>
+                <x-confirm-modal name="clear-audit-trail" :heading="__('Clear the entire audit trail?')" :text="__('Every audit entry for your organization is permanently deleted. This cannot be undone.')" :confirm-label="__('Clear all')" confirm-wire="clearAll" />
+            @endif
+        </div>
     </div>
 
     <div class="flex flex-wrap gap-3">
@@ -24,6 +32,7 @@
                     <th class="px-3 py-2">{{ __('Actor') }}</th>
                     <th class="px-3 py-2">{{ __('Subject') }}</th>
                     <th class="px-3 py-2">{{ __('IP') }}</th>
+                    @if ($canDelete)<th class="px-3 py-2"></th>@endif
                 </tr>
             </thead>
             <tbody>
@@ -42,10 +51,18 @@
                             {{ $log->auditable_id ? '#'.$log->auditable_id : '' }}
                         </td>
                         <td class="px-3 py-1.5 text-neutral-400">{{ $log->ip_address }}</td>
+                        @if ($canDelete)
+                            <td class="px-3 py-1.5 text-right">
+                                <flux:modal.trigger name="delete-audit-{{ $log->uuid }}">
+                                    <button type="button" class="text-xs text-red-600 hover:underline">{{ __('Delete') }}</button>
+                                </flux:modal.trigger>
+                                <x-confirm-modal name="delete-audit-{{ $log->uuid }}" :heading="__('Delete this audit entry?')" :text="__('This cannot be undone.')" :confirm-label="__('Delete')" confirm-wire="deleteEntry('{{ $log->uuid }}')" />
+                            </td>
+                        @endif
                     </tr>
                     @if ($log->properties)
                         <tr class="border-t border-neutral-50 dark:border-neutral-900">
-                            <td colspan="5" class="px-3 pb-2">
+                            <td colspan="{{ $canDelete ? 6 : 5 }}" class="px-3 pb-2">
                                 <details>
                                     <summary class="cursor-pointer text-xs text-neutral-500">{{ __('Details') }}</summary>
                                     <pre class="mt-1 overflow-x-auto rounded bg-neutral-50 p-2 text-xs dark:bg-neutral-900">{{ json_encode($log->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
@@ -54,7 +71,7 @@
                         </tr>
                     @endif
                 @empty
-                    <tr><td colspan="5" class="px-3 py-4 text-neutral-500">{{ __('No audit entries.') }}</td></tr>
+                    <tr><td colspan="{{ $canDelete ? 6 : 5 }}" class="px-3 py-4 text-neutral-500">{{ __('No audit entries.') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

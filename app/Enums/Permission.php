@@ -81,6 +81,7 @@ enum Permission: string
     case BillingView = 'billing.view';
     case SubscriptionManage = 'subscription.manage';
     case AuditView = 'audit.view';
+    case AuditDelete = 'audit.delete';
 
     /**
      * @return array<int, string>

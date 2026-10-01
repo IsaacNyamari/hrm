@@ -21,6 +21,7 @@ use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -156,6 +157,8 @@ class User extends Authenticatable implements PasskeyUser
 
         try {
             return $this->hasPermissionTo($permission->value);
+        } catch (PermissionDoesNotExist) {
+            return false;
         } finally {
             $registrar->setPermissionsTeamId($previous);
         }

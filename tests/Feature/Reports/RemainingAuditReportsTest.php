@@ -139,3 +139,24 @@ it('shows operator activity across organizations on the platform audit page', fu
     Livewire::actingAs(User::factory()->platformAdmin(Role::SupportAdmin)->create())
         ->test(AuditTrail::class);
 });
+
+it('lets a super admin delete platform audit entries but not a support admin', function () {
+    $entry = AuditLog::factory()->create(['tenant_id' => $this->tenant->id, 'event' => 'platform.tenant.suspended']);
+    AuditLog::factory()->create(['tenant_id' => $this->tenant->id, 'event' => 'platform.plan.updated']);
+    $tenantEntry = AuditLog::factory()->forTenant($this->tenant)->create(['event' => 'employee.updated']);
+
+    Livewire::actingAs(User::factory()->platformAdmin(Role::SupportAdmin)->create())
+        ->test(AuditTrail::class)
+        ->call('deleteEntry', $entry->uuid)
+        ->assertForbidden();
+
+    $admin = User::factory()->platformAdmin(Role::SuperAdmin)->create();
+
+    Livewire::actingAs($admin)->test(AuditTrail::class)->call('deleteEntry', $entry->uuid);
+    expect(AuditLog::query()->whereKey($entry->id)->exists())->toBeFalse();
+
+    Livewire::actingAs($admin)->test(AuditTrail::class)->call('clearAll');
+    expect(AuditLog::query()->where('event', 'platform.plan.updated')->exists())->toBeFalse()
+        ->and(AuditLog::query()->where('event', 'platform.audit.cleared')->exists())->toBeTrue()
+        ->and(AuditLog::query()->whereKey($tenantEntry->id)->exists())->toBeTrue();
+});

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Enums\Role;
 use App\Events\LeaveApproved;
+use App\Livewire\Audit\Log as AuditLogComponent;
 use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Support\TenantContext;
+use Livewire\Livewire;
 
 beforeEach(function () {
     config(['tenancy.central_domains' => ['hrm.test']]);
@@ -77,4 +79,39 @@ it('records leave approvals in the trail', function () {
     );
 
     expect(AuditLog::query()->where('event', 'leave.approved')->exists())->toBeTrue();
+});
+
+it('lets an authorised user delete one audit entry or clear the whole trail, leaving a record of it', function () {
+    $other = tenantWithRoles(['slug' => 'other-audit-co']);
+    $keep = AuditLog::factory()->forTenant($other)->create(['event' => 'employee.updated']);
+    $one = AuditLog::factory()->forTenant($this->tenant)->create(['event' => 'demo.one']);
+    AuditLog::factory()->forTenant($this->tenant)->create(['event' => 'demo.two']);
+
+    $this->actingAs($this->hr);
+
+    Livewire::test(AuditLogComponent::class)->call('deleteEntry', $one->uuid);
+    expect(AuditLog::query()->where('event', 'demo.one')->exists())->toBeFalse()
+        ->and(AuditLog::query()->where('event', 'demo.two')->exists())->toBeTrue();
+
+    Livewire::test(AuditLogComponent::class)->call('clearAll');
+    expect(AuditLog::query()->where('tenant_id', $this->tenant->id)->where('event', '!=', 'audit.cleared')->where('event', '!=', 'audit.entry_deleted')->count())->toBe(0)
+        ->and(AuditLog::query()->where('event', 'audit.cleared')->exists())->toBeTrue()
+        ->and(AuditLog::query()->whereKey($keep->id)->exists())->toBeTrue();
+});
+
+it('refuses audit deletion without the permission', function () {
+    $log = AuditLog::factory()->forTenant($this->tenant)->create();
+
+    $viewer = userForTenant($this->tenant, Role::HrManager);
+    $viewer->givePermissionTo('audit.view');
+    $this->actingAs($viewer);
+
+    Livewire::test(AuditLogComponent::class)->call('deleteEntry', $log->uuid)->assertForbidden();
+    expect(AuditLog::query()->whereKey($log->id)->exists())->toBeTrue();
+});
+
+it('still blocks deleting an audit entry through the model', function () {
+    $log = AuditLog::factory()->forTenant($this->tenant)->create();
+
+    expect(fn () => $log->delete())->toThrow(RuntimeException::class);
 });
