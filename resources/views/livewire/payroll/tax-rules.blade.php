@@ -45,7 +45,10 @@
                             @if ($canManage)
                                 <div class="flex gap-2">
                                     <button type="button" wire:click="edit('{{ $rule->uuid }}')" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Edit') }}</button>
-                                    <button type="button" wire:click="delete('{{ $rule->uuid }}')" wire:confirm="{{ __('Delete this rule? Payroll dated in this period will be blocked until another rule covers it.') }}" class="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-700 dark:border-red-800">{{ __('Delete') }}</button>
+                                    <flux:modal.trigger name="delete-rule-{{ $rule->uuid }}">
+                                        <button type="button" class="rounded-lg border border-red-300 px-2 py-1 text-xs text-red-700 dark:border-red-800">{{ __('Delete') }}</button>
+                                    </flux:modal.trigger>
+                                    <x-confirm-modal name="delete-rule-{{ $rule->uuid }}" :heading="__('Delete this rule?')" :text="__('Payroll dated in this period will be blocked until another rule covers it.')" :confirm-label="__('Delete')" confirm-wire="delete('{{ $rule->uuid }}')" variant="danger" />
                                 </div>
                             @endif
                         </div>

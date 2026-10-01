@@ -19,7 +19,10 @@
                 @if ($canManage)
                     <div class="flex gap-2">
                         <flux:button size="sm" wire:click="startEdit({{ $role->id }})">{{ __('Edit') }}</flux:button>
-                        <flux:button size="sm" variant="danger" wire:click="delete({{ $role->id }})" wire:confirm="{{ __('Delete this role?') }}">{{ __('Delete') }}</flux:button>
+                        <flux:modal.trigger name="delete-role-{{ $role->id }}">
+                            <flux:button size="sm" variant="danger">{{ __('Delete') }}</flux:button>
+                        </flux:modal.trigger>
+                        <x-confirm-modal name="delete-role-{{ $role->id }}" :heading="__('Delete this role?')" :confirm-label="__('Delete')" confirm-wire="delete({{ $role->id }})" variant="danger" />
                     </div>
                 @endif
             </div>

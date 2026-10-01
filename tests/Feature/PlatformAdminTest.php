@@ -253,3 +253,26 @@ it('denies app access to a suspended organization even if its subscription is st
 
     expect($tenant->fresh()->hasAppAccess())->toBeFalse();
 });
+
+it('grants feature flags to a plan from the platform area and keeps its limits', function () {
+    $plan = Plan::factory()->create(['features' => ['flags' => ['hr_core'], 'limits' => ['branches' => 3]]]);
+
+    $this->actingAs($this->superAdmin);
+
+    Livewire::test(Plans::class)
+        ->call('edit', $plan->id)
+        ->assertSet('form.flags', ['hr_core'])
+        ->set('form.flags', ['hr_core', 'payroll', 'assets'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($plan->refresh()->hasFeature('payroll'))->toBeTrue()
+        ->and($plan->hasFeature('assets'))->toBeTrue()
+        ->and($plan->limit('branches'))->toBe(3);
+
+    Livewire::test(Plans::class)
+        ->call('edit', $plan->id)
+        ->set('form.flags', ['bogus'])
+        ->call('save')
+        ->assertHasErrors('form.flags.0');
+});

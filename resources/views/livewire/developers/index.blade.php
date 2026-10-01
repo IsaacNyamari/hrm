@@ -60,7 +60,10 @@
                             {{ $session->last_used_at ? __('Last active :time', ['time' => $session->last_used_at->diffForHumans()]) : __('Signed in :time', ['time' => $session->created_at?->diffForHumans()]) }}
                         </span>
                     </span>
-                    <button type="button" wire:click="signOutDevice({{ $session->id }})" wire:confirm="{{ __('Sign this device out?') }}" class="text-xs text-red-600 hover:underline">{{ __('Sign out') }}</button>
+                    <flux:modal.trigger name="sign-out-device-{{ $session->id }}">
+                        <button type="button" class="text-xs text-red-600 hover:underline">{{ __('Sign out') }}</button>
+                    </flux:modal.trigger>
+                    <x-confirm-modal name="sign-out-device-{{ $session->id }}" :heading="__('Sign this device out?')" :confirm-label="__('Sign out')" confirm-wire="signOutDevice({{ $session->id }})" variant="danger" />
                 </li>
             @empty
                 <li class="py-2 text-neutral-500">{{ __('No devices are signed in to the mobile app.') }}</li>

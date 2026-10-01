@@ -56,12 +56,15 @@
                                 <td colspan="5" class="pb-3">
                                     <ul class="space-y-1 text-xs text-neutral-600 dark:text-neutral-400">
                                         @foreach ($claim->items as $lineItem)
-                                            <li wire:key="item-{{ $lineItem->uuid }}" class="flex items-center justify-between gap-2">
+                                            <li wire:key="item-{{ $lineItem->uuid }}" class="flex items-center gap-2">
                                                 <span>{{ $lineItem->spent_on->format('d M') }} · {{ $lineItem->description }} ({{ $lineItem->category->value }}) — {{ number_format($lineItem->amount_cents / 100, 2) }}
                                                     @if ($lineItem->receipt_path) · <a class="underline" href="{{ route('expense-items.receipt', $lineItem) }}">{{ __('Receipt') }}</a> @endif
                                                 </span>
                                                 @if ($claim->status->isEditable())
-                                                    <button type="button" class="text-red-600" wire:click="removeItem('{{ $lineItem->uuid }}')" wire:confirm="{{ __('Remove this line item?') }}">{{ __('Remove') }}</button>
+                                                    <flux:modal.trigger name="remove-item-{{ $lineItem->uuid }}">
+                                                        <button type="button" class="rounded p-0.5 text-neutral-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950" title="{{ __('Remove line item') }}" aria-label="{{ __('Remove line item') }}"><flux:icon.x-mark variant="micro" /></button>
+                                                    </flux:modal.trigger>
+                                                    <x-confirm-modal name="remove-item-{{ $lineItem->uuid }}" :heading="__('Remove this line item?')" :confirm-label="__('Remove')" confirm-wire="removeItem('{{ $lineItem->uuid }}')" variant="danger" />
                                                 @endif
                                             </li>
                                         @endforeach

@@ -72,10 +72,12 @@
                         <td class="px-4 py-3"><x-status-badge :status="$lead->status" /></td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
                             <flux:button size="sm" variant="ghost" icon="eye" wire:click="view('{{ $lead->uuid }}')">{{ __('View') }}</flux:button>
-                            <flux:button size="sm" variant="primary" icon="paper-airplane" wire:click="sendAccess('{{ $lead->uuid }}')"
-                                         wire:confirm="{{ __('Email a single-use registration link to :email?', ['email' => $lead->email]) }}">
-                                {{ $lead->status === \App\Enums\LeadStatus::Invited ? __('Resend link') : __('Send access link') }}
-                            </flux:button>
+                            <flux:modal.trigger name="send-access-{{ $lead->uuid }}">
+                                <flux:button size="sm" variant="primary" icon="paper-airplane">
+                                    {{ $lead->status === \App\Enums\LeadStatus::Invited ? __('Resend link') : __('Send access link') }}
+                                </flux:button>
+                            </flux:modal.trigger>
+                            <x-confirm-modal name="send-access-{{ $lead->uuid }}" :heading="__('Email a single-use registration link to :email?', ['email' => $lead->email])" :confirm-label="__('Send')" confirm-wire="sendAccess('{{ $lead->uuid }}')" variant="primary" />
                         </td>
                     </tr>
                 @empty

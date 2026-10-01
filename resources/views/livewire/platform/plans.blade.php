@@ -75,6 +75,18 @@
                 <flux:input type="number" wire:model="form.sort_order" :label="__('Sort order')" />
             </div>
 
+            <div>
+                <flux:label>{{ __('Features included') }}</flux:label>
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                    @foreach (config('billing.feature_flags') as $flag)
+                        <flux:field variant="inline">
+                            <flux:checkbox wire:model="form.flags" value="{{ $flag }}" />
+                            <flux:label>{{ str($flag)->replace('_', ' ')->headline() }}</flux:label>
+                        </flux:field>
+                    @endforeach
+                </div>
+            </div>
+
             <flux:field variant="inline">
                 <flux:checkbox wire:model="form.is_active" />
                 <flux:label>{{ __('Active (offered to new organizations)') }}</flux:label>

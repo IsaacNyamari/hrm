@@ -46,11 +46,10 @@
                                 @if ($tenant->status === \App\Enums\TenantStatus::Suspended)
                                     <flux:button size="sm" variant="primary" wire:click="activate({{ $tenant->id }})">{{ __('Activate') }}</flux:button>
                                 @else
-                                    <flux:button size="sm" variant="ghost"
-                                        wire:click="suspend({{ $tenant->id }})"
-                                        wire:confirm="{{ __('Suspend :name? Its users lose app access.', ['name' => $tenant->name]) }}">
-                                        {{ __('Suspend') }}
-                                    </flux:button>
+                                    <flux:modal.trigger name="suspend-tenant-{{ $tenant->id }}">
+                                        <flux:button size="sm" variant="ghost">{{ __('Suspend') }}</flux:button>
+                                    </flux:modal.trigger>
+                                    <x-confirm-modal name="suspend-tenant-{{ $tenant->id }}" :heading="__('Suspend :name?', ['name' => $tenant->name])" :text="__('Its users lose app access.')" :confirm-label="__('Suspend')" confirm-wire="suspend({{ $tenant->id }})" />
                                 @endif
                             @endif
                         </td>

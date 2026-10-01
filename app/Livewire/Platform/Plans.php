@@ -12,6 +12,7 @@ use App\Models\Plan;
 use App\Support\Auditor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -61,6 +62,7 @@ class Plans extends Component
             'trial_days' => $plan->trial_days,
             'sort_order' => $plan->sort_order,
             'is_active' => $plan->is_active,
+            'flags' => array_values($plan->features['flags'] ?? []),
         ];
         $this->showForm = true;
     }
@@ -79,6 +81,8 @@ class Plans extends Component
             'form.trial_days' => ['required', 'integer', 'min:0', 'max:365'],
             'form.sort_order' => ['required', 'integer', 'min:0'],
             'form.is_active' => ['boolean'],
+            'form.flags' => ['array'],
+            'form.flags.*' => ['string', Rule::in((array) config('billing.feature_flags'))],
         ])['form'];
 
         $attributes = [
@@ -93,14 +97,17 @@ class Plans extends Component
             'is_active' => (bool) ($data['is_active'] ?? false),
         ];
 
+        $flags = array_values(array_unique($data['flags'] ?? []));
+
         if ($this->editingId !== null) {
             $plan = Plan::query()->findOrFail($this->editingId);
+            $attributes['features'] = ['flags' => $flags, 'limits' => $plan->features['limits'] ?? []];
             $plan->update($attributes);
             $auditor->log('platform.plan.updated', $plan, ['slug' => $plan->slug]);
             $this->notice = __('Plan “:name” updated.', ['name' => $plan->name]);
         } else {
             $attributes['currency'] = 'KES';
-            $attributes['features'] = ['flags' => [], 'limits' => []];
+            $attributes['features'] = ['flags' => $flags, 'limits' => []];
             $attributes['slug'] = Str::slug((string) $attributes['name']).'-'.Str::lower(Str::random(4));
             $plan = Plan::query()->create($attributes);
             $auditor->log('platform.plan.created', $plan, ['slug' => $plan->slug]);
@@ -127,6 +134,7 @@ class Plans extends Component
             'trial_days' => 14,
             'sort_order' => 0,
             'is_active' => true,
+            'flags' => [],
         ];
     }
 

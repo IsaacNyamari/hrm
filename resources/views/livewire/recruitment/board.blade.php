@@ -134,8 +134,10 @@
                                     <flux:button size="sm" variant="ghost" wire:click="recordOfferResponse('{{ $offer->uuid }}', true)">{{ __('Accepted') }}</flux:button>
                                     <flux:button size="sm" variant="ghost" wire:click="recordOfferResponse('{{ $offer->uuid }}', false)">{{ __('Declined') }}</flux:button>
                                 @else
-                                    <flux:button size="sm" variant="primary" icon="user-plus" wire:click="hire('{{ $offer->uuid }}')"
-                                        wire:confirm="{{ __('Create the employee record and staff account, and email the welcome link?') }}">{{ __('Hire & create account') }}</flux:button>
+                                    <flux:modal.trigger name="hire-{{ $offer->uuid }}">
+                                        <flux:button size="sm" variant="primary" icon="user-plus">{{ __('Hire & create account') }}</flux:button>
+                                    </flux:modal.trigger>
+                                    <x-confirm-modal name="hire-{{ $offer->uuid }}" :heading="__('Create the employee record and staff account, and email the welcome link?')" :confirm-label="__('Hire')" confirm-wire="hire('{{ $offer->uuid }}')" variant="primary" />
                                 @endif
                             </span>
                         </li>

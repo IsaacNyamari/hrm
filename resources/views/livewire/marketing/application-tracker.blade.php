@@ -130,8 +130,14 @@
                         @endif
                     </dl>
                     <div class="mt-5 flex flex-wrap gap-3">
-                        <button type="button" wire:click="respond(true)" wire:confirm="{{ __('Accept this job offer?') }}" class="rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90">{{ __('Accept offer') }}</button>
-                        <button type="button" wire:click="respond(false)" wire:confirm="{{ __('Decline this job offer? This cannot be undone.') }}" class="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 transition hover:border-danger hover:text-danger">{{ __('Decline') }}</button>
+                        <flux:modal.trigger name="accept-offer">
+                            <button type="button" class="rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90">{{ __('Accept offer') }}</button>
+                        </flux:modal.trigger>
+                        <x-confirm-modal name="accept-offer" :heading="__('Accept this job offer?')" :confirm-label="__('Accept offer')" confirm-wire="respond(true)" variant="primary" />
+                        <flux:modal.trigger name="decline-offer">
+                            <button type="button" class="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 transition hover:border-danger hover:text-danger">{{ __('Decline') }}</button>
+                        </flux:modal.trigger>
+                        <x-confirm-modal name="decline-offer" :heading="__('Decline this job offer?')" :text="__('This cannot be undone.')" :confirm-label="__('Decline')" confirm-wire="respond(false)" variant="danger" />
                     </div>
                 </div>
             @endif

@@ -44,7 +44,23 @@
                                     <button wire:click="approve('{{ $run->uuid }}')" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Approve') }}</button>
                                 @endif
                                 @if ($run && $run->status->value === 'approved')
-                                    <button type="button" x-on:click="const ref = prompt('{{ __('Payment reference (bank batch or M-Pesa transaction)') }}'); if (ref && ref.trim()) { $wire.pay('{{ $run->uuid }}', ref.trim()) }" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Mark paid') }}</button>
+                                    <flux:modal.trigger name="pay-run-{{ $run->uuid }}">
+                                        <button type="button" class="rounded-lg border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700">{{ __('Mark paid') }}</button>
+                                    </flux:modal.trigger>
+                                    <flux:modal name="pay-run-{{ $run->uuid }}" class="min-w-[22rem]">
+                                        <div x-data="{ reference: '' }" class="space-y-4">
+                                            <flux:heading size="lg">{{ __('Mark this run as paid') }}</flux:heading>
+                                            <flux:input x-model="reference" :label="__('Payment reference (bank batch or M-Pesa transaction)')" />
+                                            <div class="flex justify-end gap-2">
+                                                <flux:modal.close>
+                                                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                                                </flux:modal.close>
+                                                <flux:modal.close>
+                                                    <flux:button variant="primary" x-bind:disabled="! reference.trim()" x-on:click="$wire.pay('{{ $run->uuid }}', reference.trim())">{{ __('Mark paid') }}</flux:button>
+                                                </flux:modal.close>
+                                            </div>
+                                        </div>
+                                    </flux:modal>
                                 @endif
                                 @if ($run && ! $run->status->isMutable())
                                     <flux:dropdown>

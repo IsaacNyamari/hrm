@@ -12,7 +12,10 @@
             </label>
             <button type="button" wire:click="markAllRead" class="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700">{{ __('Mark all read') }}</button>
             @if ($notifications->isNotEmpty())
-                <button type="button" wire:click="deleteAll" wire:confirm="{{ __('Delete all notifications?') }}" class="rounded-lg border border-red-300 px-3 py-1.5 text-red-600 dark:border-red-900">{{ __('Delete all') }}</button>
+                <flux:modal.trigger name="delete-all-notifications">
+                    <button type="button" class="rounded-lg border border-red-300 px-3 py-1.5 text-red-600 dark:border-red-900">{{ __('Delete all') }}</button>
+                </flux:modal.trigger>
+                <x-confirm-modal name="delete-all-notifications" :heading="__('Delete all notifications?')" :confirm-label="__('Delete all')" confirm-wire="deleteAll" variant="danger" />
             @endif
         </div>
     </div>

@@ -71,6 +71,9 @@
                                 {{ __('Sitemap') }}
                             </flux:sidebar.item>
                         @endif
+                        <flux:sidebar.item icon="bell" :href="route('platform.notifications')" :current="request()->routeIs('platform.notifications')" wire:navigate>
+                            {{ __('Notifications') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                 @elseif (auth()->user()->isSelfServiceOnly())
                 <flux:sidebar.group :heading="__('Me')" class="grid">

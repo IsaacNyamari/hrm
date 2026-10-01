@@ -16,10 +16,10 @@
     </div>
 
     <div class="flex items-center gap-3">
-        <flux:button variant="primary" wire:click="pullLatest" :disabled="$hasRunning"
-            wire:confirm="{{ __('Pull the latest changes from :branch and deploy them? The site goes into maintenance mode while this runs.', ['branch' => $currentBranch]) }}">
-            {{ __('Pull latest changes') }}
-        </flux:button>
+        <flux:modal.trigger name="pull-latest">
+            <flux:button variant="primary" :disabled="$hasRunning">{{ __('Pull latest changes') }}</flux:button>
+        </flux:modal.trigger>
+        <x-confirm-modal name="pull-latest" :heading="__('Pull the latest changes from :branch and deploy them?', ['branch' => $currentBranch])" :text="__('The site goes into maintenance mode while this runs.')" :confirm-label="__('Deploy')" confirm-wire="pullLatest" variant="primary" />
         @if ($hasRunning)
             <flux:badge color="amber">{{ __('A deployment is running…') }}</flux:badge>
         @endif
@@ -41,11 +41,10 @@
                             @if ($commit['sha'] === $currentCommit)
                                 <flux:badge size="sm">{{ __('Current') }}</flux:badge>
                             @else
-                                <flux:button size="sm" variant="danger" :disabled="$hasRunning"
-                                    wire:click="rollback('{{ $commit['sha'] }}')"
-                                    wire:confirm="{{ __('Roll back the code to this commit? The site goes into maintenance mode while this runs.') }}">
-                                    {{ __('Roll back here') }}
-                                </flux:button>
+                                <flux:modal.trigger name="rollback-{{ $commit['sha'] }}">
+                                    <flux:button size="sm" variant="danger" :disabled="$hasRunning">{{ __('Roll back here') }}</flux:button>
+                                </flux:modal.trigger>
+                                <x-confirm-modal name="rollback-{{ $commit['sha'] }}" :heading="__('Roll back the code to this commit?')" :text="__('The site goes into maintenance mode while this runs.')" :confirm-label="__('Roll back')" confirm-wire="rollback('{{ $commit['sha'] }}')" />
                             @endif
                         </td>
                     </tr>

@@ -11,10 +11,10 @@
                 @if ($tenant->status === \App\Enums\TenantStatus::Suspended)
                     <flux:button variant="primary" wire:click="activate">{{ __('Activate') }}</flux:button>
                 @else
-                    <flux:button variant="danger" wire:click="suspend"
-                        wire:confirm="{{ __('Suspend this organization? Its users lose app access.') }}">
-                        {{ __('Suspend') }}
-                    </flux:button>
+                    <flux:modal.trigger name="suspend-tenant">
+                        <flux:button variant="danger">{{ __('Suspend') }}</flux:button>
+                    </flux:modal.trigger>
+                    <x-confirm-modal name="suspend-tenant" :heading="__('Suspend this organization?')" :text="__('Its users lose app access.')" :confirm-label="__('Suspend')" confirm-wire="suspend" />
                 @endif
             </div>
         @endif
@@ -122,11 +122,13 @@
                         </td>
                         <td class="px-4 py-2 text-right">
                             @if ($canImpersonate && ! $member->is_platform_admin)
-                                <form method="POST" action="{{ route('impersonate.start', $member) }}"
-                                      onsubmit="return confirm('{{ __('Sign in as this user? The session is audited.') }}')">
+                                <form id="impersonate-{{ $member->id }}" method="POST" action="{{ route('impersonate.start', $member) }}">
                                     @csrf
-                                    <flux:button type="submit" size="sm" variant="ghost">{{ __('Impersonate') }}</flux:button>
                                 </form>
+                                <flux:modal.trigger name="impersonate-{{ $member->id }}">
+                                    <flux:button type="button" size="sm" variant="ghost">{{ __('Impersonate') }}</flux:button>
+                                </flux:modal.trigger>
+                                <x-confirm-modal name="impersonate-{{ $member->id }}" :heading="__('Sign in as this user?')" :text="__('The session is audited.')" :confirm-label="__('Impersonate')" form="impersonate-{{ $member->id }}" variant="primary" />
                             @endif
                         </td>
                     </tr>

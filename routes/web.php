@@ -143,6 +143,7 @@ Route::middleware(['auth', 'verified', 'platform', 'two-factor'])->prefix('platf
     Route::view('deployments', 'platform.deployments')->name('deployments');
     Route::view('audit', 'platform.audit')->name('audit');
     Route::view('sitemap', 'platform.sitemap')->name('sitemap');
+    Route::view('notifications', 'notifications.index')->name('notifications');
 });
 
 /*

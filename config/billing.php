@@ -34,6 +34,12 @@ return [
         'logout',
     ],
 
+    // Every feature flag a plan can grant (checkboxes on the platform plan form).
+    'feature_flags' => [
+        'hr_core', 'leave', 'attendance', 'reports', 'payroll', 'documents',
+        'performance', 'recruitment', 'expenses', 'assets', 'api_access',
+    ],
+
     // URL path patterns that need a plan feature flag (see plans.features.flags).
     'route_features' => [
         'payroll*' => 'payroll',
