@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use WeakMap;
 
 /**
  * Writes append-only entries to {@see AuditLog}. Actor + tenant + request
@@ -18,6 +19,9 @@ use Illuminate\Support\Facades\Request;
 class Auditor
 {
     private static int $mutedDepth = 0;
+
+    /** @var WeakMap<object, array<string, AuditLog>>|null */
+    private static ?WeakMap $logged = null;
 
     /**
      * Run a bulk system operation (tenant provisioning, seeding) without
@@ -54,7 +58,15 @@ class Auditor
         $tenantId = app(TenantContext::class)->id()
             ?? ($actor instanceof User ? $actor->tenant_id : null);
 
-        return AuditLog::query()->create([
+        $fingerprint = $this->fingerprint($event, $subject, $properties, $actor, $tenantId);
+        $request = request();
+        self::$logged ??= new WeakMap;
+
+        if (isset(self::$logged[$request][$fingerprint])) {
+            return self::$logged[$request][$fingerprint];
+        }
+
+        $entry = AuditLog::query()->create([
             'tenant_id' => $tenantId,
             'event' => $event,
             'actor_type' => $actor !== null ? $actor->getMorphClass() : null,
@@ -69,6 +81,27 @@ class Auditor
             'via_impersonation' => session()->has('impersonator_id'),
             'created_at' => CarbonImmutable::now(),
         ]);
+
+        $logged = self::$logged[$request] ?? [];
+        $logged[$fingerprint] = $entry;
+        self::$logged[$request] = $logged;
+
+        return $entry;
+    }
+
+    /**
+     * One request must never record the same event for the same item twice
+     * (a model saved repeatedly, or an event raised by both a model hook and
+     * an explicit call).
+     *
+     * @param  array<string, mixed>  $properties
+     */
+    private function fingerprint(string $event, ?Model $subject, array $properties, ?object $actor, int|string|null $tenantId): string
+    {
+        return md5(serialize([
+            $event, $subject?->getMorphClass(), $subject?->getKey(), $properties,
+            $actor instanceof Model ? $actor->getKey() : null, $tenantId,
+        ]));
     }
 
     private function actorLabel(?object $actor): string

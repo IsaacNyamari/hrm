@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Concerns\Auditable;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasUuid;
 use Carbon\CarbonImmutable;
@@ -33,7 +32,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class AttendanceCorrection extends Model
 {
-    use Auditable;
     use BelongsToTenant;
     use HasUuid;
 

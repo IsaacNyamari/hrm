@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Role;
 use App\Models\AuditLog;
+use App\Support\Auditor;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 
@@ -19,4 +20,15 @@ it('records each login and failed login exactly once', function () {
     expect(AuditLog::query()->where('event', 'auth.login')->count())->toBe(1)
         ->and(AuditLog::query()->where('event', 'auth.failed')->count())->toBe(1)
         ->and(AuditLog::query()->where('event', 'auth.failed')->first()->properties)->not->toHaveKey('password');
+});
+
+it('records the same event for the same item only once per request', function () {
+    $auditor = app(Auditor::class);
+    $tenant = $this->tenant;
+
+    $auditor->log('demo.happened', $tenant, ['a' => 1]);
+    $auditor->log('demo.happened', $tenant, ['a' => 1]);
+    $auditor->log('demo.happened', $tenant, ['a' => 2]);
+
+    expect(AuditLog::query()->where('event', 'demo.happened')->count())->toBe(2);
 });
