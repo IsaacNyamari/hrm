@@ -24,6 +24,13 @@ class RenderInvoicePdf
             ->download($this->filename($invoice));
     }
 
+    public function output(Invoice $invoice): string
+    {
+        $invoice->loadMissing(['tenant', 'items', 'subscription.plan', 'payments']);
+
+        return Pdf::loadView('billing.invoice-pdf', ['invoice' => $invoice])->setPaper('a4')->output();
+    }
+
     public function filename(Invoice $invoice): string
     {
         return 'invoice-'.Str::slug($invoice->number).'.pdf';

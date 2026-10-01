@@ -5,13 +5,18 @@ declare(strict_types=1);
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Enums\Role;
+use App\Livewire\Platform\Billing as PlatformBilling;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\InvoiceSentNotification;
 use App\Services\Payment\PaymentManager;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+use Livewire\Livewire;
 
 beforeEach(function () {
     $this->superAdmin = User::factory()->platformAdmin(Role::SuperAdmin)->create();
@@ -142,4 +147,57 @@ it('treats Paystack test keys and the M-Pesa sandbox as not live', function () {
 
     config(['services.mpesa.environment' => 'sandbox']);
     expect($gateways->isLive(PaymentProvider::Mpesa))->toBeFalse();
+});
+
+it('emails an invoice with its PDF to the organization owner', function () {
+    Notification::fake();
+    $tenant = tenantWithRoles(['slug' => 'inv-send-co']);
+    $owner = userForTenant($tenant, Role::TenantOwner);
+    $staff = userForTenant($tenant, Role::HrManager);
+    $invoice = Invoice::factory()->forTenant($tenant)->create();
+
+    Livewire::actingAs($this->superAdmin)
+        ->test(PlatformBilling::class)
+        ->set('tab', 'invoices')
+        ->call('sendInvoice', $invoice->uuid)
+        ->assertSet('noticeVariant', 'success');
+
+    Notification::assertSentTo($owner, InvoiceSentNotification::class);
+    Notification::assertNotSentTo($staff, InvoiceSentNotification::class);
+});
+
+it('renders the invoice email with the PDF attached', function () {
+    $tenant = tenantWithRoles(['slug' => 'inv-mail-co']);
+    $owner = userForTenant($tenant, Role::TenantOwner);
+    $invoice = Invoice::factory()->forTenant($tenant)->create();
+
+    $mail = (new InvoiceSentNotification($invoice))->toMail($owner);
+
+    expect($mail->rawAttachments)->toHaveCount(1)
+        ->and($mail->rawAttachments[0]['name'])->toBe('invoice-'.Str::slug($invoice->number).'.pdf');
+});
+
+it('deletes an unpaid invoice but keeps a paid one', function () {
+    $tenant = tenantWithRoles(['slug' => 'inv-del-co']);
+    $open = Invoice::factory()->forTenant($tenant)->create();
+    $paid = Invoice::factory()->forTenant($tenant)->paid()->create();
+
+    Livewire::actingAs($this->superAdmin)
+        ->test(PlatformBilling::class)
+        ->set('tab', 'invoices')
+        ->call('deleteInvoice', $open->uuid)
+        ->call('deleteInvoice', $paid->uuid)
+        ->assertSet('noticeVariant', 'warning');
+
+    expect(Invoice::query()->whereKey($open->id)->exists())->toBeFalse()
+        ->and(Invoice::query()->whereKey($paid->id)->exists())->toBeTrue();
+});
+
+it('forbids a support admin from sending or deleting invoices', function () {
+    $tenant = tenantWithRoles(['slug' => 'inv-forbid-co']);
+    $invoice = Invoice::factory()->forTenant($tenant)->create();
+    $support = User::factory()->platformAdmin(Role::SupportAdmin)->create();
+
+    Livewire::actingAs($support)->test(PlatformBilling::class)->call('sendInvoice', $invoice->uuid)->assertForbidden();
+    Livewire::actingAs($support)->test(PlatformBilling::class)->call('deleteInvoice', $invoice->uuid)->assertForbidden();
 });

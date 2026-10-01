@@ -7,6 +7,10 @@
         <flux:text class="mt-1">{{ __('Every payment, invoice and subscription across all organizations.') }}</flux:text>
     </div>
 
+    @if ($notice)
+        <flux:callout :variant="$noticeVariant ?? 'success'" icon="check-circle" :heading="$notice" />
+    @endif
+
     <nav class="flex gap-6 border-b border-neutral-200 text-sm font-medium dark:border-neutral-700">
         <button type="button" wire:click="$set('tab', 'payments')" class="border-b-2 pb-3 {{ $tab === 'payments' ? $active : $idle }}">{{ __('Payments') }}</button>
         @if (auth()->user()?->canOnPlatform(\App\Enums\PlatformPermission::InvoicesManage))
@@ -103,7 +107,19 @@
                             <td class="px-4 py-3"><x-money :cents="$invoice->outstandingCents()" :currency="$invoice->currency" /></td>
                             <td class="px-4 py-3"><flux:badge size="sm" :color="$invoice->isPaid() ? 'green' : ($invoice->status === \App\Enums\InvoiceStatus::Uncollectible ? 'red' : 'zinc')">{{ $invoice->status->label() }}</flux:badge></td>
                             <td class="px-4 py-3 text-neutral-500">{{ $invoice->due_at?->format('Y-m-d') ?? '—' }}</td>
-                            <td class="px-4 py-3 text-right"><flux:button size="sm" variant="ghost" icon="arrow-down-tray" :href="route('platform.billing.invoices.pdf', $invoice)">{{ __('PDF') }}</flux:button></td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                                <flux:button size="sm" variant="ghost" icon="arrow-down-tray" :href="route('platform.billing.invoices.pdf', $invoice)">{{ __('PDF') }}</flux:button>
+                                <flux:modal.trigger name="send-invoice-{{ $invoice->uuid }}">
+                                    <flux:button size="sm" variant="primary" icon="paper-airplane">{{ __('Send') }}</flux:button>
+                                </flux:modal.trigger>
+                                <x-confirm-modal name="send-invoice-{{ $invoice->uuid }}" :heading="__('Send :number to the owner of :name?', ['number' => $invoice->number, 'name' => $invoice->tenant?->name ?? '—'])" :confirm-label="__('Send')" confirm-wire="sendInvoice('{{ $invoice->uuid }}')" variant="primary" />
+                                @unless ($invoice->isPaid() || $invoice->amount_paid_cents > 0)
+                                    <flux:modal.trigger name="delete-invoice-{{ $invoice->uuid }}">
+                                        <flux:button size="sm" variant="danger" icon="trash">{{ __('Delete') }}</flux:button>
+                                    </flux:modal.trigger>
+                                    <x-confirm-modal name="delete-invoice-{{ $invoice->uuid }}" :heading="__('Delete invoice :number?', ['number' => $invoice->number])" :text="__('This cannot be undone.')" :confirm-label="__('Delete')" confirm-wire="deleteInvoice('{{ $invoice->uuid }}')" />
+                                @endunless
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="8" class="px-4 py-6 text-center text-neutral-500">{{ __('No invoices match.') }}</td></tr>

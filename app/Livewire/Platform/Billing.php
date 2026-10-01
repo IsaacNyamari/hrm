@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Platform;
 
+use App\Actions\Billing\SendInvoiceToOwners;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
@@ -14,6 +15,7 @@ use App\Livewire\Platform\Concerns\WithPlatformGuard;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Subscription;
+use App\Support\Auditor;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -46,9 +48,51 @@ class Billing extends Component
     #[Url(history: true)]
     public string $provider = '';
 
+    public ?string $notice = null;
+
+    public ?string $noticeVariant = null;
+
     public function mount(): void
     {
         $this->authorizePlatform(PlatformPermission::PaymentsView);
+    }
+
+    public function sendInvoice(string $uuid, SendInvoiceToOwners $send, Auditor $auditor): void
+    {
+        $this->authorizePlatform(PlatformPermission::InvoicesManage);
+
+        $invoice = Invoice::query()->where('uuid', $uuid)->firstOrFail();
+        $sent = $send->handle($invoice);
+
+        if ($sent === 0) {
+            $this->noticeVariant = 'warning';
+            $this->notice = __('No owner found for :name, so :number was not sent.', ['name' => $invoice->tenant?->name ?? '—', 'number' => $invoice->number]);
+
+            return;
+        }
+
+        $auditor->log('platform.invoice.sent', $invoice, ['number' => $invoice->number, 'recipients' => $sent]);
+        $this->noticeVariant = 'success';
+        $this->notice = __('Invoice :number sent to the owner of :name.', ['number' => $invoice->number, 'name' => $invoice->tenant?->name ?? '—']);
+    }
+
+    public function deleteInvoice(string $uuid, Auditor $auditor): void
+    {
+        $this->authorizePlatform(PlatformPermission::InvoicesManage);
+
+        $invoice = Invoice::query()->where('uuid', $uuid)->firstOrFail();
+
+        if ($invoice->isPaid() || $invoice->amount_paid_cents > 0) {
+            $this->noticeVariant = 'warning';
+            $this->notice = __('Invoice :number has payments recorded and cannot be deleted.', ['number' => $invoice->number]);
+
+            return;
+        }
+
+        $invoice->delete();
+        $auditor->log('platform.invoice.deleted', null, ['number' => $invoice->number, 'tenant_id' => $invoice->tenant_id]);
+        $this->noticeVariant = 'success';
+        $this->notice = __('Invoice :number deleted.', ['number' => $invoice->number]);
     }
 
     public function updatedTab(): void
@@ -57,7 +101,7 @@ class Billing extends Component
             $this->tab = 'payments';
         }
 
-        $this->reset('search', 'status', 'provider');
+        $this->reset('search', 'status', 'provider', 'notice');
         $this->resetPage();
     }
 
