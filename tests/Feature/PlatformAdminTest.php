@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Tenancy\ChangeTenantStatus;
+use App\Enums\BillingInterval;
 use App\Enums\PaymentStatus;
 use App\Enums\Role;
 use App\Enums\SubscriptionStatus;
@@ -18,6 +19,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -275,4 +277,25 @@ it('grants feature flags to a plan from the platform area and keeps its limits',
         ->set('form.flags', ['bogus'])
         ->call('save')
         ->assertHasErrors('form.flags.0');
+});
+
+it('offers a lifetime interval on plans, never expiring and not counted as recurring revenue', function () {
+    $this->actingAs($this->superAdmin);
+
+    Livewire::test(Plans::class)
+        ->call('create')
+        ->assertSee('Lifetime')
+        ->set('form.name', 'Forever')
+        ->set('form.billing_interval', 'lifetime')
+        ->set('form.price_cents', 5000000)
+        ->set('form.trial_days', 0)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $plan = Plan::query()->where('name', 'Forever')->firstOrFail();
+    $now = CarbonImmutable::now();
+
+    expect($plan->billing_interval)->toBe(BillingInterval::Lifetime)
+        ->and($plan->billing_interval->advance($now)->year)->toBeGreaterThanOrEqual($now->year + 99)
+        ->and($plan->billing_interval->perLabel())->toBe('one-time');
 });

@@ -41,13 +41,15 @@ class InvoiceService
                 ]);
 
                 $invoice->items()->create([
-                    'description' => sprintf(
-                        '%s (%s) — %s to %s',
-                        $plan->name,
-                        $plan->billing_interval->label(),
-                        $periodStart->toDateString(),
-                        $periodEnd->toDateString(),
-                    ),
+                    'description' => $plan->billing_interval->isLifetime()
+                        ? sprintf('%s (Lifetime) — one-time payment', $plan->name)
+                        : sprintf(
+                            '%s (%s) — %s to %s',
+                            $plan->name,
+                            $plan->billing_interval->label(),
+                            $periodStart->toDateString(),
+                            $periodEnd->toDateString(),
+                        ),
                     'quantity' => 1,
                     'unit_amount_cents' => $subtotal,
                     'amount_cents' => $subtotal,

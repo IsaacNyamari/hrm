@@ -148,11 +148,11 @@
                             <td class="px-4 py-3">
                                 @if ($subscription->plan)
                                     <x-money :cents="$subscription->plan->price_cents" :currency="$subscription->plan->currency" :decimals="0" />
-                                    <span class="text-xs text-neutral-500">/ {{ $subscription->plan->billing_interval->label() }}</span>
+                                    <span class="text-xs text-neutral-500">{{ $subscription->plan->billing_interval->perLabel() }}</span>
                                 @else — @endif
                             </td>
                             <td class="px-4 py-3"><flux:badge size="sm" :color="$subscription->status === \App\Enums\SubscriptionStatus::Active ? 'green' : (in_array($subscription->status, [\App\Enums\SubscriptionStatus::Cancelled, \App\Enums\SubscriptionStatus::Expired, \App\Enums\SubscriptionStatus::Suspended], true) ? 'red' : 'zinc')">{{ $subscription->status->label() }}</flux:badge></td>
-                            <td class="px-4 py-3 text-neutral-500">{{ $subscription->current_period_end?->format('Y-m-d') ?? '—' }}</td>
+                            <td class="px-4 py-3 text-neutral-500">{{ $subscription->plan?->billing_interval?->isLifetime() ? __('Never') : ($subscription->current_period_end?->format('Y-m-d') ?? '—') }}</td>
                             <td class="px-4 py-3 text-neutral-500">{{ $subscription->trial_ends_at?->format('Y-m-d') ?? '—' }}</td>
                         </tr>
                     @empty

@@ -36,7 +36,7 @@
                         <p class="mt-6 flex items-baseline gap-1">
                             <span class="text-sm font-semibold {{ $isFeatured ? 'text-zinc-300' : 'text-zinc-500' }}">{{ $plan->currency }}</span>
                             <span class="text-5xl font-extrabold tracking-tight">{{ number_format($plan->price_cents / 100) }}</span>
-                            <span class="text-sm {{ $isFeatured ? 'text-zinc-300' : 'text-zinc-500' }}">/ {{ $plan->billing_interval->value === 'yearly' ? __('year') : __('month') }}</span>
+                            <span class="text-sm {{ $isFeatured ? 'text-zinc-300' : 'text-zinc-500' }}">{{ $plan->billing_interval->perLabel() }}</span>
                         </p>
                         <p class="mt-2 text-sm font-semibold {{ $isFeatured ? 'text-highlight' : 'text-brand' }}">
                             {{ $plan->employee_limit === null ? __('Unlimited employees') : __('Up to :count employees', ['count' => $plan->employee_limit]) }}

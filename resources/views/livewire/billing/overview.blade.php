@@ -41,7 +41,7 @@
                     <flux:heading size="lg">{{ $subscription->trial_ends_at?->toFormattedDateString() ?? __('—') }}</flux:heading>
                 @else
                     <flux:text size="sm">{{ __('Current period ends') }}</flux:text>
-                    <flux:heading size="lg">{{ $subscription?->current_period_end?->toFormattedDateString() ?? __('—') }}</flux:heading>
+                    <flux:heading size="lg">{{ $subscription?->plan?->billing_interval?->isLifetime() ? __('Never — lifetime') : ($subscription?->current_period_end?->toFormattedDateString() ?? __('—')) }}</flux:heading>
                 @endif
             </div>
         </div>
@@ -59,7 +59,7 @@
                         </div>
                         <p class="text-2xl font-semibold">
                             {{ $plan->currency }} {{ number_format($plan->price_cents / 100, 2) }}
-                            <span class="text-sm font-normal text-neutral-500">/ {{ $plan->billing_interval->value }}</span>
+                            <span class="text-sm font-normal text-neutral-500">{{ $plan->billing_interval->perLabel() }}</span>
                         </p>
                         @if ($plan->description)
                             <flux:text>{{ $plan->description }}</flux:text>
@@ -97,7 +97,7 @@
                             <tr wire:key="invoice-{{ $invoice->uuid }}">
                                 <td class="px-4 py-3 font-medium">{{ $invoice->number }}</td>
                                 <td class="px-4 py-3 text-neutral-500">
-                                    {{ $invoice->period_start?->toFormattedDateString() }} – {{ $invoice->period_end?->toFormattedDateString() }}
+                                    {{ $invoice->period_end?->year >= now()->year + 50 ? __('Lifetime') : $invoice->period_start?->toFormattedDateString().' – '.$invoice->period_end?->toFormattedDateString() }}
                                 </td>
                                 <td class="px-4 py-3">{{ $invoice->currency }} {{ number_format($invoice->total_cents / 100, 2) }}</td>
                                 <td class="px-4 py-3"><x-status-badge :status="$invoice->status" /></td>

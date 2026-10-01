@@ -80,7 +80,7 @@
                     <tr><td class="muted right">{{ __('Issued') }}</td><td class="right">{{ $invoice->created_at?->format('d M Y') }}</td></tr>
                     <tr><td class="muted right">{{ __('Due') }}</td><td class="right">{{ $invoice->due_at?->format('d M Y') ?? '—' }}</td></tr>
                     @if ($invoice->period_start && $invoice->period_end)
-                        <tr><td class="muted right">{{ __('Service period') }}</td><td class="right">{{ $invoice->period_start->format('d M Y') }} – {{ $invoice->period_end->format('d M Y') }}</td></tr>
+                        <tr><td class="muted right">{{ __('Service period') }}</td><td class="right">{{ $invoice->subscription?->plan?->billing_interval?->isLifetime() ? __('Lifetime') : $invoice->period_start->format('d M Y').' – '.$invoice->period_end->format('d M Y') }}</td></tr>
                     @endif
                     @if ($invoice->subscription?->plan)
                         <tr><td class="muted right">{{ __('Plan') }}</td><td class="right">{{ $invoice->subscription->plan->name }}</td></tr>

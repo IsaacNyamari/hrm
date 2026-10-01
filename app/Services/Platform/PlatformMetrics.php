@@ -303,9 +303,11 @@ class PlatformMetrics
     {
         $price = $subscription->plan->price_cents;
 
-        return $subscription->plan->billing_interval === BillingInterval::Yearly
-            ? intdiv($price, 12)
-            : $price;
+        return match ($subscription->plan->billing_interval) {
+            BillingInterval::Yearly => intdiv($price, 12),
+            BillingInterval::Lifetime => 0, // one-time payment, not recurring revenue
+            default => $price,
+        };
     }
 
     private function money(int $cents): string
