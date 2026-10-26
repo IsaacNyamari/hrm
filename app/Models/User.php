@@ -60,7 +60,21 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_platform_admin' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
+    }
+
+    /**
+     * Any new password (welcome link, reset, settings) lifts the forced change,
+     * unless the same save sets the flag on purpose.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            if ($user->isDirty('password') && ! $user->isDirty('must_change_password')) {
+                $user->must_change_password = false;
+            }
+        });
     }
 
     /**

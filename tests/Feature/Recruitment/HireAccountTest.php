@@ -59,6 +59,7 @@ it('lets the new hire set a password once, then lands them on My HR', function (
     $url = CreateStaffAccount::welcomeUrl($user);
 
     $this->get($url)->assertOk()->assertSee('Welcome, Otieno!');
+    $this->get($url)->assertSee('This link is no longer valid');
 
     $this->post($url, ['password' => 'Sup3r-Secret!pass', 'password_confirmation' => 'Sup3r-Secret!pass'])
         ->assertRedirect(route('portal'));

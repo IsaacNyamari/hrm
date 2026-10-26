@@ -19,6 +19,7 @@ class CreateEmployee
         private readonly TenantContext $context,
         private readonly GenerateEmployeeNumber $numbers,
         private readonly FeatureGate $features,
+        private readonly CreateStaffAccount $createAccount,
     ) {}
 
     /**
@@ -31,7 +32,7 @@ class CreateEmployee
         return $this->context->run($tenant, function () use ($tenant, $attributes): Employee {
             $this->assertWithinPlanLimit($tenant);
 
-            return DB::transaction(function () use ($tenant, $attributes): Employee {
+            $employee = DB::transaction(function () use ($tenant, $attributes): Employee {
                 $core = Arr::except($attributes, ['emergency_contacts', 'bank_accounts', 'statutory']);
                 $core['employee_number'] ??= $this->numbers->forTenant($tenant);
 
@@ -54,6 +55,10 @@ class CreateEmployee
 
                 return $employee->refresh();
             });
+
+            $this->createAccount->handle($employee);
+
+            return $employee->refresh();
         });
     }
 

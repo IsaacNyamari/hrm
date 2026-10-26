@@ -12,12 +12,12 @@ use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 /**
  * Gives an employee a login: creates a self-service (Employee role) user in
  * their organization, links it to the employee record and emails a one-time
- * link to choose a password.
+ * link to choose a password. Until then they can sign in with their email as
+ * the password, and are made to change it straight away.
  */
 class CreateStaffAccount
 {
@@ -51,8 +51,12 @@ class CreateStaffAccount
             }
 
             if ($user === null) {
-                $user = new User(['name' => $employee->fullName(), 'email' => $email, 'password' => Hash::make(Str::random(40))]);
-                $user->forceFill(['tenant_id' => $tenant->getKey(), 'email_verified_at' => CarbonImmutable::now()])->save();
+                $user = new User(['name' => $employee->fullName(), 'email' => $email, 'password' => Hash::make($email)]);
+                $user->forceFill([
+                    'tenant_id' => $tenant->getKey(),
+                    'email_verified_at' => CarbonImmutable::now(),
+                    'must_change_password' => true,
+                ])->save();
             }
 
             if (! $user->hasRole(Role::Employee->value)) {

@@ -13,6 +13,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\CareersController;
+use App\Http\Controllers\ChangeDefaultPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardMetricsController;
 use App\Http\Controllers\DepartmentController;
@@ -106,6 +107,14 @@ Route::get('robots.txt', function () {
 Route::middleware('throttle:20,1')->group(function () {
     Route::get('welcome/{user}', [WelcomeNewHireController::class, 'show'])->name('welcome.show');
     Route::post('welcome/{user}', [WelcomeNewHireController::class, 'store'])->name('welcome.store');
+});
+
+/*
+| Forced change after signing in with the default password (the email address).
+*/
+Route::middleware(['auth', 'throttle:20,1'])->group(function () {
+    Route::get('change-password', [ChangeDefaultPasswordController::class, 'show'])->name('password.change');
+    Route::post('change-password', [ChangeDefaultPasswordController::class, 'update'])->name('password.change.update');
 });
 
 /*
