@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Employees;
 
 use App\Actions\Employees\CreateEmployee;
+use App\Actions\Employees\CreateStaffAccount;
 use App\Actions\Employees\UpdateEmployee;
 use App\Enums\EmploymentStatus;
 use App\Exceptions\PlanLimitExceededException;
@@ -175,6 +176,21 @@ class Index extends Component
         Flux::toast(variant: 'success', text: __('Employee removed.'));
     }
 
+    public function sendSetupLink(string $uuid, CreateStaffAccount $accounts): void
+    {
+        $employee = Employee::query()->where('uuid', $uuid)->firstOrFail();
+
+        Gate::authorize('update', $employee);
+
+        if ($accounts->sendSetupLink($employee) === null) {
+            Flux::toast(variant: 'danger', text: __('No link sent: the employee needs an email not used by another organization, and must not have set a password yet.'));
+
+            return;
+        }
+
+        Flux::toast(variant: 'success', text: __('Setup link sent to :email.', ['email' => $employee->email]));
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -193,7 +209,7 @@ class Index extends Component
             ->search($this->search)
             ->when($this->status !== '', fn ($q) => $q->where('status', $this->status))
             ->when($this->department !== '', fn ($q) => $q->whereRelation('department', 'uuid', $this->department))
-            ->with(['department:id,name', 'designation:id,name', 'branch:id,name'])
+            ->with(['department:id,name', 'designation:id,name', 'branch:id,name', 'user:id,must_change_password'])
             ->orderBy('employee_number')
             ->paginate($this->perPage);
 

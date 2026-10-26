@@ -62,6 +62,11 @@
                             <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                                 @if ($canUpdate)
                                     <flux:button size="sm" variant="ghost" wire:click="startEdit('{{ $employee->uuid }}')">{{ __('Edit') }}</flux:button>
+                                    @if ($employee->email && ($employee->user === null || $employee->user->must_change_password))
+                                        <flux:button size="sm" variant="ghost" icon="envelope" wire:click="sendSetupLink('{{ $employee->uuid }}')" wire:loading.attr="disabled">
+                                            {{ $employee->user === null ? __('Send login link') : __('Resend login link') }}
+                                        </flux:button>
+                                    @endif
                                 @endif
                                 @if (! $employee->status->isCurrentlyEmployed() && $canSettle)
                                     <flux:button size="sm" variant="ghost" icon="banknotes" :href="route('payroll').'#final-settlements'" wire:navigate>{{ __('Final pay') }}</flux:button>

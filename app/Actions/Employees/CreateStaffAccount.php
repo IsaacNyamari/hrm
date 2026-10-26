@@ -72,6 +72,30 @@ class CreateStaffAccount
     }
 
     /**
+     * Sends the setup link to an employee who has no login yet (creating it),
+     * or whose login still has the default password.
+     *
+     * @return User|null null when there is nothing to send: no usable email, or
+     *                   the employee has already chosen a password
+     */
+    public function sendSetupLink(Employee $employee): ?User
+    {
+        $user = $employee->user()->first();
+
+        if ($user === null) {
+            return $this->handle($employee);
+        }
+
+        if (! $user->must_change_password) {
+            return null;
+        }
+
+        $user->notify(new WelcomeNewHireNotification($employee->tenant()->firstOrFail(), self::welcomeUrl($user)));
+
+        return $user;
+    }
+
+    /**
      * A signed link to set the first password. It carries a fingerprint of the
      * current password hash, so it stops working as soon as a password is set.
      */

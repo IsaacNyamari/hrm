@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 use App\Actions\Employees\CreateEmployee;
 use App\Actions\Employees\CreateStaffAccount;
+use App\Enums\Role;
+use App\Livewire\Employees\Index;
+use App\Models\Employee;
 use App\Models\User;
 use App\Notifications\WelcomeNewHireNotification;
 use Illuminate\Support\Facades\Notification;
+use Livewire\Livewire;
 
 beforeEach(function () {
     Notification::fake();
@@ -74,4 +78,48 @@ it('expires the setup link after 7 days', function () {
     $this->travelTo(now()->addDays(CreateStaffAccount::LINK_DAYS)->addMinute());
 
     $this->get($url)->assertSee('This link is no longer valid');
+});
+
+it('sends a login link to an existing employee who never got one', function () {
+    $employee = Employee::factory()->forTenant($this->tenant)->create(['email' => 'legacy@example.com', 'user_id' => null]);
+    $this->actingAs(userForTenant($this->tenant, Role::HrAdministrator));
+
+    Livewire::test(Index::class)
+        ->assertSee('Send login link')
+        ->call('sendSetupLink', $employee->uuid);
+
+    $user = User::query()->where('email', 'legacy@example.com')->firstOrFail();
+
+    expect($employee->fresh()->user_id)->toBe($user->id)
+        ->and($user->must_change_password)->toBeTrue();
+    Notification::assertSentTo($user, WelcomeNewHireNotification::class);
+});
+
+it('resends the login link until the employee sets a password', function () {
+    $this->actingAs(userForTenant($this->tenant, Role::HrAdministrator));
+
+    Livewire::test(Index::class)
+        ->assertSee('Resend login link')
+        ->call('sendSetupLink', $this->employee->uuid);
+
+    Notification::assertSentToTimes($this->user, WelcomeNewHireNotification::class, 2);
+
+    $this->user->forceFill(['password' => 'Sup3r-Secret!pass'])->save();
+
+    Livewire::test(Index::class)
+        ->assertDontSee('Resend login link')
+        ->call('sendSetupLink', $this->employee->uuid);
+
+    Notification::assertSentToTimes($this->user, WelcomeNewHireNotification::class, 2);
+});
+
+it('does not let staff without update rights send login links', function () {
+    $this->actingAs(userForTenant($this->tenant, Role::Supervisor));
+
+    Livewire::test(Index::class)
+        ->assertDontSee('Resend login link')
+        ->call('sendSetupLink', $this->employee->uuid)
+        ->assertForbidden();
+
+    Notification::assertSentToTimes($this->user, WelcomeNewHireNotification::class, 1);
 });
